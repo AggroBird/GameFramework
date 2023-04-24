@@ -1,0 +1,21 @@
+{
+	"name": "com.aggrobird.gameframework",
+	"displayName":"Game Framework",
+	"version": "1.0.0",
+	"unity": "2021.3",
+	"keywords": ["Game", "Framework"],
+	"category": "Utility",
+	"description": "Custom game framework for unity games",
+	"dependencies": {
+		"com.aggrobird.unityengineextend": "1.0.39",
+		"com.aggrobird.reflectiondebugconsole": "2.0.72",
+		"com.unity.inputsystem": "1.5.1",
+		"com.cysharp.unitask": "2.1.2"
+	},
+	"author":
+	{
+		"name": "AggroBirdGK",
+		"email": "contact@aggrobird.com",
+		"url": "https://www.aggrobird.com"
+	}
+}
