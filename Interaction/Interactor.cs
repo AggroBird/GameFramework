@@ -5,9 +5,9 @@ namespace AggroBird.GameFramework
 {
     public class Interactor : MonoBehaviour
     {
-        [field: SerializeField] public Pawn Owner { get; private set; }
+        [field: SerializeField] public Entity Entity { get; private set; }
 
-        private List<Interactable> interactables = new();
+        private readonly List<Interactable> interactables = new();
         private Interactable nearestInteractable = null;
         private Interactable currentInteractable = null;
 
@@ -16,7 +16,7 @@ namespace AggroBird.GameFramework
 
         protected virtual void Start()
         {
-            enabled = Owner;
+            enabled = Entity;
         }
 
         protected virtual void OnDestroy()
