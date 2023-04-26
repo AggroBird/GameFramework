@@ -92,7 +92,10 @@ namespace AggroBird.GameFramework
         {
             for (int i = 0; i < PlayerCount; i++)
             {
-                GetPlayer(i).UpdateInput();
+                if (TryGetPlayer(i, out Player player))
+                {
+                    player.UpdateInput();
+                }
             }
 
             onUpdate?.Invoke();
@@ -103,7 +106,10 @@ namespace AggroBird.GameFramework
         {
             for (int i = 0; i < PlayerCount; i++)
             {
-                GetPlayer(i).UpdateUserInterface();
+                if (TryGetPlayer(i, out Player player))
+                {
+                    player.UpdateUserInterface();
+                }
             }
 
             onLateUpdate?.Invoke();
@@ -112,7 +118,7 @@ namespace AggroBird.GameFramework
             uiRequiresInput = false;
             for (int i = 0; i < PlayerCount; i++)
             {
-                if (GetPlayer(i).TryGetUserInterface(out UserInterface userInterface))
+                if (TryGetPlayer(i, out Player player) && player.TryGetUserInterface(out UserInterface userInterface))
                 {
                     uiRequiresInput |= userInterface.AllowInput;
                 }
