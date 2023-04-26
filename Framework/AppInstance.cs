@@ -12,7 +12,7 @@ namespace AggroBird.GameFramework
     }
 
     [DefaultExecutionOrder(-99999)]
-    public class AppInstance : MonoBehaviour
+    public abstract class AppInstance : MonoBehaviour
     {
         // Singleton instance
         public static bool IsInitialized => instance;
@@ -58,23 +58,17 @@ namespace AggroBird.GameFramework
         private InputMode inputMode = InputMode.KeyboardMouse;
         public InputMode InputMode => inputMode;
 
-        // Prefabs
-        [SerializeField] private Player playerPrefab;
-
         // Players
-        public const int PlayerCount = 1;
-        private Player[] players;
-        public Player GetPlayer(int index) => players[index];
+        public abstract int PlayerCount { get; }
+        public abstract Player GetPlayer(int index);
         public bool TryGetPlayer<T>(int index, out T player) where T : Player
         {
-            if (index >= 0 && index < PlayerCount)
+            if (index >= 0 && index < PlayerCount && GetPlayer(index) is T casted)
             {
-                if (players[index] is T casted)
-                {
-                    player = casted;
-                    return true;
-                }
+                player = casted;
+                return true;
             }
+
             player = null;
             return false;
         }
@@ -85,18 +79,6 @@ namespace AggroBird.GameFramework
             if (instance) throw new FatalGameException("Application instance has already been initialized");
             DontDestroyOnLoad(gameObject);
             instance = this;
-
-            // Create players
-            players = new Player[PlayerCount];
-            for (int i = 0; i < PlayerCount; i++)
-            {
-                players[i] = Instantiate(playerPrefab);
-                players[i].name = $"Player {i + 1}";
-            }
-            for (int i = 0; i < PlayerCount; i++)
-            {
-                players[i].Initialize(this);
-            }
 
             inputMode = Keyboard.current != null ? InputMode.KeyboardMouse : InputMode.Controller;
 
@@ -110,7 +92,7 @@ namespace AggroBird.GameFramework
         {
             for (int i = 0; i < PlayerCount; i++)
             {
-                players[i].UpdateInput();
+                GetPlayer(i).UpdateInput();
             }
 
             onUpdate?.Invoke();
@@ -121,21 +103,22 @@ namespace AggroBird.GameFramework
         {
             for (int i = 0; i < PlayerCount; i++)
             {
-                players[i].UpdateUserInterface();
+                GetPlayer(i).UpdateUserInterface();
             }
 
             onLateUpdate?.Invoke();
 
             // Check if UI still requires input
             uiRequiresInput = false;
-            for (int i = 0; i < players.Length; i++)
+            for (int i = 0; i < PlayerCount; i++)
             {
-                if (players[i].TryGetUserInterface(out UserInterface userInterface))
+                if (GetPlayer(i).TryGetUserInterface(out UserInterface userInterface))
                 {
                     uiRequiresInput |= userInterface.AllowInput;
                 }
             }
 
+            // Gain focus on mouse button click
             if (!HasFocus && !DebugConsole.HasFocus)
             {
                 Mouse mouse = Mouse.current;
@@ -145,6 +128,7 @@ namespace AggroBird.GameFramework
                 }
             }
 
+            // Editor specific remove focus on escape
             if (HasFocus && Application.isEditor)
             {
                 Keyboard keyboard = Keyboard.current;
@@ -231,8 +215,7 @@ namespace AggroBird.GameFramework
 
             for (int i = 0; i < PlayerCount; i++)
             {
-                players[i].Shutdown();
-                Destroy(players[i]);
+                GetPlayer(i).Shutdown();
             }
         }
 
@@ -240,10 +223,7 @@ namespace AggroBird.GameFramework
         {
             DebugConsole.onConsoleFocusChange -= OnDebugConsoleFocus;
 
-            if (Application.isEditor)
-            {
-                Shutdown();
-            }
+            Shutdown();
 
             instance = null;
         }
