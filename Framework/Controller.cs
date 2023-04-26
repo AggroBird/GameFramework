@@ -8,14 +8,6 @@ using UnityEngine.InputSystem.LowLevel;
 
 namespace AggroBird.GameFramework
 {
-    public enum ButtonState
-    {
-        None = 0,
-        Pressed,
-        Held,
-        Released,
-    }
-
     public static class InputSystemUtility
     {
         public static ButtonControl GetMouseButton(this Mouse mouse, MouseButton mouseButton)
@@ -35,6 +27,14 @@ namespace AggroBird.GameFramework
             }
             throw new System.ArgumentException("Invalid mouse button");
         }
+    }
+
+    public enum ButtonState
+    {
+        None = 0,
+        Pressed,
+        Held,
+        Released,
     }
 
     public readonly struct ButtonStateObject : System.IEquatable<ButtonStateObject>
