@@ -212,11 +212,6 @@ namespace AggroBird.GameFramework
         protected virtual void Shutdown()
         {
             onShutdown?.Invoke();
-
-            for (int i = 0; i < PlayerCount; i++)
-            {
-                GetPlayer(i).Shutdown();
-            }
         }
 
         protected virtual void OnDestroy()
