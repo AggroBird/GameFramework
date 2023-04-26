@@ -2,6 +2,9 @@ using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
+using UnityEngine.InputSystem.LowLevel;
 
 namespace AggroBird.GameFramework
 {
@@ -11,6 +14,27 @@ namespace AggroBird.GameFramework
         Pressed,
         Held,
         Released,
+    }
+
+    public static class InputSystemUtility
+    {
+        public static ButtonControl GetMouseButton(this Mouse mouse, MouseButton mouseButton)
+        {
+            switch (mouseButton)
+            {
+                case MouseButton.Left:
+                    return mouse.leftButton;
+                case MouseButton.Right:
+                    return mouse.rightButton;
+                case MouseButton.Middle:
+                    return mouse.middleButton;
+                case MouseButton.Forward:
+                    return mouse.forwardButton;
+                case MouseButton.Back:
+                    return mouse.backButton;
+            }
+            throw new System.ArgumentException("Invalid mouse button");
+        }
     }
 
     public readonly struct ButtonStateObject : System.IEquatable<ButtonStateObject>
@@ -101,6 +125,40 @@ namespace AggroBird.GameFramework
 
     public abstract class Controller : ScriptableObject
     {
+        protected struct ButtonStateObjectMask
+        {
+            public ButtonStateObject value;
+            public bool wasModified;
+
+            public static implicit operator ButtonStateObject(ButtonStateObjectMask buttonStateObjectResult)
+            {
+                return buttonStateObjectResult.value;
+            }
+
+            public static ButtonStateObjectMask operator |(ButtonStateObjectMask lhs, ButtonControl control)
+            {
+                if (!lhs.wasModified)
+                {
+                    if (control.wasPressedThisFrame)
+                    {
+                        lhs.value = ButtonState.Pressed;
+                        lhs.wasModified = true;
+                    }
+                    else if (control.wasReleasedThisFrame)
+                    {
+                        lhs.value = ButtonState.Released;
+                        lhs.wasModified = true;
+                    }
+                    else if (control.isPressed)
+                    {
+                        lhs.value = ButtonState.Held;
+                        lhs.wasModified = true;
+                    }
+                }
+                return lhs;
+            }
+        }
+
         public Vector2 CameraInput { get; protected set; }
 
         protected sealed class WritableInputAction<T> : ControllerInputAction<T>
