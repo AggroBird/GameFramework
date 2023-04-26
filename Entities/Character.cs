@@ -65,9 +65,10 @@ namespace AggroBird.GameFramework
                 }
             }
         }
-        
+
         protected virtual float movementSpeedModifier => 1;
         protected virtual float jumpForceModifier => 1;
+        protected bool useAcceleration = true;
 
         private float groundedPushForce => Physics.gravity.magnitude;
         private const float GroundedCorrectionDuration = 0.1f;
@@ -219,7 +220,7 @@ namespace AggroBird.GameFramework
                     moving = true;
                 }
 
-                Vector3 newVelocity = Vector3.MoveTowards(rigidbody.velocity, targetSpeed, walkAcceleration * delta);
+                Vector3 newVelocity = useAcceleration ? Vector3.MoveTowards(rigidbody.velocity, targetSpeed, walkAcceleration * delta) : targetSpeed;
                 if (newVelocity.sqrMagnitude < 0.01f && !hasInput)
                 {
                     rigidbody.velocity = Vector3.zero;
