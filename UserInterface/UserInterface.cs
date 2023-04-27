@@ -189,7 +189,9 @@ namespace AggroBird.GameFramework
                     }
                 }
             }
-
+        }
+        public virtual void UpdateLayout()
+        {
             EventSystem eventSystem = EventSystem;
 
             // Check if current selection is visible in scroll rect

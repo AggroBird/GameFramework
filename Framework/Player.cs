@@ -108,7 +108,12 @@ namespace AggroBird.GameFramework
                 // Update widgets
                 UI.UpdateUserInterface();
                 // Update input (after widgets have consumed input events)
-                UI.UpdateInput(Controller);
+                if (Controller)
+                {
+                    UI.UpdateInput(Controller);
+                }
+                // Update layout
+                UI.UpdateLayout();
             }
         }
 
