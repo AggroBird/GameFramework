@@ -5,7 +5,7 @@ using UnityEngine;
 namespace AggroBird.GameFramework
 {
     [RequireComponent(typeof(Rigidbody), typeof(CapsuleCollider))]
-    public abstract class Character : Pawn
+    public class CharacterMovement : Movement
     {
         public enum MovementState
         {

@@ -22,6 +22,11 @@ namespace AggroBird.GameFramework
         public virtual Interactor Interactor { get; }
 
 
+        public virtual void UpdateInput(Controller controller)
+        {
+
+        }
+
         protected virtual void OnOwnerChanged(Player previousOwner, Player newOwner)
         {
 

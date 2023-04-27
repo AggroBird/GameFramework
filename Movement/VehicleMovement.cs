@@ -5,7 +5,7 @@ using UnityEngine;
 namespace AggroBird.GameFramework
 {
     [RequireComponent(typeof(Rigidbody), typeof(CapsuleCollider))]
-    public abstract class Vehicle : Pawn
+    public class VehicleMovement : Movement
     {
         [SerializeField, HideInInspector]
         [UnityEngine.Serialization.FormerlySerializedAs("rigidbodyComponent")]
@@ -40,13 +40,13 @@ namespace AggroBird.GameFramework
             [SerializeField] private Transform transform;
             public Transform Transform => transform;
 
-            [System.NonSerialized] public Character passenger;
+            [System.NonSerialized] public CharacterMovement passenger;
         }
         [Space]
         [SerializeField] protected Seat[] seats = null;
 
         public int SeatCount => seats.Length;
-        public Character GetPassenger(int index)
+        public CharacterMovement GetPassenger(int index)
         {
             if ((uint)index >= (uint)seats.Length)
             {

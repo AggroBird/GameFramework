@@ -73,11 +73,11 @@ namespace AggroBird.GameFramework
         }
 
 
-        public virtual void Initialize(AppInstance app)
+        public virtual void Initialize(AppInstance app, bool createController = true)
         {
             App = app;
 
-            if (controllerPrefab)
+            if (createController && controllerPrefab)
             {
                 Controller = Instantiate(controllerPrefab);
             }
@@ -94,6 +94,11 @@ namespace AggroBird.GameFramework
             if (Controller)
             {
                 Controller.UpdateInput(this, InputEnabled);
+
+                if (pawn)
+                {
+                    pawn.UpdateInput(Controller);
+                }
             }
         }
         public virtual void UpdateUserInterface()
