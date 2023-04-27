@@ -9,10 +9,6 @@ namespace AggroBird.GameFramework
     public abstract class UserInterface : MonoBehaviour
     {
         public Player Owner { get; private set; }
-        public void SetOwner(Player owner)
-        {
-            Owner = owner;
-        }
 
         public abstract RectTransform RootTransform { get; }
         public abstract EventSystem EventSystem { get; }
@@ -50,12 +46,14 @@ namespace AggroBird.GameFramework
         }
 
 
-        public virtual void Initialize()
+        public virtual void Initialize(Player Owner)
         {
             if (AppInstance.IsInitialized)
             {
                 AppInstance.Instance.onInputModeChanged += OnInputModeChanged;
             }
+
+            this.Owner = Owner;
         }
         protected virtual void OnDestroy()
         {
@@ -331,7 +329,5 @@ namespace AggroBird.GameFramework
                 PauseGame |= menu.PauseGame;
             }
         }
-
-        public abstract void SetScreenFade(float value);
     }
 }
