@@ -18,6 +18,8 @@ namespace AggroBird.GameFramework
         public Player Owner { get; internal set; }
         public bool TryGetOwner<T>(out T result) where T : Player => result = Owner as T;
 
+        public virtual Vector3 Center => transform.position + Vector3.up;
+
 
         public virtual Interactor Interactor { get; }
 
