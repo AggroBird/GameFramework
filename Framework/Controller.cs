@@ -8,8 +8,18 @@ using UnityEngine.InputSystem.LowLevel;
 
 namespace AggroBird.GameFramework
 {
+    public enum Stick
+    {
+        LeftStick,
+        RightStick,
+    }
+
     public static class InputSystemUtility
     {
+        public static StickControl GetStickControl(this Gamepad gamepad, Stick stick)
+        {
+            return stick == Stick.LeftStick ? gamepad.leftStick : gamepad.rightStick;
+        }
         public static ButtonControl GetMouseButton(this Mouse mouse, MouseButton mouseButton)
         {
             switch (mouseButton)
