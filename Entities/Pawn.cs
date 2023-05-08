@@ -5,11 +5,30 @@ namespace AggroBird.GameFramework
     [DisallowMultipleComponent]
     public class Pawn : Entity
     {
+        private Dummy FetchDummy()
+        {
+            if (dummy)
+            {
+                return dummy;
+            }
+
+            int childCount = transform.childCount;
+            for (int i = 0; i < childCount; i++)
+            {
+                if (transform.TryGetComponent(out dummy))
+                {
+                    return dummy;
+                }
+            }
+
+            return null;
+        }
+
         [SerializeField] private Dummy dummy;
-        public Dummy Dummy => dummy;
+        public Dummy Dummy => FetchDummy();
         public bool TryGetDummy(out Dummy dummy)
         {
-            dummy = this.dummy;
+            dummy = FetchDummy();
             return dummy;
         }
 
