@@ -5,6 +5,8 @@ namespace AggroBird.GameFramework
     [DisallowMultipleComponent]
     public class Pawn : Entity
     {
+        [SerializeField] private Dummy dummy;
+
         private Dummy FetchDummy()
         {
             if (dummy)
@@ -23,12 +25,10 @@ namespace AggroBird.GameFramework
 
             return null;
         }
-
-        [SerializeField] private Dummy dummy;
         public Dummy Dummy => FetchDummy();
-        public bool TryGetDummy(out Dummy dummy)
+        public bool TryGetDummy<T>(out Dummy dummy) where T : Dummy
         {
-            dummy = FetchDummy();
+            dummy = FetchDummy() as T;
             return dummy;
         }
 
