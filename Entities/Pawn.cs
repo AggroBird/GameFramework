@@ -17,7 +17,7 @@ namespace AggroBird.GameFramework
             int childCount = transform.childCount;
             for (int i = 0; i < childCount; i++)
             {
-                if (transform.TryGetComponent(out dummy))
+                if (transform.GetChild(i).TryGetComponent(out dummy))
                 {
                     return dummy;
                 }
