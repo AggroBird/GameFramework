@@ -8,6 +8,7 @@ namespace AggroBird.GameFramework
     public class Dummy : MonoBehaviour
     {
         [SerializeField] private Animator animator;
+        [SerializeField] private bool createPlayableGraph = false;
         public Animator Animator => animator;
 
         private PlayableGraph playableGraph;
@@ -23,19 +24,22 @@ namespace AggroBird.GameFramework
 
         protected virtual void Awake()
         {
-            playableGraph = PlayableGraph.Create($"{name}.DummyAnimation");
-            playableGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
-            AnimationPlayableOutput playableOutput = AnimationPlayableOutput.Create(playableGraph, $"AnimatorOutput", animator);
+            if (createPlayableGraph)
+            {
+                playableGraph = PlayableGraph.Create($"{name}.DummyAnimation");
+                playableGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
+                AnimationPlayableOutput playableOutput = AnimationPlayableOutput.Create(playableGraph, $"AnimatorOutput", animator);
 
-            mixerPlayable = AnimationMixerPlayable.Create(playableGraph, 2);
-            playableOutput.SetSourcePlayable(mixerPlayable);
+                mixerPlayable = AnimationMixerPlayable.Create(playableGraph, 2);
+                playableOutput.SetSourcePlayable(mixerPlayable);
 
-            AnimatorControllerPlayable controllerPlayable = AnimatorControllerPlayable.Create(playableGraph, animator.runtimeAnimatorController);
-            mixerPlayable.ConnectInput(0, controllerPlayable, 0);
+                AnimatorControllerPlayable controllerPlayable = AnimatorControllerPlayable.Create(playableGraph, animator.runtimeAnimatorController);
+                mixerPlayable.ConnectInput(0, controllerPlayable, 0);
 
-            BlendClip(0);
+                BlendClip(0);
 
-            animator.runtimeAnimatorController = null;
+                animator.runtimeAnimatorController = null;
+            }
         }
         protected virtual void OnDestroy()
         {
@@ -47,11 +51,17 @@ namespace AggroBird.GameFramework
 
         protected virtual void OnEnable()
         {
-            playableGraph.Play();
+            if (playableGraph.IsValid())
+            {
+                playableGraph.Play();
+            }
         }
         protected virtual void OnDisable()
         {
-            playableGraph.Stop();
+            if (playableGraph.IsValid())
+            {
+                playableGraph.Stop();
+            }
         }
 
 
