@@ -22,7 +22,7 @@ namespace AggroBird.GameFramework
         [SerializeField, HideInInspector]
         [UnityEngine.Serialization.FormerlySerializedAs("colliderComponent")]
         protected new CapsuleCollider collider = default;
-        public Collider Collider => collider;
+        public CapsuleCollider Collider => collider;
 
         [Header("Character Settings")]
         [SerializeField] protected Space inputSpace = Space.World;
