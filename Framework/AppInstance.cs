@@ -128,7 +128,7 @@ namespace AggroBird.GameFramework
             if (!HasFocus && !DebugConsole.HasFocus)
             {
                 Mouse mouse = Mouse.current;
-                if (mouse != null && mouse.leftButton.isPressed)
+                if (mouse != null && (mouse.leftButton.isPressed || mouse.rightButton.isPressed))
                 {
                     OnGainFocus();
                 }
