@@ -44,7 +44,7 @@ namespace AggroBird.GameFramework
         [SerializeField, Clamped(min: 0)] protected float gravityScale = 1;
 
         // Input properties
-        public Vector2 MovementInput { get; protected set; }
+        public Vector2 MovementInput { get; set; }
         public bool IsKinematic
         {
             get
@@ -189,6 +189,7 @@ namespace AggroBird.GameFramework
             if (groundedCorrectionTime > 0) groundedCorrectionTime -= delta;
 
             Vector2 moveInput = MovementInput;
+            MovementInput = Vector2.zero;
             float moveInputLength = moveInput.magnitude;
             if (moveInputLength > 1)
             {
