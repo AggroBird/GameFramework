@@ -23,7 +23,7 @@ namespace AggroBird.GameFramework
             {
                 if (Application.isPlaying && !instance)
                 {
-                    throw new FatalGameException("Application has not been initialized yet");
+                    EntryPoint.Initialize();
                 }
                 return instance;
             }
