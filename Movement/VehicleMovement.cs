@@ -292,7 +292,7 @@ namespace AggroBird.GameFramework
                     rigidbody.interpolation = RigidbodyInterpolation.None;
                     rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
                     rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
-                    UnityEditor.EditorUtility.SetDirty(this);
+                    UnityEditor.EditorUtility.SetDirty(rigidbody);
                 }
 
                 if (!collider)
@@ -308,6 +308,7 @@ namespace AggroBird.GameFramework
                     collider.height = collisionHeight;
                     collider.direction = 1;
                     collider.sharedMaterial = null;
+                    UnityEditor.EditorUtility.SetDirty(collider);
                 }
             }
         }

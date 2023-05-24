@@ -372,7 +372,7 @@ namespace AggroBird.GameFramework
             if (!rigidbody)
             {
                 rigidbody = GetComponent<Rigidbody>();
-                UnityEditor.EditorUtility.SetDirty(rigidbody);
+                UnityEditor.EditorUtility.SetDirty(this);
             }
             if (rigidbody)
             {
@@ -391,7 +391,7 @@ namespace AggroBird.GameFramework
             if (!collider)
             {
                 collider = GetComponent<CapsuleCollider>();
-                UnityEditor.EditorUtility.SetDirty(collider);
+                UnityEditor.EditorUtility.SetDirty(this);
             }
             if (collider)
             {
@@ -402,6 +402,7 @@ namespace AggroBird.GameFramework
                 collider.isTrigger = false;
                 collider.center = new Vector3(0, collisionHeight * 0.5f, 0);
                 collider.direction = 1;
+                UnityEditor.EditorUtility.SetDirty(collider);
             }
         }
 #endif
