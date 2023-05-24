@@ -386,6 +386,10 @@ namespace AggroBird.GameFramework
                     UnityEditor.EditorUtility.SetDirty(rigidbody);
                 }
             }
+            if (rigidbody)
+            {
+                rigidbody.hideFlags |= HideFlags.NotEditable;
+            }
 
             if (!collider)
             {
@@ -393,14 +397,20 @@ namespace AggroBird.GameFramework
                 if (collider)
                 {
                     collider.hideFlags |= HideFlags.NotEditable;
+                    collider.radius = collisionRadius;
+                    collider.height = collisionHeight;
                     collider.enabled = true;
                     collider.isTrigger = false;
                     collider.center = new Vector3(0, collisionHeight * 0.5f, 0);
-                    collider.radius = collisionRadius;
-                    collider.height = collisionHeight;
                     collider.direction = 1;
                     UnityEditor.EditorUtility.SetDirty(collider);
                 }
+            }
+            if (collider)
+            {
+                collider.hideFlags |= HideFlags.NotEditable;
+                collider.radius = collisionRadius;
+                collider.height = collisionHeight;
             }
         }
 #endif
