@@ -372,45 +372,36 @@ namespace AggroBird.GameFramework
             if (!rigidbody)
             {
                 rigidbody = GetComponent<Rigidbody>();
-                if (rigidbody)
-                {
-                    rigidbody.hideFlags |= HideFlags.NotEditable;
-                    rigidbody.mass = 1;
-                    rigidbody.drag = 0;
-                    rigidbody.angularDrag = 0.05f;
-                    rigidbody.useGravity = true;
-                    rigidbody.isKinematic = false;
-                    rigidbody.interpolation = RigidbodyInterpolation.None;
-                    rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-                    rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
-                    UnityEditor.EditorUtility.SetDirty(rigidbody);
-                }
+                UnityEditor.EditorUtility.SetDirty(rigidbody);
             }
             if (rigidbody)
             {
                 rigidbody.hideFlags |= HideFlags.NotEditable;
+                rigidbody.mass = 1;
+                rigidbody.drag = 0;
+                rigidbody.angularDrag = 0.05f;
+                rigidbody.useGravity = true;
+                rigidbody.isKinematic = false;
+                rigidbody.interpolation = RigidbodyInterpolation.None;
+                rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+                rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
+                UnityEditor.EditorUtility.SetDirty(rigidbody);
             }
 
             if (!collider)
             {
                 collider = GetComponent<CapsuleCollider>();
-                if (collider)
-                {
-                    collider.hideFlags |= HideFlags.NotEditable;
-                    collider.radius = collisionRadius;
-                    collider.height = collisionHeight;
-                    collider.enabled = true;
-                    collider.isTrigger = false;
-                    collider.center = new Vector3(0, collisionHeight * 0.5f, 0);
-                    collider.direction = 1;
-                    UnityEditor.EditorUtility.SetDirty(collider);
-                }
+                UnityEditor.EditorUtility.SetDirty(collider);
             }
             if (collider)
             {
                 collider.hideFlags |= HideFlags.NotEditable;
                 collider.radius = collisionRadius;
                 collider.height = collisionHeight;
+                collider.enabled = true;
+                collider.isTrigger = false;
+                collider.center = new Vector3(0, collisionHeight * 0.5f, 0);
+                collider.direction = 1;
             }
         }
 #endif
