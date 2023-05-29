@@ -364,17 +364,25 @@ namespace AggroBird.GameFramework
 
 
 #if UNITY_EDITOR
+        protected bool EnsureReference<T>(ref T field) where T : Component
+        {
+            bool result = true;
+            if (!field)
+            {
+                result = field = GetComponent<T>();
+                if (result)
+                {
+                    UnityEditor.EditorUtility.SetDirty(this);
+                }
+            }
+            return result;
+        }
         protected virtual void OnValidate()
         {
             float halfHeight = collisionHeight * 0.5f;
             if (collisionRadius > halfHeight) collisionRadius = halfHeight;
 
-            if (!rigidbody)
-            {
-                rigidbody = GetComponent<Rigidbody>();
-                UnityEditor.EditorUtility.SetDirty(this);
-            }
-            if (rigidbody)
+            if (EnsureReference(ref rigidbody))
             {
                 rigidbody.hideFlags |= HideFlags.NotEditable;
                 rigidbody.mass = 1;
@@ -388,12 +396,7 @@ namespace AggroBird.GameFramework
                 UnityEditor.EditorUtility.SetDirty(rigidbody);
             }
 
-            if (!collider)
-            {
-                collider = GetComponent<CapsuleCollider>();
-                UnityEditor.EditorUtility.SetDirty(this);
-            }
-            if (collider)
+            if (EnsureReference(ref collider))
             {
                 collider.hideFlags |= HideFlags.NotEditable;
                 collider.radius = collisionRadius;
