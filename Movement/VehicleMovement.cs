@@ -274,29 +274,32 @@ namespace AggroBird.GameFramework
             float halfHeight = collisionHeight * 0.5f;
             if (collisionRadius > halfHeight) collisionRadius = halfHeight;
 
-            if (Utility.EnsureReference(gameObject, ref rigidbody))
+            if (!Application.isPlaying)
             {
-                rigidbody.hideFlags |= HideFlags.NotEditable;
-                rigidbody.mass = 1;
-                rigidbody.drag = 0;
-                rigidbody.angularDrag = 0;
-                rigidbody.useGravity = true;
-                rigidbody.isKinematic = false;
-                rigidbody.interpolation = RigidbodyInterpolation.None;
-                rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-                rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
-                if (!Application.isPlaying) UnityEditor.EditorUtility.SetDirty(rigidbody);
-            }
+                if (Utility.EnsureReference(gameObject, ref rigidbody))
+                {
+                    rigidbody.hideFlags |= HideFlags.NotEditable;
+                    rigidbody.mass = 1;
+                    rigidbody.drag = 0;
+                    rigidbody.angularDrag = 0;
+                    rigidbody.useGravity = true;
+                    rigidbody.isKinematic = false;
+                    rigidbody.interpolation = RigidbodyInterpolation.None;
+                    rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+                    rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+                    UnityEditor.EditorUtility.SetDirty(rigidbody);
+                }
 
-            if (Utility.EnsureReference(gameObject, ref collider))
-            {
-                collider.hideFlags |= HideFlags.NotEditable;
-                collider.center = new Vector3(0, collisionHeight * 0.5f, 0);
-                collider.radius = collisionRadius;
-                collider.height = collisionHeight;
-                collider.direction = 1;
-                collider.sharedMaterial = null;
-                if (!Application.isPlaying) UnityEditor.EditorUtility.SetDirty(collider);
+                if (Utility.EnsureReference(gameObject, ref collider))
+                {
+                    collider.hideFlags |= HideFlags.NotEditable;
+                    collider.center = new Vector3(0, collisionHeight * 0.5f, 0);
+                    collider.radius = collisionRadius;
+                    collider.height = collisionHeight;
+                    collider.direction = 1;
+                    collider.sharedMaterial = null;
+                    UnityEditor.EditorUtility.SetDirty(collider);
+                }
             }
         }
 #endif
