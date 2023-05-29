@@ -367,7 +367,7 @@ namespace AggroBird.GameFramework
         protected bool EnsureReference<T>(ref T field) where T : Component
         {
             bool result = true;
-            if (!field)
+            if (!field || !ReferenceEquals(field.gameObject, gameObject))
             {
                 result = field = GetComponent<T>();
                 if (result)
