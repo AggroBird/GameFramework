@@ -364,25 +364,12 @@ namespace AggroBird.GameFramework
 
 
 #if UNITY_EDITOR
-        protected bool EnsureReference<T>(ref T field) where T : Component
-        {
-            bool result = true;
-            if (!field || !ReferenceEquals(field.gameObject, gameObject))
-            {
-                result = field = GetComponent<T>();
-                if (result)
-                {
-                    UnityEditor.EditorUtility.SetDirty(this);
-                }
-            }
-            return result;
-        }
         protected virtual void OnValidate()
         {
             float halfHeight = collisionHeight * 0.5f;
             if (collisionRadius > halfHeight) collisionRadius = halfHeight;
 
-            if (EnsureReference(ref rigidbody))
+            if (Utility.EnsureReference(gameObject, ref rigidbody))
             {
                 rigidbody.hideFlags |= HideFlags.NotEditable;
                 rigidbody.mass = 1;
@@ -393,10 +380,10 @@ namespace AggroBird.GameFramework
                 rigidbody.interpolation = RigidbodyInterpolation.None;
                 rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
                 rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
-                UnityEditor.EditorUtility.SetDirty(rigidbody);
+                if (!Application.isPlaying) UnityEditor.EditorUtility.SetDirty(rigidbody);
             }
 
-            if (EnsureReference(ref collider))
+            if (Utility.EnsureReference(gameObject, ref collider))
             {
                 collider.hideFlags |= HideFlags.NotEditable;
                 collider.radius = collisionRadius;
@@ -405,7 +392,7 @@ namespace AggroBird.GameFramework
                 collider.isTrigger = false;
                 collider.center = new Vector3(0, collisionHeight * 0.5f, 0);
                 collider.direction = 1;
-                UnityEditor.EditorUtility.SetDirty(collider);
+                if (!Application.isPlaying) UnityEditor.EditorUtility.SetDirty(collider);
             }
         }
 #endif
