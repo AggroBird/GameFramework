@@ -39,6 +39,8 @@ namespace AggroBird.GameFramework
         private PhysicMaterial physicMaterial = default;
 
 
+        public float MaxSpeed => maxSpeed;
+
         private Vector3 localVelocity = Vector3.zero;
         private float steerValue = 0;
 
