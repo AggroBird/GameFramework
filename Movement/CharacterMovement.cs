@@ -17,11 +17,11 @@ namespace AggroBird.GameFramework
 
         [SerializeField, HideInInspector]
         [UnityEngine.Serialization.FormerlySerializedAs("rigidbodyComponent")]
-        protected new Rigidbody rigidbody = default;
+        private new Rigidbody rigidbody = default;
         public Rigidbody Rigidbody => rigidbody;
         [SerializeField, HideInInspector]
         [UnityEngine.Serialization.FormerlySerializedAs("colliderComponent")]
-        protected new CapsuleCollider collider = default;
+        private new CapsuleCollider collider = default;
         public CapsuleCollider Collider => collider;
 
         [Header("Character Settings")]
@@ -51,7 +51,7 @@ namespace AggroBird.GameFramework
             {
                 return rigidbody.isKinematic;
             }
-            protected set
+            set
             {
                 if (value)
                 {
