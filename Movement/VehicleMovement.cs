@@ -34,27 +34,6 @@ namespace AggroBird.GameFramework
         [Space]
         [SerializeField] protected AnimationCurve rolloutCurve;
 
-        [System.Serializable]
-        protected struct Seat
-        {
-            [SerializeField] private Transform transform;
-            public Transform Transform => transform;
-
-            [System.NonSerialized] public CharacterMovement passenger;
-        }
-        [Space]
-        [SerializeField] protected Seat[] seats = null;
-
-        public int SeatCount => seats.Length;
-        public CharacterMovement GetPassenger(int index)
-        {
-            if ((uint)index >= (uint)seats.Length)
-            {
-                return null;
-            }
-            return seats[index].passenger;
-        }
-
         private float GetRollout(float velz) => maxSpeed > 0 ? rolloutCurve.Evaluate(Mathf.Abs(velz) / maxSpeed) : 0;
 
         private PhysicMaterial physicMaterial = default;
@@ -72,15 +51,28 @@ namespace AggroBird.GameFramework
         public Vector3 GroundNormal => groundNormal;
         public bool IsGrounded => isGrounded;
 
-        public int Throttle { get; protected set; }
-        public float Steer { get; protected set; }
-        public bool Sprint { get; protected set; }
-        public bool Brake { get; protected set; }
+        public float ColliderRadius => collisionRadius;
+        public float ColliderHeight => collisionHeight;
+        public Vector3 BottomPosition
+        {
+            get
+            {
+                Vector3 position = transform.position;
+                position.y = (transform.position.y + collider.center.y) - ColliderHeight * 0.5f;
+                return position;
+            }
+        }
+        public Vector3 Center => transform.position + collider.center;
+
+        public int Throttle { get; set; }
+        public float Steer { get; set; }
+        public bool Sprint { get; set; }
+        public bool Brake { get; set; }
 
         public float SteerValue => steerValue;
 
         private bool isKinematic = false;
-        protected bool IsKinematic
+        public bool IsKinematic
         {
             get => isKinematic;
             set
