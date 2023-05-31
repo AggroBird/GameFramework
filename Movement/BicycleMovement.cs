@@ -5,23 +5,21 @@ using UnityEngine;
 namespace AggroBird.GameFramework
 {
     [RequireComponent(typeof(Rigidbody), typeof(CapsuleCollider))]
-    public class VehicleMovement : Movement
+    public class BicycleMovement : Movement
     {
         [SerializeField, HideInInspector]
-        [UnityEngine.Serialization.FormerlySerializedAs("rigidbodyComponent")]
         protected new Rigidbody rigidbody = default;
         public Rigidbody Rigidbody => rigidbody;
         [SerializeField, HideInInspector]
-        [UnityEngine.Serialization.FormerlySerializedAs("colliderComponent")]
         protected new CapsuleCollider collider = default;
         public Collider Collider => collider;
 
-        [Header("Vehicle Settings")]
+        [Header("Bicycle Settings")]
         [SerializeField, Clamped(min: 0.1f)] protected float collisionRadius = 0.5f;
         [SerializeField, Clamped(min: 0.2f)] protected float collisionHeight = 2;
         [Space]
         [SerializeField, Min(0)] protected float defaultSpeed = 4;
-        [SerializeField, Min(0)] protected float maxSpeed = 10;
+        [SerializeField, Min(0)] protected float maxSpeed = 4;
         [SerializeField, Min(0)] protected float forwardAcceleration = 5;
         [Space]
         [SerializeField, Min(0)] protected float reverseSpeed = 2;
@@ -32,7 +30,9 @@ namespace AggroBird.GameFramework
         [SerializeField, Min(0)] protected float tyreFriction = 5;
         [SerializeField, Clamped(min: 0, max: 90)] protected float maxGroundAngle = 50;
         [Space]
-        [SerializeField] protected AnimationCurve rolloutCurve;
+        [SerializeField] protected AnimationCurve rolloutCurve = new(new Keyframe { time = 0, value = 0.1f, }, new Keyframe { time = 1, value = 2, });
+        [Space]
+        [SerializeField, Min(0)] protected float groundDistanceCheck = 0.5f;
 
         private float GetRollout(float velz) => maxSpeed > 0 ? rolloutCurve.Evaluate(Mathf.Abs(velz) / maxSpeed) : 0;
 
@@ -43,12 +43,24 @@ namespace AggroBird.GameFramework
 
         private Vector3 localVelocity = Vector3.zero;
         private float steerValue = 0;
+        public float SteerValue => steerValue;
 
-        private List<Vector3> contactNormals = new List<Vector3>();
+        private readonly List<Vector3> contactNormals = new();
         private Vector3 groundNormal = Vector3.up;
         private bool isGrounded = false;
 
-        public Vector3 Velocity => rigidbody.velocity;
+        public Vector3 Velocity
+        {
+            get
+            {
+                return rigidbody.velocity;
+            }
+            set
+            {
+                rigidbody.velocity = value;
+                localVelocity = transform.InverseTransformDirection(value);
+            }
+        }
         public Vector3 LocalVelocity => localVelocity;
         public Vector3 GroundNormal => groundNormal;
         public bool IsGrounded => isGrounded;
@@ -70,8 +82,6 @@ namespace AggroBird.GameFramework
         public float Steer { get; set; }
         public bool Sprint { get; set; }
         public bool Brake { get; set; }
-
-        public float SteerValue => steerValue;
 
         private bool isKinematic = false;
         public bool IsKinematic
@@ -159,7 +169,7 @@ namespace AggroBird.GameFramework
                     {
                         Vector3 normal = transform.InverseTransformDirection(groundNormal);
                         Vector3 localSurfaceForward = Mathfx.ProjectAlongSurface(Vector2.up, normal);
-                        localVelocity += localSurfaceForward * forwardAcceleration * grip * defaultDif * deltaTime;
+                        localVelocity += localSurfaceForward * (forwardAcceleration * grip * defaultDif * deltaTime);
                     }
                     else
                         localVelocity.z += GetRollout(localVelocity.z) * defaultDif * deltaTime;
@@ -220,18 +230,18 @@ namespace AggroBird.GameFramework
 
         protected virtual void OnCollisionEnter(Collision collision)
         {
-            OnCollision(collision, true);
+            OnCollision(collision);
         }
         protected virtual void OnCollisionStay(Collision collision)
         {
-            OnCollision(collision, false);
+            OnCollision(collision);
         }
         protected virtual void OnCollisionExit(Collision collision)
         {
 
         }
 
-        private void OnCollision(Collision collision, bool wasEnter)
+        private void OnCollision(Collision collision)
         {
             for (int i = 0; i < collision.contactCount; i++)
             {
@@ -263,12 +273,12 @@ namespace AggroBird.GameFramework
 #if UNITY_EDITOR
         protected virtual void OnValidate()
         {
-            if (defaultSpeed > maxSpeed) defaultSpeed = maxSpeed;
+            if (defaultSpeed > maxSpeed) maxSpeed = defaultSpeed;
 
             float halfHeight = collisionHeight * 0.5f;
             if (collisionRadius > halfHeight) collisionRadius = halfHeight;
 
-            if (Utility.EnsureReference(gameObject, ref rigidbody))
+            if (Utility.EnsureComponentReference(this, ref rigidbody))
             {
                 rigidbody.hideFlags |= HideFlags.NotEditable;
                 rigidbody.mass = 1;
@@ -279,10 +289,9 @@ namespace AggroBird.GameFramework
                 rigidbody.interpolation = RigidbodyInterpolation.None;
                 rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
                 rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
-                UnityEditor.EditorUtility.SetDirty(rigidbody);
             }
 
-            if (Utility.EnsureReference(gameObject, ref collider))
+            if (Utility.EnsureComponentReference(this, ref collider))
             {
                 collider.hideFlags |= HideFlags.NotEditable;
                 collider.center = new Vector3(0, collisionHeight * 0.5f, 0);
@@ -290,8 +299,16 @@ namespace AggroBird.GameFramework
                 collider.height = collisionHeight;
                 collider.direction = 1;
                 collider.sharedMaterial = null;
-                UnityEditor.EditorUtility.SetDirty(collider);
             }
+        }
+
+        private void OnDrawGizmos()
+        {
+            Vector3 raycastPos = transform.position + Vector3.up * collisionRadius;
+            Gizmos.color = Color.white;
+            Gizmos.DrawWireSphere(raycastPos, collisionRadius);
+            Gizmos.color = Color.white;
+            Gizmos.DrawWireSphere(raycastPos + Vector3.down * groundDistanceCheck, collisionRadius);
         }
 #endif
     }

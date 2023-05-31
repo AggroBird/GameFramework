@@ -66,15 +66,15 @@ namespace AggroBird.GameFramework
             }
         }
 
-        protected virtual float movementSpeedModifier => 1;
-        protected virtual float jumpForceModifier => 1;
+        protected virtual float MovementSpeedModifier => 1;
+        protected virtual float JumpForceModifier => 1;
         protected bool useAcceleration = true;
 
-        private float groundedPushForce => Physics.gravity.magnitude;
+        private float GroundedPushForce => Physics.gravity.magnitude;
         private const float GroundedCorrectionDuration = 0.1f;
 
         public float MaxWalkSpeed => walkSpeed;
-        public float EffectiveWalkSpeed => walkSpeed * movementSpeedModifier;
+        public float EffectiveWalkSpeed => walkSpeed * MovementSpeedModifier;
 
         // Private movement variables
         public MovementState State => groundedCorrectionTime > 0 ? MovementState.Grounded : state;
@@ -229,7 +229,7 @@ namespace AggroBird.GameFramework
                 }
                 else
                 {
-                    rigidbody.velocity = newVelocity + groundNormal * -(groundedPushForce * delta);
+                    rigidbody.velocity = newVelocity + groundNormal * -(GroundedPushForce * delta);
                     if (rotateTowardsInput && hasInput)
                     {
                         rigidbody.rotation = Quaternion.RotateTowards(rigidbody.rotation, Quaternion.LookRotation(moveInput.Horizontal3D(), Vector3.up), rotationSpeed * delta);
@@ -243,7 +243,7 @@ namespace AggroBird.GameFramework
                     Vector2 horizontal = HorizontalVelocity;
                     float currentMagnitude = horizontal.magnitude;
                     float forceStrength = 1;
-                    float forceMax = fallMaxMoveSpeed * movementSpeedModifier;
+                    float forceMax = fallMaxMoveSpeed * MovementSpeedModifier;
                     if (currentMagnitude >= forceMax)
                     {
                         forceStrength = Mathf.Clamp01(-Vector2.Dot(horizontal.normalized, moveInput.normalized));
@@ -282,7 +282,7 @@ namespace AggroBird.GameFramework
         {
             if (canJump && IsGrounded)
             {
-                Jump(jumpForce * jumpForceModifier);
+                Jump(jumpForce * JumpForceModifier);
             }
         }
         protected void Jump(float setVerticalVelocity, bool additive = false)
@@ -305,18 +305,18 @@ namespace AggroBird.GameFramework
 
         protected virtual void OnCollisionEnter(Collision collision)
         {
-            OnCollision(collision, true);
+            OnCollision(collision);
         }
         protected virtual void OnCollisionStay(Collision collision)
         {
-            OnCollision(collision, false);
+            OnCollision(collision);
         }
         protected virtual void OnCollisionExit(Collision collision)
         {
 
         }
 
-        private void OnCollision(Collision collision, bool wasEnter)
+        private void OnCollision(Collision collision)
         {
             for (int i = 0; i < collision.contactCount; i++)
             {
@@ -369,7 +369,7 @@ namespace AggroBird.GameFramework
             float halfHeight = collisionHeight * 0.5f;
             if (collisionRadius > halfHeight) collisionRadius = halfHeight;
 
-            if (Utility.EnsureReference(gameObject, ref rigidbody))
+            if (Utility.EnsureComponentReference(this, ref rigidbody))
             {
                 rigidbody.hideFlags |= HideFlags.NotEditable;
                 rigidbody.mass = 1;
@@ -380,10 +380,9 @@ namespace AggroBird.GameFramework
                 rigidbody.interpolation = RigidbodyInterpolation.None;
                 rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
                 rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
-                UnityEditor.EditorUtility.SetDirty(rigidbody);
             }
 
-            if (Utility.EnsureReference(gameObject, ref collider))
+            if (Utility.EnsureComponentReference(this, ref collider))
             {
                 collider.hideFlags |= HideFlags.NotEditable;
                 collider.radius = collisionRadius;
@@ -392,7 +391,6 @@ namespace AggroBird.GameFramework
                 collider.isTrigger = false;
                 collider.center = new Vector3(0, collisionHeight * 0.5f, 0);
                 collider.direction = 1;
-                UnityEditor.EditorUtility.SetDirty(collider);
             }
         }
 #endif
