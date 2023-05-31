@@ -5,7 +5,7 @@ using UnityEngine;
 namespace AggroBird.GameFramework
 {
     [RequireComponent(typeof(Rigidbody), typeof(CapsuleCollider))]
-    public class BicycleMovement : Movement
+    public class VehicleMovement : Movement
     {
         [SerializeField, HideInInspector]
         protected new Rigidbody rigidbody = default;
@@ -32,7 +32,15 @@ namespace AggroBird.GameFramework
         [Space]
         [SerializeField] protected AnimationCurve rolloutCurve = new(new Keyframe { time = 0, value = 0.1f, }, new Keyframe { time = 1, value = 2, });
         [Space]
-        [SerializeField, Min(0)] protected float groundDistanceCheck = 0.5f;
+        [SerializeField, Min(0.1f)] protected float suspensionHeight = 0.5f;
+        [SerializeField, Min(0)] protected float springForce = 250;
+        [SerializeField, Min(0)] protected float springDamp = 30;
+        [SerializeField, Min(0.1f)] protected float vehicleMass = 5;
+        [SerializeField, Min(0.1f)] protected float wheelMass = 1;
+
+        private float wheelPosition = 0;
+        private float wheelVelocity = 0;
+
 
         private float GetRollout(float velz) => maxSpeed > 0 ? rolloutCurve.Evaluate(Mathf.Abs(velz) / maxSpeed) : 0;
 
@@ -112,13 +120,30 @@ namespace AggroBird.GameFramework
             physicMaterial.frictionCombine = PhysicMaterialCombine.Multiply;
             physicMaterial.bounceCombine = PhysicMaterialCombine.Average;
             collider.sharedMaterial = physicMaterial;
+
+            wheelPosition = transform.position.y + collisionRadius;
         }
 
         private void FixedUpdate()
         {
             //debugText.Clear();
 
-            // Update normals
+            float deltaTime = Time.deltaTime;
+
+            // Update suspension physics
+            Vector3 position = transform.position;
+            float wheelOrigin = position.y + collisionRadius + suspensionHeight;
+            float distance = Mathf.Abs(wheelOrigin - wheelPosition);
+            float force = -(distance - suspensionHeight) * springForce;
+            float damp = (rigidbody.velocity.y - wheelVelocity) * springDamp;
+
+            rigidbody.velocity += Vector3.up * ((force - damp) / rigidbody.mass * deltaTime);
+            wheelVelocity += (-force + damp) / wheelMass * deltaTime;
+            wheelVelocity += Physics.gravity.y * deltaTime;
+            wheelPosition += wheelVelocity * deltaTime;
+            wheelPosition = Mathf.Min(wheelPosition, wheelOrigin - 0.001f);
+
+            // Update ground normals
             isGrounded = contactNormals.Count > 0;
             if (isGrounded)
             {
@@ -128,16 +153,23 @@ namespace AggroBird.GameFramework
                     groundNormal += contactNormals[i];
                 }
                 groundNormal.Normalize();
-
                 contactNormals.Clear();
+            }
+
+            // Raycast wheel collision
+            float originEpsilon = wheelOrigin + 0.001f;
+            isGrounded |= Physics.SphereCast(new Vector3(position.x, originEpsilon, position.z), collisionRadius, Vector3.down, out RaycastHit hit, Mathf.Abs(originEpsilon - wheelPosition));
+            if (isGrounded)
+            {
+                groundNormal = hit.normal;
+                wheelPosition = hit.point.y + groundNormal.y * collisionRadius;
+                wheelVelocity *= -0.8f;
             }
 
             if (rigidbody.IsSleeping())
             {
                 return;
             }
-
-            float deltaTime = Time.deltaTime;
 
             steerValue = Mathf.MoveTowards(steerValue, Steer, 10 * deltaTime);
 
@@ -281,7 +313,7 @@ namespace AggroBird.GameFramework
             if (Utility.EnsureComponentReference(this, ref rigidbody))
             {
                 rigidbody.hideFlags |= HideFlags.NotEditable;
-                rigidbody.mass = 1;
+                rigidbody.mass = vehicleMass;
                 rigidbody.drag = 0;
                 rigidbody.angularDrag = 0;
                 rigidbody.useGravity = true;
@@ -294,21 +326,25 @@ namespace AggroBird.GameFramework
             if (Utility.EnsureComponentReference(this, ref collider))
             {
                 collider.hideFlags |= HideFlags.NotEditable;
-                collider.center = new Vector3(0, collisionHeight * 0.5f, 0);
+                collider.center = new Vector3(0, collisionHeight * 0.5f + suspensionHeight, 0);
                 collider.radius = collisionRadius;
                 collider.height = collisionHeight;
                 collider.direction = 1;
                 collider.sharedMaterial = null;
             }
         }
-
-        private void OnDrawGizmos()
+        private void OnDrawGizmosSelected()
         {
-            Vector3 raycastPos = transform.position + Vector3.up * collisionRadius;
             Gizmos.color = Color.white;
-            Gizmos.DrawWireSphere(raycastPos, collisionRadius);
-            Gizmos.color = Color.white;
-            Gizmos.DrawWireSphere(raycastPos + Vector3.down * groundDistanceCheck, collisionRadius);
+            Vector3 position = transform.position;
+            if (Application.isPlaying)
+            {
+                Gizmos.DrawWireSphere(new Vector3(position.x, wheelPosition, position.z), collisionRadius);
+            }
+            else
+            {
+                Gizmos.DrawWireSphere(new Vector3(position.x, position.y + collisionRadius, position.z), collisionRadius);
+            }
         }
 #endif
     }
