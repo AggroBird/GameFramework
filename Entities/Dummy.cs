@@ -1,3 +1,4 @@
+using AggroBird.UnityEngineExtend;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
@@ -142,14 +143,7 @@ namespace AggroBird.GameFramework
 #if UNITY_EDITOR
         protected virtual void OnValidate()
         {
-            if (!animator)
-            {
-                animator = GetComponent<Animator>();
-                if (animator)
-                {
-                    UnityEditor.EditorUtility.SetDirty(animator);
-                }
-            }
+            Utility.EnsureComponentReference(this, ref animator);
         }
 #endif
     }
