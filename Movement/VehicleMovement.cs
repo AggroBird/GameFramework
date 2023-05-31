@@ -158,12 +158,21 @@ namespace AggroBird.GameFramework
 
             // Raycast wheel collision
             float originEpsilon = wheelOrigin + 0.001f;
-            isGrounded |= Physics.SphereCast(new Vector3(position.x, originEpsilon, position.z), collisionRadius, Vector3.down, out RaycastHit hit, Mathf.Abs(originEpsilon - wheelPosition));
-            if (isGrounded)
+            if (Physics.SphereCast(new Vector3(position.x, originEpsilon, position.z), collisionRadius, Vector3.down, out RaycastHit hit, Mathf.Abs(originEpsilon - wheelPosition)))
             {
-                groundNormal = hit.normal;
-                wheelPosition = hit.point.y + groundNormal.y * collisionRadius;
-                wheelVelocity *= -0.8f;
+                float y = hit.normal.y;
+                if (y > 0)
+                {
+                    if (y > 1) y = 1;
+                    float normalAngle = Mathf.Acos(y) * Mathf.Rad2Deg;
+                    if (normalAngle <= maxGroundAngle)
+                    {
+                        isGrounded = true;
+                        groundNormal = hit.normal;
+                        wheelPosition = hit.point.y + groundNormal.y * collisionRadius;
+                        wheelVelocity *= -0.8f;
+                    }
+                }
             }
 
             if (rigidbody.IsSleeping())
