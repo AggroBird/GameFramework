@@ -37,6 +37,7 @@ namespace AggroBird.GameFramework
         [SerializeField, Min(0)] protected float springDamp = 30;
         [SerializeField, Min(0.1f)] protected float vehicleMass = 5;
         [SerializeField, Min(0.1f)] protected float wheelMass = 1;
+        [SerializeField] protected LayerMask suspensionLayerMask = ~0;
 
         private float wheelPosition = 0;
         private float wheelVelocity = 0;
@@ -157,7 +158,7 @@ namespace AggroBird.GameFramework
 
             // Raycast wheel collision
             float originEpsilon = wheelOrigin + 0.001f;
-            if (Physics.SphereCast(new Vector3(position.x, originEpsilon, position.z), collisionRadius, Vector3.down, out RaycastHit hit, Mathf.Abs(originEpsilon - wheelPosition)))
+            if (Physics.SphereCast(new Vector3(position.x, originEpsilon, position.z), collisionRadius, Vector3.down, out RaycastHit hit, Mathf.Abs(originEpsilon - wheelPosition), suspensionLayerMask))
             {
                 float y = hit.normal.y;
                 if (y > 0)
