@@ -36,6 +36,7 @@ namespace AggroBird.GameFramework
         public Rotator2 currentRotation;
 
         private Pawn currentTarget;
+        public Pawn CurrentTarget => currentTarget;
 
         private Vector3 currentPosition;
         private float inputForce;
@@ -62,7 +63,7 @@ namespace AggroBird.GameFramework
             currentPosition = transform.position - Quaternion.Euler(currentRotation.pitch, currentRotation.yaw, 0) * followOffset;
         }
 
-        private void LateUpdate()
+        protected virtual void LateUpdate()
         {
             Pawn target = null;
             if (TryGetPlayer(out Player player))
@@ -114,7 +115,7 @@ namespace AggroBird.GameFramework
             if (inputForce < 0) inputForce = 0;
         }
 
-        private void FixedUpdate()
+        protected virtual void FixedUpdate()
         {
             if (currentTarget)
             {
