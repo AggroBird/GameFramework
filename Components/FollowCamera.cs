@@ -36,8 +36,7 @@ namespace AggroBird.GameFramework
         [System.NonSerialized]
         public Rotator2 currentRotation;
 
-        private Pawn currentTarget;
-        public Pawn CurrentTarget => currentTarget;
+        protected Pawn CurrentTarget { get; private set; }
 
         private Vector3 currentPosition;
         private float inputForce;
@@ -72,34 +71,34 @@ namespace AggroBird.GameFramework
                 target = player.Pawn;
             }
 
-            if (currentTarget != target)
+            if (!ReferenceEquals(CurrentTarget, target))
             {
-                bool hadTarget = !ReferenceEquals(currentTarget, null);
-                if (currentTarget && currentTarget.TryGetOwner(out Player currentOwner))
+                bool hadTarget = !ReferenceEquals(CurrentTarget, null);
+                if (CurrentTarget && CurrentTarget.TryGetOwner(out Player currentOwner))
                 {
                     currentOwner.UnregisterCamera(this);
                 }
 
-                currentTarget = target;
+                CurrentTarget = target;
 
-                if (currentTarget)
+                if (CurrentTarget)
                 {
-                    if (currentTarget.TryGetOwner(out currentOwner))
+                    if (CurrentTarget.TryGetOwner(out currentOwner))
                     {
                         currentOwner.RegisterCamera(this);
                     }
 
-                    Vector3 currentTargetPosition = currentTarget.transform.position + originOffset;
+                    Vector3 currentTargetPosition = CurrentTarget.transform.position + originOffset;
                     if (!hadTarget || Vector3.Distance(currentTargetPosition, currentPosition) > 5)
                     {
-                        currentRotation.yaw = currentTarget.transform.eulerAngles.y;
+                        currentRotation.yaw = CurrentTarget.transform.eulerAngles.y;
                         currentPosition = targetPreviousPosition = currentTargetPosition;
                         transform.eulerAngles = new Vector3(pitch + currentRotation.pitch, currentRotation.yaw, 0);
                     }
                 }
             }
 
-            if (currentTarget && currentTarget.TryGetOwner(out Player owner))
+            if (CurrentTarget && CurrentTarget.TryGetOwner(out Player owner))
             {
                 if (owner.TryGetController(out Controller controller))
                 {
@@ -118,19 +117,19 @@ namespace AggroBird.GameFramework
 
         protected virtual void FixedUpdate()
         {
-            if (currentTarget)
+            if (CurrentTarget)
             {
                 float deltaTime = Time.deltaTime;
 
                 // Calculate current target velocity
-                Vector3 targetPosition = currentTarget.transform.position + originOffset;
+                Vector3 targetPosition = CurrentTarget.Center + originOffset;
                 Vector2 velocity = (targetPreviousPosition.GetXZ() - targetPosition.GetXZ()) / deltaTime;
                 targetPreviousPosition = targetPosition;
 
                 // Update rotation
-                if (currentTarget.rotateCamera)
+                if (CurrentTarget.rotateCamera)
                 {
-                    Rotator3 targetRot = Rotator3.FromEuler(currentTarget.transform.eulerAngles);
+                    Rotator3 targetRot = Rotator3.FromEuler(CurrentTarget.transform.eulerAngles);
                     float rotateSpeed = (1 - Mathf.Clamp01(inputForce)) * Mathf.Clamp01((velocity.magnitude - 0.1f) / 3);
                     // Only rotate if the player is moving and we havent changed the camera recently
                     if (rotateSpeed > 0)
@@ -153,19 +152,25 @@ namespace AggroBird.GameFramework
                 // Raycast for collisions
                 {
                     Vector3 cameraPosition = currentPosition + Quaternion.Euler(currentRotation.pitch, currentRotation.yaw, 0) * followOffset;
-                    Vector3 direction = cameraPosition - currentPosition;
-                    float length = Mathf.Max(direction.magnitude, Mathf.Epsilon);
-                    Vector3 normal = direction / length;
-                    if (Physics.SphereCast(currentPosition, collisionRadius, normal, out RaycastHit hit, length, collisionMask))
+                    Vector3 direction = cameraPosition - targetPosition;
+                    float length = direction.magnitude;
+                    if (length < Mathf.Epsilon)
                     {
-                        offsetLength = hit.distance;
+                        transform.position = targetPosition;
                     }
                     else
                     {
-                        float len = followOffset.magnitude;
-                        offsetLength = Mathf.MoveTowards(offsetLength, len, len * 3 * deltaTime);
+                        Vector3 normal = direction / length;
+                        if (Physics.SphereCast(targetPosition, collisionRadius, normal, out RaycastHit hit, length, collisionMask))
+                        {
+                            offsetLength = hit.distance;
+                        }
+                        else
+                        {
+                            offsetLength = Mathf.MoveTowards(offsetLength, length, length * 3 * deltaTime);
+                        }
+                        transform.position = targetPosition + normal * offsetLength;
                     }
-                    transform.position = currentPosition + normal * offsetLength;
                 }
             }
         }
