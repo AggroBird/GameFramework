@@ -25,6 +25,12 @@ namespace AggroBird.GameFramework
         public float minPitch = -30;
         public float maxPitch = 60;
 
+        public virtual float FieldOfView
+        {
+            get => cameraComponent.fieldOfView;
+            set => cameraComponent.fieldOfView = value;
+        }
+
 
         [System.NonSerialized]
         public Rotator2 currentRotation;
