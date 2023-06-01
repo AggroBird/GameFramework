@@ -57,7 +57,7 @@ namespace AggroBird.GameFramework
         public bool TryGetUserInterface<T>(out T result) where T : UserInterface => result = UI as T;
 
         private readonly List<IPlayerCamera> cameraStack = new List<IPlayerCamera>();
-        public Camera CurrentCamera => cameraStack.Count > 0 ? cameraStack[^1].Camera : null;
+        public IPlayerCamera CurrentCamera => cameraStack.Count > 0 ? cameraStack[^1] : null;
 
 
         public bool GamePaused { get; private set; }
