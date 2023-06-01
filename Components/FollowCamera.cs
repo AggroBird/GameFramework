@@ -77,7 +77,7 @@ namespace AggroBird.GameFramework
                 bool hadTarget = !ReferenceEquals(currentTarget, null);
                 if (currentTarget && currentTarget.TryGetOwner(out Player currentOwner))
                 {
-                    currentOwner.UnregisterCamera(cameraComponent);
+                    currentOwner.UnregisterCamera(this);
                 }
 
                 currentTarget = target;
@@ -86,7 +86,7 @@ namespace AggroBird.GameFramework
                 {
                     if (currentTarget.TryGetOwner(out currentOwner))
                     {
-                        currentOwner.RegisterCamera(cameraComponent);
+                        currentOwner.RegisterCamera(this);
                     }
 
                     Vector3 currentTargetPosition = currentTarget.transform.position + originOffset;
