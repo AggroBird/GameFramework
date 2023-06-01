@@ -80,8 +80,7 @@ namespace AggroBird.GameFramework
             get
             {
                 Vector3 position = transform.position;
-                position.y = (transform.position.y + collider.center.y) - ColliderHeight * 0.5f;
-                return position;
+                return new Vector3(position.x, wheelPosition - collisionRadius, position.z);
             }
         }
         public Vector3 Center => transform.position + collider.center;
@@ -314,6 +313,8 @@ namespace AggroBird.GameFramework
 #if UNITY_EDITOR
         protected virtual void OnValidate()
         {
+            wheelPosition = transform.position.y + collisionRadius;
+
             if (defaultSpeed > maxSpeed) maxSpeed = defaultSpeed;
 
             float halfHeight = collisionHeight * 0.5f;
