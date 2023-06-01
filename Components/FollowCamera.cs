@@ -4,9 +4,10 @@ using UnityEngine;
 namespace AggroBird.GameFramework
 {
     [DefaultExecutionOrder(99999)]
-    public class FollowCamera : MonoBehaviour
+    public class FollowCamera : MonoBehaviour, IPlayerCamera
     {
         [SerializeField] private Camera cameraComponent;
+        public Camera Camera => cameraComponent;
 
         [Clamped(min: 0)] public int playerIndex = 0;
         [Space]
