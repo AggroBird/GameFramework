@@ -44,8 +44,10 @@ namespace AggroBird.GameFramework
         private Vector3 targetPreviousPosition;
 
         private bool isOverride;
-        private Vector3 overridePosition;
-        private Quaternion overrideRotation;
+        private Vector3 overrideOriginPosition
+        private Vector3 overrideTargetPosition;
+        private Quaternion overrideOriginRotation;
+        private Quaternion overrideTargetRotation;
         private float overrideDuration;
         private float overrideStartTime;
 
@@ -185,14 +187,14 @@ namespace AggroBird.GameFramework
                     float t = Mathf.Clamp01((Time.time - overrideStartTime) / overrideDuration);
                     if (t >= 1)
                     {
-                        setPosition = overridePosition;
-                        setRotation = overrideRotation;
+                        setPosition = overrideTargetPosition;
+                        setRotation = overrideTargetRotation;
                     }
                     else
                     {
                         t = Mathfx.InvPow(t, 2);
-                        setPosition = Vector3.Lerp(setPosition, overridePosition, t);
-                        setRotation = Quaternion.Slerp(setRotation, overrideRotation, t);
+                        setPosition = Vector3.Lerp(overrideOriginPosition, overrideTargetPosition, t);
+                        setRotation = Quaternion.Slerp(overrideOriginRotation, overrideTargetRotation, t);
                     }
                 }
 
@@ -203,8 +205,10 @@ namespace AggroBird.GameFramework
         public void Override(Vector3 position, Quaternion rotation, float duration)
         {
             isOverride = true;
-            overridePosition = position;
-            overrideRotation = rotation;
+            overrideOriginPosition = transform.position;
+            overrideTargetPosition = position;
+            overrideOriginRotation = transform.rotation;
+            overrideTargetRotation = rotation;
             overrideDuration = Mathf.Max(0.001f, duration);
             overrideStartTime = Time.time;
         }
