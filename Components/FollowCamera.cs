@@ -43,7 +43,13 @@ namespace AggroBird.GameFramework
         private float offsetLength;
         private Vector3 targetPreviousPosition;
 
-        private bool isOverride;
+        private enum OverrideState
+        {
+            None = 0,
+            In,
+            Out,
+        }
+        private OverrideState overrideState = OverrideState.None;
         private Vector3 overrideOriginPosition;
         private Vector3 overrideTargetPosition;
         private Quaternion overrideOriginRotation;
@@ -106,7 +112,7 @@ namespace AggroBird.GameFramework
                 }
             }
 
-            if (!isOverride && CurrentTarget && CurrentTarget.TryGetOwner(out Player owner))
+            if (overrideState == OverrideState.None && CurrentTarget && CurrentTarget.TryGetOwner(out Player owner))
             {
                 if (owner.TryGetController(out Controller controller))
                 {
@@ -158,7 +164,7 @@ namespace AggroBird.GameFramework
                 }
 
                 // Raycast for collisions
-                Vector3 setPosition = currentPosition;
+                Vector3 setPosition;
                 {
                     Vector3 cameraPosition = currentPosition + Quaternion.Euler(currentRotation.pitch, currentRotation.yaw, 0) * followOffset;
                     Vector3 direction = cameraPosition - targetPosition;
@@ -182,19 +188,19 @@ namespace AggroBird.GameFramework
                     }
                 }
 
-                if (isOverride)
+                if (overrideState != OverrideState.None)
                 {
-                    float t = Mathf.Clamp01((Time.time - overrideStartTime) / overrideDuration);
-                    if (t >= 1)
+                    float t = Mathfx.InvPow(Mathf.Clamp01((Time.time - overrideStartTime) / overrideDuration), 2);
+                    switch (overrideState)
                     {
-                        setPosition = overrideTargetPosition;
-                        setRotation = overrideTargetRotation;
-                    }
-                    else
-                    {
-                        t = Mathfx.InvPow(t, 2);
-                        setPosition = Vector3.Lerp(overrideOriginPosition, overrideTargetPosition, t);
-                        setRotation = Quaternion.Slerp(overrideOriginRotation, overrideTargetRotation, t);
+                        case OverrideState.In:
+                            setPosition = Vector3.Lerp(overrideOriginPosition, overrideTargetPosition, t);
+                            setRotation = Quaternion.Slerp(overrideOriginRotation, overrideTargetRotation, t);
+                            break;
+                        case OverrideState.Out:
+                            setPosition = Vector3.Lerp(overrideOriginPosition, setPosition, t);
+                            setRotation = Quaternion.Slerp(overrideOriginRotation, setRotation, t);
+                            break;
                     }
                 }
 
@@ -202,9 +208,9 @@ namespace AggroBird.GameFramework
             }
         }
 
-        public void Override(Vector3 position, Quaternion rotation, float duration)
+        public void SetOverride(Vector3 position, Quaternion rotation, float duration = 1)
         {
-            isOverride = true;
+            overrideState = OverrideState.In;
             overrideOriginPosition = transform.position;
             overrideTargetPosition = position;
             overrideOriginRotation = transform.rotation;
@@ -212,9 +218,16 @@ namespace AggroBird.GameFramework
             overrideDuration = Mathf.Max(0.001f, duration);
             overrideStartTime = Time.time;
         }
-        public void ClearOverride()
+        public void ClearOverride(float duration = 1)
         {
-            isOverride = false;
+            if (overrideState == OverrideState.In)
+            {
+                overrideState = OverrideState.Out;
+                overrideOriginPosition = transform.position;
+                overrideOriginRotation = transform.rotation;
+                overrideDuration = Mathf.Max(0.001f, duration);
+                overrideStartTime = Time.time;
+            }
         }
 
 #if UNITY_EDITOR
