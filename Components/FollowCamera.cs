@@ -44,7 +44,7 @@ namespace AggroBird.GameFramework
         private Vector3 targetPreviousPosition;
 
         private bool isOverride;
-        private Vector3 overrideOriginPosition
+        private Vector3 overrideOriginPosition;
         private Vector3 overrideTargetPosition;
         private Quaternion overrideOriginRotation;
         private Quaternion overrideTargetRotation;
