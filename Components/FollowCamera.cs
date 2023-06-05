@@ -43,6 +43,12 @@ namespace AggroBird.GameFramework
         private float offsetLength;
         private Vector3 targetPreviousPosition;
 
+        private bool isOverride;
+        private Vector3 overridePosition;
+        private Quaternion overrideRotation;
+        private float overrideDuration;
+        private float overrideStartTime;
+
         protected bool TryGetPlayer<T>(out T player) where T : Player
         {
             if (AppInstance.TryGetInstance(out AppInstance instance) && instance.TryGetPlayer(playerIndex, out player))
@@ -98,7 +104,7 @@ namespace AggroBird.GameFramework
                 }
             }
 
-            if (CurrentTarget && CurrentTarget.TryGetOwner(out Player owner))
+            if (!isOverride && CurrentTarget && CurrentTarget.TryGetOwner(out Player owner))
             {
                 if (owner.TryGetController(out Controller controller))
                 {
@@ -141,7 +147,7 @@ namespace AggroBird.GameFramework
                         currentRotation.yaw = Mathf.MoveTowardsAngle(currentRotation.yaw, targetRot.yaw, yawRotation);
                     }
                 }
-                transform.eulerAngles = new Vector3(pitch + currentRotation.pitch, currentRotation.yaw, 0);
+                Quaternion setRotation = Quaternion.Euler(pitch + currentRotation.pitch, currentRotation.yaw, 0);
 
                 // Update position
                 {
@@ -150,13 +156,14 @@ namespace AggroBird.GameFramework
                 }
 
                 // Raycast for collisions
+                Vector3 setPosition = currentPosition;
                 {
                     Vector3 cameraPosition = currentPosition + Quaternion.Euler(currentRotation.pitch, currentRotation.yaw, 0) * followOffset;
                     Vector3 direction = cameraPosition - targetPosition;
                     float length = direction.magnitude;
                     if (length < Mathf.Epsilon)
                     {
-                        transform.position = targetPosition;
+                        setPosition = targetPosition;
                     }
                     else
                     {
@@ -169,10 +176,40 @@ namespace AggroBird.GameFramework
                         {
                             offsetLength = Mathf.MoveTowards(offsetLength, length, length * 3 * deltaTime);
                         }
-                        transform.position = targetPosition + normal * offsetLength;
+                        setPosition = targetPosition + normal * offsetLength;
                     }
                 }
+
+                if (isOverride)
+                {
+                    float t = Mathf.Clamp01((Time.time - overrideStartTime) / overrideDuration);
+                    if (t >= 1)
+                    {
+                        setPosition = overridePosition;
+                        setRotation = overrideRotation;
+                    }
+                    else
+                    {
+                        setPosition = Vector3.Lerp(setPosition, overridePosition, t);
+                        setRotation = Quaternion.Slerp(setRotation, overrideRotation, t);
+                    }
+                }
+
+                transform.SetPositionAndRotation(setPosition, setRotation);
             }
+        }
+
+        public void Override(Vector3 position, Quaternion rotation, float duration)
+        {
+            isOverride = true;
+            overridePosition = position;
+            overrideRotation = rotation;
+            overrideDuration = Mathf.Max(0.001f, duration);
+            overrideStartTime = Time.time;
+        }
+        public void ClearOverride()
+        {
+            isOverride = false;
         }
 
 #if UNITY_EDITOR
