@@ -112,7 +112,7 @@ namespace AggroBird.GameFramework
                 }
             }
 
-            if (overrideState == OverrideState.None && CurrentTarget && CurrentTarget.TryGetOwner(out Player owner))
+            if (overrideState != OverrideState.In && CurrentTarget && CurrentTarget.TryGetOwner(out Player owner))
             {
                 if (owner.TryGetController(out Controller controller))
                 {
@@ -200,6 +200,7 @@ namespace AggroBird.GameFramework
                         case OverrideState.Out:
                             setPosition = Vector3.Lerp(overrideOriginPosition, setPosition, t);
                             setRotation = Quaternion.Slerp(overrideOriginRotation, setRotation, t);
+                            if (t >= 1) overrideState = OverrideState.None;
                             break;
                     }
                 }
