@@ -190,6 +190,7 @@ namespace AggroBird.GameFramework
                     }
                     else
                     {
+                        t = Mathfx.InvPow(t, 2);
                         setPosition = Vector3.Lerp(setPosition, overridePosition, t);
                         setRotation = Quaternion.Slerp(setRotation, overrideRotation, t);
                     }
