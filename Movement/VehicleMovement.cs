@@ -121,7 +121,7 @@ namespace AggroBird.GameFramework
             physicMaterial.bounceCombine = PhysicMaterialCombine.Average;
             collider.sharedMaterial = physicMaterial;
 
-            wheelPosition = transform.position.y + collisionRadius;
+            wheelPosition = rigidbody.position.y + collisionRadius;
         }
 
         private void FixedUpdate()
@@ -130,18 +130,10 @@ namespace AggroBird.GameFramework
 
             float deltaTime = Time.deltaTime;
 
-            // Update suspension physics
-            Vector3 position = transform.position;
-            float wheelOrigin = position.y + collisionRadius + suspensionHeight;
-            float distance = Mathf.Abs(wheelOrigin - wheelPosition);
-            float force = -(distance - suspensionHeight) * springForce;
-            float damp = (rigidbody.velocity.y - wheelVelocity) * springDamp;
-
-            rigidbody.velocity += Vector3.up * ((force - damp) / rigidbody.mass * deltaTime);
-            wheelVelocity += (-force + damp) / wheelMass * deltaTime;
             wheelVelocity += Physics.gravity.y * deltaTime;
-            wheelPosition += wheelVelocity * deltaTime;
-            wheelPosition = Mathf.Min(wheelPosition, wheelOrigin - 0.001f);
+
+            Vector3 position = rigidbody.position;
+            float wheelOrigin = position.y + collisionRadius + suspensionHeight;
 
             // Update ground normals
             isGrounded = contactNormals.Count > 0;
@@ -154,14 +146,14 @@ namespace AggroBird.GameFramework
                 }
                 groundNormal.Normalize();
                 contactNormals.Clear();
-            }
 
-            // Raycast wheel collision
-            float originEpsilon = wheelOrigin + 0.001f;
-            if (Physics.SphereCast(new Vector3(position.x, originEpsilon, position.z), collisionRadius, Vector3.down, out RaycastHit hit, Mathf.Abs(originEpsilon - wheelPosition), suspensionLayerMask))
+                wheelPosition = wheelOrigin;
+                wheelVelocity = 0;
+            }
+            else if (Physics.SphereCast(new Vector3(position.x, wheelOrigin, position.z), collisionRadius - 0.0001f, Vector3.down, out RaycastHit hit, Mathf.Abs(wheelOrigin - wheelPosition), suspensionLayerMask))
             {
                 float y = hit.normal.y;
-                if (y > 0)
+                if (y >= 0)
                 {
                     if (y > 1) y = 1;
                     float normalAngle = Mathf.Acos(y) * Mathf.Rad2Deg;
@@ -169,9 +161,9 @@ namespace AggroBird.GameFramework
                     {
                         isGrounded = true;
                         groundNormal = hit.normal;
-                        wheelPosition = hit.point.y + groundNormal.y * collisionRadius;
-                        wheelVelocity *= -0.8f;
                     }
+                    wheelPosition = Mathf.Min(hit.point.y + groundNormal.y * collisionRadius, wheelOrigin);
+                    wheelVelocity = 0;
                 }
             }
 
@@ -235,8 +227,18 @@ namespace AggroBird.GameFramework
                     float rolloutVel = localVelocity.z > 0 ? GetRollout(localVelocity.z) : reverseAcceleration;
                     localVelocity.z = Mathf.MoveTowards(localVelocity.z, 0, rolloutVel * deltaTime);
                 }
-                rigidbody.velocity = transform.TransformDirection(localVelocity);
             }
+
+            // Update suspension physics
+            float distance = Mathf.Abs(wheelOrigin - wheelPosition);
+            float force = -(distance - suspensionHeight) * springForce;
+            float damp = (rigidbody.velocity.y - wheelVelocity) * springDamp;
+
+            localVelocity.y += (force - damp) / rigidbody.mass * deltaTime;
+            wheelVelocity += (-force + damp) / wheelMass * deltaTime;
+            wheelPosition += wheelVelocity * deltaTime;
+
+            rigidbody.velocity = transform.TransformDirection(localVelocity);
 
             if (isKinematic && !rigidbody.isKinematic && localVelocity.sqrMagnitude < 0.01f)
             {
@@ -331,7 +333,7 @@ namespace AggroBird.GameFramework
                 rigidbody.isKinematic = false;
                 rigidbody.interpolation = RigidbodyInterpolation.None;
                 rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-                rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+                rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
             }
 
             if (Utility.EnsureComponentReference(this, ref collider))
