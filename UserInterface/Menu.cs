@@ -71,15 +71,18 @@ namespace AggroBird.GameFramework
 
         public virtual bool OnConfirm()
         {
-            EventSystem eventSystem = Parent.EventSystem;
-            if (eventSystem)
+            // Press current selection if controller
+            if (AppInstance.Instance.InputMode == InputMode.Controller)
             {
-                // Press current selection
-                GameObject selectedGameobject = eventSystem.currentSelectedGameObject;
-                if (selectedGameobject && selectedGameobject.GetComponentInParent<Widget>() == this)
+                EventSystem eventSystem = Parent.EventSystem;
+                if (eventSystem)
                 {
-                    PointerEventData data = new(EventSystem.current);
-                    ExecuteEvents.Execute(selectedGameobject, data, ExecuteEvents.pointerClickHandler);
+                    GameObject selectedGameobject = eventSystem.currentSelectedGameObject;
+                    if (selectedGameobject && selectedGameobject.GetComponentInParent<Widget>() == this)
+                    {
+                        PointerEventData data = new(EventSystem.current);
+                        ExecuteEvents.Execute(selectedGameobject, data, ExecuteEvents.pointerClickHandler);
+                    }
                 }
             }
 
