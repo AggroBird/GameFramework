@@ -69,7 +69,7 @@ namespace AggroBird.GameFramework
         private bool _jumpInput = false;
 
         private Vector3 _gravitationalForce;
-        private Vector3 _previousVelocity = Vector3.zero;
+        private Vector2 _previousVelocity = Vector2.zero;
         private static PhysicMaterial physicMaterial = default;
 
         private bool _shouldMaintainHeight = true;
@@ -307,7 +307,7 @@ namespace AggroBird.GameFramework
                 float target = transform.GetYaw();
                 if (_characterLookDirection == LookDirectionOptions.Velocity || _characterLookDirection == LookDirectionOptions.Acceleration)
                 {
-                    Vector2 velocity = rigidbody.velocity.GetXZ();
+                    Vector2 velocity = HorizontalVelocity;
                     if (_characterLookDirection == LookDirectionOptions.Velocity)
                     {
                         if (velocity.sqrMagnitude > Mathf.Epsilon)
@@ -317,7 +317,7 @@ namespace AggroBird.GameFramework
                     }
                     else
                     {
-                        Vector2 deltaVelocity = velocity - _previousVelocity.GetXZ();
+                        Vector2 deltaVelocity = velocity - _previousVelocity;
                         _previousVelocity = velocity;
                         Vector2 acceleration = deltaVelocity / Time.fixedDeltaTime;
                         if (acceleration.sqrMagnitude > Mathf.Epsilon)
