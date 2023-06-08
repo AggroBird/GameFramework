@@ -86,6 +86,9 @@ namespace AggroBird.GameFramework
         private bool _isJumping = false;
         private bool _isGrounded = false;
 
+        public Rigidbody Rigidbody => rigidbody;
+        public CapsuleCollider Collider => collider;
+
         public float ColliderRadius => collisionRadius;
         public float ColliderHeight => collisionHeight;
         public Vector3 Center
