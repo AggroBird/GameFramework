@@ -46,7 +46,28 @@ namespace AggroBird.GameFramework
         [SerializeField, Min(0)] private float _jumpBuffer = 0.15f;
         [SerializeField, Min(0)] private float _coyoteTime = 0.25f;
 
+
         public Vector2 MovementInput { get; set; }
+        public bool Jump
+        {
+            get
+            {
+                return _jumpInput;
+            }
+            set
+            {
+                if (value != _jumpInput && _canJump)
+                {
+                    _jumpInput = value;
+
+                    if (value)
+                    {
+                        _jumpInputTime = Time.fixedTime;
+                    }
+                }
+            }
+        }
+        private bool _jumpInput = false;
 
         private Vector3 _gravitationalForce;
         private Vector3 _previousVelocity = Vector3.zero;
@@ -58,12 +79,12 @@ namespace AggroBird.GameFramework
         private float _maxAccelForceFactor = 1f;
         private Vector3 _m_GoalVel = Vector3.zero;
 
-        private bool jumpInput = false;
-        private float _timeSinceJumpPressed = 0f;
+        private float? _jumpInputTime = null;
         private float _timeSinceUngrounded = 0f;
         private float _timeSinceJump = 0f;
         private bool _jumpReady = true;
         private bool _isJumping = false;
+        private bool _isGrounded = false;
 
         public float ColliderRadius => collisionRadius;
         public float ColliderHeight => collisionHeight;
@@ -76,6 +97,7 @@ namespace AggroBird.GameFramework
                 return position;
             }
         }
+        public bool IsGrounded => _isGrounded;
 
 
         protected virtual void Awake()
@@ -104,15 +126,16 @@ namespace AggroBird.GameFramework
                 input /= len;
             }
 
-            bool rayHitGround = Physics.Raycast(new Ray(transform.position + new Vector3(0, _rideHeight + Mathf.Epsilon, 0), Vector3.down), out RaycastHit hit, _rayToGroundLength, _terrainLayer.value);
-            bool grounded = rayHitGround && hit.distance <= _rideHeight * 1.3f;
-            if (grounded == true)
+            bool rayHitGround = Physics.Raycast(new Ray(transform.position + new Vector3(0, _rideHeight + 0.0001f, 0), Vector3.down), out RaycastHit hit, _rayToGroundLength, _terrainLayer.value);
+            _isGrounded = rayHitGround && hit.distance <= _rideHeight * 1.3f;
+            if (_isGrounded)
             {
                 _timeSinceUngrounded = 0f;
 
                 if (_timeSinceJump > 0.2f)
                 {
                     _isJumping = false;
+                    _jumpReady = true;
                 }
             }
             else
@@ -121,7 +144,7 @@ namespace AggroBird.GameFramework
             }
 
             CharacterMove(input);
-            CharacterJump(jumpInput, grounded, hit);
+            CharacterJump(hit);
 
             if (rayHitGround && _shouldMaintainHeight)
             {
@@ -164,15 +187,13 @@ namespace AggroBird.GameFramework
             rigidbody.AddForce(Vector3.Scale(neededAccel * rigidbody.mass, new Vector3(1, 0, 1)));
         }
 
-        private void CharacterJump(bool jumpInput, bool grounded, RaycastHit rayHit)
+        private void CharacterJump(RaycastHit rayHit)
         {
-            _timeSinceJumpPressed += Time.fixedDeltaTime;
             _timeSinceJump += Time.fixedDeltaTime;
             if (rigidbody.velocity.y < 0)
             {
                 _shouldMaintainHeight = true;
-                _jumpReady = true;
-                if (!grounded)
+                if (!_isGrounded)
                 {
                     // Increase downforce for a sudden plummet.
                     rigidbody.AddForce(_gravitationalForce * (_fallGravityFactor - 1f)); // Hmm... this feels a bit weird. I want a reactive jump, but I don't want it to dive all the time...
@@ -180,13 +201,13 @@ namespace AggroBird.GameFramework
             }
             else if (rigidbody.velocity.y > 0)
             {
-                if (!grounded)
+                if (!_isGrounded)
                 {
                     if (_isJumping)
                     {
                         rigidbody.AddForce(_gravitationalForce * (_riseGravityFactor - 1f));
                     }
-                    if (!jumpInput)
+                    if (!_jumpInput)
                     {
                         // Impede the jump height to achieve a low jump.
                         rigidbody.AddForce(_gravitationalForce * (_lowJumpFactor - 1f));
@@ -194,21 +215,25 @@ namespace AggroBird.GameFramework
                 }
             }
 
-            if (_timeSinceJumpPressed < _jumpBuffer && _timeSinceUngrounded < _coyoteTime)
+            if (_jumpInputTime.HasValue)
             {
-                if (_jumpReady)
+                float timeSinceJumpPressed = Time.fixedTime - _jumpInputTime.Value;
+                if (timeSinceJumpPressed < _jumpBuffer && _timeSinceUngrounded < _coyoteTime)
                 {
-                    _jumpReady = false;
-                    _shouldMaintainHeight = false;
-                    _isJumping = true;
-                    rigidbody.velocity = new Vector3(rigidbody.velocity.x, 0f, rigidbody.velocity.z); // Cheat fix... (see comment below when adding force to rigidbody).
-                    if (rayHit.distance != 0) // i.e. if the ray has hit
+                    if (_jumpReady)
                     {
-                        rigidbody.position = new Vector3(rigidbody.position.x, rigidbody.position.y - (rayHit.distance - _rideHeight), rigidbody.position.z);
+                        _jumpReady = false;
+                        _shouldMaintainHeight = false;
+                        _isJumping = true;
+                        rigidbody.velocity = new Vector3(rigidbody.velocity.x, 0f, rigidbody.velocity.z); // Cheat fix... (see comment below when adding force to rigidbody).
+                        if (rayHit.distance != 0) // i.e. if the ray has hit
+                        {
+                            rigidbody.position = new Vector3(rigidbody.position.x, rigidbody.position.y - (rayHit.distance - _rideHeight), rigidbody.position.z);
+                        }
+                        rigidbody.AddForce(Vector3.up * _jumpForceFactor, ForceMode.Impulse); // This does not work very consistently... Jump height is affected by initial y velocity and y position relative to RideHeight... Want to adopt a fancier approach (more like PlayerMovement). A cheat fix to ensure consistency has been issued above...
+                        _jumpInputTime = null;
+                        _timeSinceJump = 0f;
                     }
-                    rigidbody.AddForce(Vector3.up * _jumpForceFactor, ForceMode.Impulse); // This does not work very consistently... Jump height is affected by initial y velocity and y position relative to RideHeight... Want to adopt a fancier approach (more like PlayerMovement). A cheat fix to ensure consistency has been issued above...
-                    _timeSinceJumpPressed = _jumpBuffer; // So as to not activate further jumps, in the case that the player lands before the jump timer surpasses the buffer.
-                    _timeSinceJump = 0f;
                 }
             }
         }
@@ -247,15 +272,6 @@ namespace AggroBird.GameFramework
             }
         }
 
-
-        public void Jump()
-        {
-            if (_canJump)
-            {
-                jumpInput = true;
-                _timeSinceJumpPressed = 0f;
-            }
-        }
 
 #if UNITY_EDITOR
         protected virtual void OnDrawGizmosSelected()
