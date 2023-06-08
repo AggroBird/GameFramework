@@ -6,38 +6,57 @@ namespace AggroBird.GameFramework
     // Based on physics based character controller by Toyful games https://www.toyfulgames.com/
     public class CharacterMovement : Movement
     {
-        private enum LookDirectionOptions { Velocity, Acceleration, Input };
+        private enum LookDirectionOptions
+        {
+            Velocity,
+            Acceleration,
+            Input,
+            Manual,
+        };
 
         [SerializeField, HideInInspector] private new Rigidbody rigidbody;
         [SerializeField, HideInInspector] private new CapsuleCollider collider;
+
+        [Header("Settings")]
+        [SerializeField] private LayerMask _terrainLayer;
+        [SerializeField] private LookDirectionOptions _characterLookDirection = LookDirectionOptions.Velocity;
+        [SerializeField, Min(0)] private float _rotateSpeed = 500;
+        [SerializeField, Min(0.1f)] private float collisionRadius = 0.5f;
+        [SerializeField, Min(0.2f)] private float collisionHeight = 1.75f;
+
+        [Header("Height")]
+        [SerializeField, Min(0)] private float _rideHeight = 0.25f;
+        [SerializeField, Min(0)] private float _rayToGroundLength = 0.5f;
+        [SerializeField, Min(0)] public float _rideSpringStrength = 200;
+        [SerializeField, Min(0)] private float _rideSpringDamper = 20;
+
+        [Header("Movement")]
+        [SerializeField, Min(0)] private float _maxSpeed = 6;
+        [SerializeField, Min(0)] private float _acceleration = 400;
+        [SerializeField, Min(0)] private float _maxAccelForce = 300;
+        [SerializeField] private AnimationCurve _accelerationFactorFromDot;
+        [SerializeField] private AnimationCurve _maxAccelerationForceFactorFromDot;
+
+        [Header("Jump")]
+        [SerializeField] private bool _canJump = true;
+        [SerializeField, Min(0)] private float _jumpForceFactor = 16;
+        [SerializeField, Min(0)] private float _riseGravityFactor = 3;
+        [SerializeField, Min(0)] private float _fallGravityFactor = 8;
+        [SerializeField, Min(0)] private float _lowJumpFactor = 10;
+        [SerializeField, Min(0)] private float _jumpBuffer = 0.15f;
+        [SerializeField, Min(0)] private float _coyoteTime = 0.25f;
+
+        public Vector2 MovementInput { get; set; }
+
         private Vector3 _gravitationalForce;
         private Vector3 _previousVelocity = Vector3.zero;
         private static PhysicMaterial physicMaterial = default;
 
-        [Header("Other")]
-        [SerializeField] private LayerMask _terrainLayer;
-        [SerializeField] private LookDirectionOptions _characterLookDirection = LookDirectionOptions.Velocity;
-        [SerializeField] private float _rotateSpeed = 360;
-
         private bool _shouldMaintainHeight = true;
-
-        [Header("Height Spring")]
-        [SerializeField] private float _rideHeight = 2; // rideHeight: desired distance to ground (Note, this is distance from the original raycast position (currently centre of transform)). 
-        [SerializeField] private float _rayToGroundLength = 3; // rayToGroundLength: max distance of raycast to ground (Note, this should be greater than the rideHeight).
-        [SerializeField] public float _rideSpringStrength = 200; // rideSpringStrength: strength of spring. (?)
-        [SerializeField] private float _rideSpringDamper = 10; // rideSpringDampener: dampener of spring. (?)
-
 
         private float _speedFactor = 1f;
         private float _maxAccelForceFactor = 1f;
         private Vector3 _m_GoalVel = Vector3.zero;
-
-        [Header("Movement")]
-        [SerializeField] private float _maxSpeed = 10;
-        [SerializeField] private float _acceleration = 400;
-        [SerializeField] private float _maxAccelForce = 300;
-        [SerializeField] private AnimationCurve _accelerationFactorFromDot;
-        [SerializeField] private AnimationCurve _maxAccelerationForceFactorFromDot;
 
         private bool jumpInput = false;
         private float _timeSinceJumpPressed = 0f;
@@ -46,20 +65,20 @@ namespace AggroBird.GameFramework
         private bool _jumpReady = true;
         private bool _isJumping = false;
 
-        [Header("Jump")]
-        [SerializeField] private bool _canJump = true;
-        [SerializeField] private float _jumpForceFactor = 10f;
-        [SerializeField] private float _riseGravityFactor = 5f;
-        [SerializeField] private float _fallGravityFactor = 10f; // typically > 1f (i.e. 5f).
-        [SerializeField] private float _lowJumpFactor = 2.5f;
-        [SerializeField] private float _jumpBuffer = 0.15f; // Note, jumpBuffer shouldn't really exceed the time of the jump.
-        [SerializeField] private float _coyoteTime = 0.25f;
+        public float ColliderRadius => collisionRadius;
+        public float ColliderHeight => collisionHeight;
+        public Vector3 Center
+        {
+            get
+            {
+                Vector3 position = transform.position;
+                position.y += (_rideHeight + collisionHeight) * 0.5f;
+                return position;
+            }
+        }
 
-        [System.NonSerialized] public Vector2 movementInput;
 
-
-
-        private void Awake()
+        protected virtual void Awake()
         {
             rigidbody = GetComponent<Rigidbody>();
             _gravitationalForce = Physics.gravity * rigidbody.mass;
@@ -75,72 +94,18 @@ namespace AggroBird.GameFramework
             collider.sharedMaterial = physicMaterial;
         }
 
-        /// <summary>
-        /// Use the result of a Raycast to determine if the capsules distance from the ground is sufficiently close to the desired ride height such that the character can be considered 'grounded'.
-        /// </summary>
-        /// <param name="rayHitGround">Whether or not the Raycast hit anything.</param>
-        /// <param name="rayHit">Information about the ray.</param>
-        /// <returns>Whether or not the player is considered grounded.</returns>
-        private bool CheckIfGrounded(bool rayHitGround, RaycastHit rayHit)
-        {
-            bool grounded;
-            if (rayHitGround == true)
-            {
-                grounded = rayHit.distance <= _rideHeight * 1.3f; // 1.3f allows for greater leniancy (as the value will oscillate about the rideHeight).
-            }
-            else
-            {
-                grounded = false;
-            }
-            return grounded;
-        }
-
-        private void UpdateLookDirection()
-        {
-            float target;
-            if (_characterLookDirection == LookDirectionOptions.Velocity || _characterLookDirection == LookDirectionOptions.Acceleration)
-            {
-                Vector3 velocity = rigidbody.velocity;
-                velocity.y = 0f;
-                if (_characterLookDirection == LookDirectionOptions.Velocity)
-                {
-                    target = Mathfx.AngleFromVectorDeg(velocity);
-                }
-                else
-                {
-                    Vector3 deltaVelocity = velocity - _previousVelocity;
-                    _previousVelocity = velocity;
-                    Vector3 acceleration = deltaVelocity / Time.fixedDeltaTime;
-                    target = Mathfx.AngleFromVectorDeg(acceleration);
-                }
-            }
-            else if (movementInput.sqrMagnitude > 0)
-            {
-                target = Mathfx.AngleFromVectorDeg(movementInput);
-            }
-            else
-            {
-                return;
-            }
-
-            transform.SetYaw(Mathf.MoveTowardsAngle(transform.GetYaw(), target, _rotateSpeed * Time.fixedDeltaTime));
-        }
-
-        /// <summary>
-        /// Determines and plays the appropriate character sounds, particle effects, then calls the appropriate methods to move and float the character.
-        /// </summary>
-        private void FixedUpdate()
+        protected virtual void FixedUpdate()
         {
             // Get normalized input
-            Vector2 input = movementInput;
+            Vector2 input = MovementInput;
             float len = input.magnitude;
             if (len > 1)
             {
                 input /= len;
             }
 
-            bool rayHitGround = RaycastToGround(out RaycastHit hit);
-            bool grounded = CheckIfGrounded(rayHitGround, hit);
+            bool rayHitGround = Physics.Raycast(new Ray(transform.position + new Vector3(0, _rideHeight + Mathf.Epsilon, 0), Vector3.down), out RaycastHit hit, _rayToGroundLength, _terrainLayer.value);
+            bool grounded = rayHitGround && hit.distance <= _rideHeight * 1.3f;
             if (grounded == true)
             {
                 _timeSinceUngrounded = 0f;
@@ -166,21 +131,6 @@ namespace AggroBird.GameFramework
             UpdateLookDirection();
         }
 
-        /// <summary>
-        /// Perfom raycast towards the ground.
-        /// </summary>
-        /// <returns>Whether the ray hit the ground, and information about the ray.</returns>
-        private bool RaycastToGround(out RaycastHit hit)
-        {
-            return Physics.Raycast(new Ray(transform.position, Vector3.down), out hit, _rayToGroundLength, _terrainLayer.value);
-        }
-
-        /// <summary>
-        /// Determines the relative velocity of the character to the ground beneath,
-        /// Calculates and applies the oscillator force to bring the character towards the desired ride height.
-        /// Additionally applies the oscillator force to the squash and stretch oscillator, and any object beneath.
-        /// </summary>
-        /// <param name="rayHit">Information about the RaycastToGround.</param>
         private void MaintainHeight(RaycastHit rayHit)
         {
             Vector3 vel = rigidbody.velocity;
@@ -200,20 +150,6 @@ namespace AggroBird.GameFramework
             rigidbody.AddForce(maintainHeightForce);
         }
 
-        public void Jump()
-        {
-            if (_canJump)
-            {
-                jumpInput = true;
-                _timeSinceJumpPressed = 0f;
-            }
-        }
-
-        /// <summary>
-        /// Apply forces to move the character up to a maximum acceleration, with consideration to acceleration graphs.
-        /// </summary>
-        /// <param name="moveInput">The player movement input.</param>
-        /// <param name="rayHit">The rayHit towards the platform.</param>
         private void CharacterMove(Vector2 moveInput)
         {
             Vector3 m_UnitGoal = moveInput.Horizontal3D();
@@ -225,15 +161,9 @@ namespace AggroBird.GameFramework
             Vector3 neededAccel = (_m_GoalVel - rigidbody.velocity) / Time.fixedDeltaTime;
             float maxAccel = _maxAccelForce * _maxAccelerationForceFactorFromDot.Evaluate(velDot) * _maxAccelForceFactor;
             neededAccel = Vector3.ClampMagnitude(neededAccel, maxAccel);
-            rigidbody.AddForceAtPosition(Vector3.Scale(neededAccel * rigidbody.mass, new Vector3(1, 0, 1)), transform.position);
+            rigidbody.AddForce(Vector3.Scale(neededAccel * rigidbody.mass, new Vector3(1, 0, 1)));
         }
 
-        /// <summary>
-        /// Apply force to cause the character to perform a single jump, including coyote time and a jump input buffer.
-        /// </summary>
-        /// <param name="jumpInput">The player jump input.</param>
-        /// <param name="grounded">Whether or not the player is considered grounded.</param>
-        /// <param name="rayHit">The rayHit towards the platform.</param>
         private void CharacterJump(bool jumpInput, bool grounded, RaycastHit rayHit)
         {
             _timeSinceJumpPressed += Time.fixedDeltaTime;
@@ -283,21 +213,85 @@ namespace AggroBird.GameFramework
             }
         }
 
+        private void UpdateLookDirection()
+        {
+            if (_characterLookDirection != LookDirectionOptions.Manual)
+            {
+                float target;
+                if (_characterLookDirection == LookDirectionOptions.Velocity || _characterLookDirection == LookDirectionOptions.Acceleration)
+                {
+                    Vector3 velocity = rigidbody.velocity;
+                    velocity.y = 0f;
+                    if (_characterLookDirection == LookDirectionOptions.Velocity)
+                    {
+                        target = Mathfx.AngleFromVectorDeg(velocity);
+                    }
+                    else
+                    {
+                        Vector3 deltaVelocity = velocity - _previousVelocity;
+                        _previousVelocity = velocity;
+                        Vector3 acceleration = deltaVelocity / Time.fixedDeltaTime;
+                        target = Mathfx.AngleFromVectorDeg(acceleration);
+                    }
+                }
+                else if (MovementInput.sqrMagnitude > Mathf.Epsilon)
+                {
+                    target = Mathfx.AngleFromVectorDeg(MovementInput);
+                }
+                else
+                {
+                    return;
+                }
+
+                transform.SetYaw(Mathf.MoveTowardsAngle(transform.GetYaw(), target, _rotateSpeed * Time.fixedDeltaTime));
+            }
+        }
+
+
+        public void Jump()
+        {
+            if (_canJump)
+            {
+                jumpInput = true;
+                _timeSinceJumpPressed = 0f;
+            }
+        }
+
 #if UNITY_EDITOR
         protected virtual void OnDrawGizmosSelected()
         {
             Gizmos.color = Color.white;
-            Gizmos.DrawLine(transform.position, transform.position - new Vector3(0, _rideHeight, 0));
+            Gizmos.DrawLine(transform.position, transform.position + new Vector3(0, _rideHeight, 0));
         }
         protected virtual void OnValidate()
         {
             if (_rideHeight > _rayToGroundLength) _rayToGroundLength = _rideHeight;
 
+            float halfHeight = collisionHeight * 0.5f;
+            if (collisionRadius > halfHeight) collisionRadius = halfHeight;
+
             if (Utility.EnsureComponentReference(this, ref rigidbody))
             {
-
+                rigidbody.hideFlags |= HideFlags.NotEditable;
+                rigidbody.mass = 1;
+                rigidbody.drag = 0;
+                rigidbody.angularDrag = 0.05f;
+                rigidbody.useGravity = true;
+                rigidbody.isKinematic = false;
+                rigidbody.interpolation = RigidbodyInterpolation.None;
+                rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+                rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
             }
-            Utility.EnsureComponentReference(this, ref collider);
+            if (Utility.EnsureComponentReference(this, ref collider))
+            {
+                collider.hideFlags |= HideFlags.NotEditable;
+                collider.radius = collisionRadius;
+                collider.height = collisionHeight;
+                collider.enabled = true;
+                collider.isTrigger = false;
+                collider.center = new Vector3(0, collisionHeight * 0.5f + _rideHeight, 0);
+                collider.direction = 1;
+            }
         }
 #endif
     }
