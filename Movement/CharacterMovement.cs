@@ -9,7 +9,6 @@ namespace AggroBird.GameFramework
         private enum LookDirectionOptions
         {
             Velocity,
-            Acceleration,
             Input,
             Manual,
         };
@@ -304,26 +303,17 @@ namespace AggroBird.GameFramework
         {
             if (_characterLookDirection != LookDirectionOptions.Manual)
             {
-                float target = transform.GetYaw();
-                if (_characterLookDirection == LookDirectionOptions.Velocity || _characterLookDirection == LookDirectionOptions.Acceleration)
+                float target;
+                if (_characterLookDirection == LookDirectionOptions.Velocity)
                 {
                     Vector2 velocity = HorizontalVelocity;
-                    if (_characterLookDirection == LookDirectionOptions.Velocity)
+                    if (velocity.sqrMagnitude > Mathf.Epsilon)
                     {
-                        if (velocity.sqrMagnitude > Mathf.Epsilon)
-                        {
-                            target = Mathfx.AngleFromVectorDeg(velocity);
-                        }
+                        target = Mathfx.AngleFromVectorDeg(velocity);
                     }
                     else
                     {
-                        Vector2 deltaVelocity = velocity - _previousVelocity;
-                        _previousVelocity = velocity;
-                        Vector2 acceleration = deltaVelocity / Time.fixedDeltaTime;
-                        if (acceleration.sqrMagnitude > Mathf.Epsilon)
-                        {
-                            target = Mathfx.AngleFromVectorDeg(acceleration);
-                        }
+                        return;
                     }
                 }
                 else if (MovementInput.sqrMagnitude > Mathf.Epsilon)
