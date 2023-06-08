@@ -38,7 +38,6 @@ namespace AggroBird.GameFramework
         [SerializeField] private AnimationCurve _maxAccelerationForceFactorFromDot;
 
         [Header("Jump")]
-        [SerializeField] private bool _canJump = true;
         [SerializeField, Min(0)] private float _jumpForceFactor = 16;
         [SerializeField, Min(0)] private float _riseGravityFactor = 3;
         [SerializeField, Min(0)] private float _fallGravityFactor = 8;
@@ -56,7 +55,7 @@ namespace AggroBird.GameFramework
             }
             set
             {
-                if (value != _jumpInput && _canJump)
+                if (value != _jumpInput)
                 {
                     _jumpInput = value;
 
@@ -312,14 +311,14 @@ namespace AggroBird.GameFramework
                     velocity.y = 0f;
                     if (_characterLookDirection == LookDirectionOptions.Velocity)
                     {
-                        target = Mathfx.AngleFromVectorDeg(velocity);
+                        target = Mathfx.AngleFromVectorDeg(velocity.GetXZ());
                     }
                     else
                     {
                         Vector3 deltaVelocity = velocity - _previousVelocity;
                         _previousVelocity = velocity;
                         Vector3 acceleration = deltaVelocity / Time.fixedDeltaTime;
-                        target = Mathfx.AngleFromVectorDeg(acceleration);
+                        target = Mathfx.AngleFromVectorDeg(acceleration.GetXZ());
                     }
                 }
                 else if (MovementInput.sqrMagnitude > Mathf.Epsilon)
