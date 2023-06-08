@@ -99,6 +99,63 @@ namespace AggroBird.GameFramework
         }
         public bool IsGrounded => _isGrounded;
 
+        public Vector3 Velocity
+        {
+            get
+            {
+                return rigidbody.velocity;
+            }
+            set
+            {
+                rigidbody.velocity = value;
+            }
+        }
+        public Vector2 HorizontalVelocity
+        {
+            get
+            {
+                return Velocity.GetXZ();
+            }
+            set
+            {
+                Velocity = new Vector3(value.x, Velocity.y, value.y);
+            }
+        }
+        public float VerticalVelocity
+        {
+            get
+            {
+                return Velocity.y;
+            }
+            set
+            {
+                Vector3 vel = Velocity;
+                Velocity = new Vector3(vel.x, value, vel.z);
+            }
+        }
+
+        public bool IsKinematic
+        {
+            get
+            {
+                return rigidbody.isKinematic;
+            }
+            set
+            {
+                if (value)
+                {
+                    rigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
+                    rigidbody.isKinematic = true;
+                    rigidbody.velocity = Vector3.zero;
+                }
+                else
+                {
+                    rigidbody.isKinematic = false;
+                    rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+                }
+            }
+        }
+
 
         protected virtual void Awake()
         {
@@ -118,40 +175,43 @@ namespace AggroBird.GameFramework
 
         protected virtual void FixedUpdate()
         {
-            // Get normalized input
-            Vector2 input = MovementInput;
-            float len = input.magnitude;
-            if (len > 1)
+            if (!rigidbody.isKinematic)
             {
-                input /= len;
-            }
-
-            bool rayHitGround = Physics.Raycast(new Ray(transform.position + new Vector3(0, _rideHeight + 0.0001f, 0), Vector3.down), out RaycastHit hit, _rayToGroundLength, _terrainLayer.value);
-            _isGrounded = rayHitGround && hit.distance <= _rideHeight * 1.3f;
-            if (_isGrounded)
-            {
-                _timeSinceUngrounded = 0f;
-
-                if (_timeSinceJump > 0.2f)
+                // Get normalized input
+                Vector2 input = MovementInput;
+                float len = input.magnitude;
+                if (len > 1)
                 {
-                    _isJumping = false;
-                    _jumpReady = true;
+                    input /= len;
                 }
-            }
-            else
-            {
-                _timeSinceUngrounded += Time.fixedDeltaTime;
-            }
 
-            CharacterMove(input);
-            CharacterJump(hit);
+                bool rayHitGround = Physics.Raycast(new Ray(transform.position + new Vector3(0, _rideHeight + 0.0001f, 0), Vector3.down), out RaycastHit hit, _rayToGroundLength, _terrainLayer.value);
+                _isGrounded = rayHitGround && hit.distance <= _rideHeight * 1.3f;
+                if (_isGrounded)
+                {
+                    _timeSinceUngrounded = 0f;
 
-            if (rayHitGround && _shouldMaintainHeight)
-            {
-                MaintainHeight(hit);
+                    if (_timeSinceJump > 0.2f)
+                    {
+                        _isJumping = false;
+                        _jumpReady = true;
+                    }
+                }
+                else
+                {
+                    _timeSinceUngrounded += Time.fixedDeltaTime;
+                }
+
+                CharacterMove(input);
+                CharacterJump(hit);
+
+                if (rayHitGround && _shouldMaintainHeight)
+                {
+                    MaintainHeight(hit);
+                }
+
+                UpdateLookDirection();
             }
-
-            UpdateLookDirection();
         }
 
         private void MaintainHeight(RaycastHit rayHit)
