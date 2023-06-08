@@ -304,21 +304,26 @@ namespace AggroBird.GameFramework
         {
             if (_characterLookDirection != LookDirectionOptions.Manual)
             {
-                float target;
+                float target = transform.GetYaw();
                 if (_characterLookDirection == LookDirectionOptions.Velocity || _characterLookDirection == LookDirectionOptions.Acceleration)
                 {
-                    Vector3 velocity = rigidbody.velocity;
-                    velocity.y = 0f;
+                    Vector2 velocity = rigidbody.velocity.GetXZ();
                     if (_characterLookDirection == LookDirectionOptions.Velocity)
                     {
-                        target = Mathfx.AngleFromVectorDeg(velocity.GetXZ());
+                        if (velocity.sqrMagnitude > Mathf.Epsilon)
+                        {
+                            target = Mathfx.AngleFromVectorDeg(velocity);
+                        }
                     }
                     else
                     {
-                        Vector3 deltaVelocity = velocity - _previousVelocity;
+                        Vector2 deltaVelocity = velocity - _previousVelocity.GetXZ();
                         _previousVelocity = velocity;
-                        Vector3 acceleration = deltaVelocity / Time.fixedDeltaTime;
-                        target = Mathfx.AngleFromVectorDeg(acceleration.GetXZ());
+                        Vector2 acceleration = deltaVelocity / Time.fixedDeltaTime;
+                        if (acceleration.sqrMagnitude > Mathf.Epsilon)
+                        {
+                            target = Mathfx.AngleFromVectorDeg(acceleration);
+                        }
                     }
                 }
                 else if (MovementInput.sqrMagnitude > Mathf.Epsilon)
