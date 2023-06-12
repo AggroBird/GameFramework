@@ -40,7 +40,7 @@ namespace AggroBird.GameFramework
 
         public virtual Vector3 Center => transform.position + Vector3.up;
 
-        public event Action OnDestroyEvent;
+        public event Action<Pawn> OnDestroyEvent;
 
 
         public virtual Interactor Interactor { get; }
@@ -67,7 +67,7 @@ namespace AggroBird.GameFramework
 
         protected virtual void OnDestroy()
         {
-            OnDestroyEvent?.Invoke();
+            OnDestroyEvent?.Invoke(this);
         }
     }
 }
