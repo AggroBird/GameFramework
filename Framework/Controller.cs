@@ -202,10 +202,7 @@ namespace AggroBird.GameFramework
         public ControllerInputAction<MoveDirection> Direction => direction;
 
 
-        public virtual void UpdateInput(Player player, bool inputEnabled)
-        {
-
-        }
+        public abstract void UpdateInput(Player player, bool inputEnabled);
 
         public virtual bool GetInputGlyph(int index, out Sprite background, out string text)
         {
