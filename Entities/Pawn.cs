@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace AggroBird.GameFramework
@@ -39,6 +40,8 @@ namespace AggroBird.GameFramework
 
         public virtual Vector3 Center => transform.position + Vector3.up;
 
+        public event Action OnDestroyEvent;
+
 
         public virtual Interactor Interactor { get; }
 
@@ -60,6 +63,11 @@ namespace AggroBird.GameFramework
         public virtual void Teleport(Vector3 position, Quaternion rotation)
         {
             transform.SetPositionAndRotation(position, rotation);
+        }
+
+        protected virtual void OnDestroy()
+        {
+            OnDestroyEvent?.Invoke();
         }
     }
 }
