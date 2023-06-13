@@ -331,10 +331,5 @@ namespace AggroBird.GameFramework
                 PauseGame |= menu.PauseGame;
             }
         }
-
-        public virtual void SetOpacity(float opacity)
-        {
-
-        }
     }
 }
