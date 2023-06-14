@@ -97,10 +97,7 @@ namespace AggroBird.GameFramework
 
                 if (CurrentTarget)
                 {
-                    if (CurrentTarget.TryGetOwner(out currentOwner))
-                    {
-                        currentOwner.RegisterCamera(this);
-                    }
+                    player.RegisterCamera(this);
 
                     Vector3 currentTargetPosition = CurrentTarget.transform.position + originOffset;
                     if (!hadTarget || Vector3.Distance(currentTargetPosition, currentPosition) > 5)
@@ -206,6 +203,14 @@ namespace AggroBird.GameFramework
                 }
 
                 transform.SetPositionAndRotation(setPosition, setRotation);
+            }
+        }
+
+        protected virtual void OnDisable()
+        {
+            if (CurrentTarget && CurrentTarget.Owner)
+            {
+                CurrentTarget.Owner.UnregisterCamera(this);
             }
         }
 
