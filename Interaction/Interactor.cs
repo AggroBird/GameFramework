@@ -71,14 +71,19 @@ namespace AggroBird.GameFramework
                 float nearestDist = float.MaxValue;
                 for (int i = 0; i < interactables.Count; i++)
                 {
-                    if (interactables[i].isActiveAndEnabled && interactables[i].CanInteract(this))
+                    var interactable = interactables[i];
+                    if (interactable.isActiveAndEnabled && interactable.CanInteract(this))
                     {
-                        float dist = (interactables[i].InteractPosition - transform.position).sqrMagnitude;
+                        float dist = (interactable.InteractPosition - transform.position).sqrMagnitude;
                         if (dist < nearestDist)
                         {
-                            nearestInteractable = interactables[i];
+                            nearestInteractable = interactable;
                             nearestDist = dist;
                         }
+                    }
+                    else if (ReferenceEquals(currentInteractable, interactable))
+                    {
+                        EndInteract();
                     }
                 }
             }
@@ -130,6 +135,11 @@ namespace AggroBird.GameFramework
                 foreach (var interactable in overlap)
                 {
                     interactables.Remove(interactable);
+
+                    if (ReferenceEquals(currentInteractable, interactable))
+                    {
+                        EndInteract();
+                    }
                 }
             }
         }
