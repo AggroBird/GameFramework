@@ -25,7 +25,33 @@ namespace AggroBird.GameFramework
         }
 
 
+        protected virtual void Update()
+        {
+            UpdateInteractables();
+        }
+
         public virtual void UpdateInput(ButtonStateObject input)
+        {
+            UpdateInteractables();
+
+            // Update input
+            switch (input.state)
+            {
+                case ButtonState.Pressed:
+                    BeginInteract();
+                    break;
+                case ButtonState.Released:
+                    EndInteract();
+                    break;
+            }
+
+            if (currentInteractable)
+            {
+                currentInteractable.UpdateInteract(this);
+            }
+        }
+
+        private void UpdateInteractables()
         {
             // Filter invalids
             for (int i = 0; i < interactables.Count;)
@@ -55,22 +81,6 @@ namespace AggroBird.GameFramework
                         }
                     }
                 }
-            }
-
-            // Update input
-            switch (input.state)
-            {
-                case ButtonState.Pressed:
-                    BeginInteract();
-                    break;
-                case ButtonState.Released:
-                    EndInteract();
-                    break;
-            }
-
-            if (currentInteractable)
-            {
-                currentInteractable.UpdateInteract(this);
             }
         }
 
