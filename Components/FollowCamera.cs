@@ -35,6 +35,8 @@ namespace AggroBird.GameFramework
 
         [System.NonSerialized]
         public Rotator2 currentRotation;
+        [System.NonSerialized]
+        public bool updatePosition = true;
 
         protected Pawn CurrentTarget { get; private set; }
 
@@ -128,7 +130,7 @@ namespace AggroBird.GameFramework
 
         protected virtual void FixedUpdate()
         {
-            if (CurrentTarget)
+            if (CurrentTarget && updatePosition)
             {
                 float deltaTime = Time.deltaTime;
 
