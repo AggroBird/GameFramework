@@ -87,7 +87,7 @@ namespace AggroBird.GameFramework
 
 
 
-        public static event System.Action onUpdate;
+        public static event System.Action OnUpdate;
         protected virtual void Update()
         {
             for (int i = 0; i < PlayerCount; i++)
@@ -98,10 +98,10 @@ namespace AggroBird.GameFramework
                 }
             }
 
-            onUpdate?.Invoke();
+            OnUpdate?.Invoke();
         }
 
-        public static event System.Action onLateUpdate;
+        public static event System.Action OnLateUpdate;
         protected virtual void LateUpdate()
         {
             for (int i = 0; i < PlayerCount; i++)
@@ -112,7 +112,7 @@ namespace AggroBird.GameFramework
                 }
             }
 
-            onLateUpdate?.Invoke();
+            OnLateUpdate?.Invoke();
 
             // Check if UI still requires input
             uiRequiresInput = false;
@@ -152,7 +152,7 @@ namespace AggroBird.GameFramework
             }
         }
 
-        public event System.Action<InputMode> onInputModeChanged;
+        public event System.Action<InputMode> OnInputModeChanged;
         private void UpdateInputMode()
         {
             if (inputMode == InputMode.KeyboardMouse)
@@ -210,14 +210,14 @@ namespace AggroBird.GameFramework
             if (inputMode != newMode)
             {
                 inputMode = newMode;
-                onInputModeChanged?.Invoke(inputMode);
+                OnInputModeChanged?.Invoke(inputMode);
             }
         }
 
-        public static event System.Action onShutdown;
+        public static event System.Action OnShutdown;
         protected virtual void Shutdown()
         {
-            onShutdown?.Invoke();
+            OnShutdown?.Invoke();
         }
 
         protected virtual void OnDestroy()

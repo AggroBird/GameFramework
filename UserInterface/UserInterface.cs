@@ -50,7 +50,7 @@ namespace AggroBird.GameFramework
         {
             if (AppInstance.IsInitialized)
             {
-                AppInstance.Instance.onInputModeChanged += OnInputModeChanged;
+                AppInstance.Instance.OnInputModeChanged += OnInputModeChanged;
             }
 
             this.Owner = Owner;
@@ -59,7 +59,7 @@ namespace AggroBird.GameFramework
         {
             if (AppInstance.IsInitialized)
             {
-                AppInstance.Instance.onInputModeChanged -= OnInputModeChanged;
+                AppInstance.Instance.OnInputModeChanged -= OnInputModeChanged;
             }
         }
 
