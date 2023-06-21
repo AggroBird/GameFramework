@@ -89,7 +89,7 @@ namespace AggroBird.GameFramework
             if (UI) Destroy(UI.gameObject);
         }
 
-        public virtual void UpdateInput()
+        public virtual void Update()
         {
             if (Controller)
             {

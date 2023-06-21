@@ -94,7 +94,7 @@ namespace AggroBird.GameFramework
             {
                 if (TryGetPlayer(i, out Player player))
                 {
-                    player.UpdateInput();
+                    player.Update();
                 }
             }
 
