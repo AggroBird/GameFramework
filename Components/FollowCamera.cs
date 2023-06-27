@@ -226,6 +226,11 @@ namespace AggroBird.GameFramework
             overrideDuration = Mathf.Max(0.001f, duration);
             overrideStartTime = Time.time;
         }
+        public void UpdateOverride(Vector3 position, Quaternion rotation)
+        {
+            overrideTargetPosition = position;
+            overrideTargetRotation = rotation;
+        }
         public void ClearOverride(float duration = 1)
         {
             if (overrideState == OverrideState.In)
