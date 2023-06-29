@@ -26,7 +26,11 @@ namespace AggroBird.GameFramework
 
             return null;
         }
-        public Dummy Dummy => FetchDummy();
+        public Dummy Dummy
+        {
+            get => FetchDummy();
+            set => dummy = value;
+        }
         public bool TryGetDummy<T>(out T dummy) where T : Dummy
         {
             dummy = FetchDummy() as T;
