@@ -56,6 +56,8 @@ namespace AggroBird.GameFramework
         private Vector3 overrideTargetPosition;
         private Quaternion overrideOriginRotation;
         private Quaternion overrideTargetRotation;
+        private float overrideOriginFov;
+        private float overrideTargetFov;
         private float overrideDuration;
         private float overrideStartTime;
 
@@ -68,7 +70,6 @@ namespace AggroBird.GameFramework
             player = null;
             return false;
         }
-
 
 
         protected virtual void Awake()
@@ -190,16 +191,20 @@ namespace AggroBird.GameFramework
                 if (overrideState != OverrideState.None)
                 {
                     float t = Mathfx.InvPow(Mathf.Clamp01((Time.time - overrideStartTime) / overrideDuration), 2);
+                    bool finished = t >= 0.999f;
+                    if (finished) t = 1;
                     switch (overrideState)
                     {
                         case OverrideState.In:
                             setPosition = Vector3.Lerp(overrideOriginPosition, overrideTargetPosition, t);
                             setRotation = Quaternion.Slerp(overrideOriginRotation, overrideTargetRotation, t);
+                            FieldOfView = Mathf.Lerp(overrideOriginFov, overrideTargetFov, t);
                             break;
                         case OverrideState.Out:
                             setPosition = Vector3.Lerp(overrideOriginPosition, setPosition, t);
                             setRotation = Quaternion.Slerp(overrideOriginRotation, setRotation, t);
-                            if (t >= 1) overrideState = OverrideState.None;
+                            FieldOfView = Mathf.Lerp(overrideTargetFov, overrideOriginFov, t);
+                            if (finished) overrideState = OverrideState.None;
                             break;
                     }
                 }
@@ -218,18 +223,29 @@ namespace AggroBird.GameFramework
 
         public void SetOverride(Vector3 position, Quaternion rotation, float duration = 1)
         {
+            SetOverride(position, rotation, FieldOfView, duration);
+        }
+        public void SetOverride(Vector3 position, Quaternion rotation, float fieldOfView, float duration = 1)
+        {
             overrideState = OverrideState.In;
             overrideOriginPosition = transform.position;
             overrideTargetPosition = position;
             overrideOriginRotation = transform.rotation;
             overrideTargetRotation = rotation;
+            overrideOriginFov = FieldOfView;
+            overrideTargetFov = fieldOfView;
             overrideDuration = Mathf.Max(0.001f, duration);
             overrideStartTime = Time.time;
         }
         public void UpdateOverride(Vector3 position, Quaternion rotation)
         {
+            UpdateOverride(position, rotation, overrideTargetFov);
+        }
+        public void UpdateOverride(Vector3 position, Quaternion rotation, float fieldOfView)
+        {
             overrideTargetPosition = position;
             overrideTargetRotation = rotation;
+            overrideTargetFov = fieldOfView;
         }
         public void ClearOverride(float duration = 1)
         {
