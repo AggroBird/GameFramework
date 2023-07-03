@@ -36,6 +36,8 @@ namespace AggroBird.GameFramework
         [System.NonSerialized]
         public Rotator2 currentRotation;
         [System.NonSerialized]
+        public bool updateInput = true;
+        [System.NonSerialized]
         public bool updatePosition = true;
 
         protected Pawn CurrentTarget { get; private set; }
@@ -112,7 +114,7 @@ namespace AggroBird.GameFramework
                 }
             }
 
-            if (overrideState != OverrideState.In && CurrentTarget && CurrentTarget.TryGetOwner(out Player owner))
+            if (updateInput && overrideState != OverrideState.In && CurrentTarget && CurrentTarget.TryGetOwner(out Player owner))
             {
                 if (owner.TryGetController(out Controller controller))
                 {
