@@ -61,20 +61,9 @@ namespace AggroBird.GameFramework
         // Players
         public abstract int PlayerCount { get; }
         public abstract Player GetPlayer(int index);
-        private bool TryGetPlayer(int index, out Player player)
-        {
-            if ((uint)index < (uint)PlayerCount)
-            {
-                player = GetPlayer(index);
-                return player;
-            }
-
-            player = null;
-            return false;
-        }
         public bool TryGetPlayer<T>(int index, out T player) where T : Player
         {
-            if ((uint)index < (uint)PlayerCount && GetPlayer(index) is T casted)
+            if (index >= 0 && index < PlayerCount && GetPlayer(index) is T casted)
             {
                 player = casted;
                 return true;
@@ -101,15 +90,7 @@ namespace AggroBird.GameFramework
         public static event System.Action OnUpdate;
         protected virtual void Update()
         {
-            int playerCount = PlayerCount;
-            for (int i = 0; i < playerCount; i++)
-            {
-                if (TryGetPlayer(i, out Player player) && player.InputEnabled)
-                {
-                    player.UpdateInput();
-                }
-            }
-            for (int i = 0; i < playerCount; i++)
+            for (int i = 0; i < PlayerCount; i++)
             {
                 if (TryGetPlayer(i, out Player player))
                 {
@@ -123,8 +104,7 @@ namespace AggroBird.GameFramework
         public static event System.Action OnLateUpdate;
         protected virtual void LateUpdate()
         {
-            int playerCount = PlayerCount;
-            for (int i = 0; i < playerCount; i++)
+            for (int i = 0; i < PlayerCount; i++)
             {
                 if (TryGetPlayer(i, out Player player))
                 {
@@ -136,7 +116,7 @@ namespace AggroBird.GameFramework
 
             // Check if UI still requires input
             uiRequiresInput = false;
-            for (int i = 0; i < playerCount; i++)
+            for (int i = 0; i < PlayerCount; i++)
             {
                 if (TryGetPlayer(i, out Player player) && player.TryGetUserInterface(out UserInterface userInterface))
                 {
