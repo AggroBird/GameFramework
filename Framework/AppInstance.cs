@@ -102,14 +102,11 @@ namespace AggroBird.GameFramework
         protected virtual void Update()
         {
             int playerCount = PlayerCount;
-            if (InputEnabled)
+            for (int i = 0; i < playerCount; i++)
             {
-                for (int i = 0; i < playerCount; i++)
+                if (TryGetPlayer(i, out Player player) && player.InputEnabled)
                 {
-                    if (TryGetPlayer(i, out Player player) && player.InputEnabled)
-                    {
-                        player.UpdateInput();
-                    }
+                    player.UpdateInput();
                 }
             }
             for (int i = 0; i < playerCount; i++)
