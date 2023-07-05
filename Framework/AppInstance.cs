@@ -21,10 +21,6 @@ namespace AggroBird.GameFramework
         {
             get
             {
-                if (Application.isPlaying && !instance)
-                {
-                    EntryPoint.Initialize();
-                }
                 return instance;
             }
         }
