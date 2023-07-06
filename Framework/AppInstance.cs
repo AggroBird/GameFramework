@@ -53,6 +53,9 @@ namespace AggroBird.GameFramework
         private bool inputEnabled = true;
         private InputMode inputMode = InputMode.KeyboardMouse;
         public InputMode InputMode => inputMode;
+        // Temporary bool for forcing controller on demo builds
+        [SerializeField]
+        private bool preferController = false;
 
         // Players
         public abstract int PlayerCount { get; }
@@ -172,7 +175,7 @@ namespace AggroBird.GameFramework
                     }
                 }
             }
-            else
+            else if (!preferController)
             {
                 Keyboard keyboard = Keyboard.current;
                 if (keyboard != null)
