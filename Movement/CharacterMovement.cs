@@ -307,7 +307,7 @@ namespace AggroBird.GameFramework
                 if (_characterLookDirection == LookDirectionOptions.Velocity)
                 {
                     Vector2 velocity = HorizontalVelocity;
-                    if (velocity.sqrMagnitude > Mathf.Epsilon)
+                    if (velocity.sqrMagnitude > 0.001f)
                     {
                         target = Mathfx.AngleFromVectorDeg(velocity);
                     }
@@ -316,7 +316,7 @@ namespace AggroBird.GameFramework
                         return;
                     }
                 }
-                else if (MovementInput.sqrMagnitude > Mathf.Epsilon)
+                else if (MovementInput.sqrMagnitude > 0.001f)
                 {
                     target = Mathfx.AngleFromVectorDeg(MovementInput);
                 }
