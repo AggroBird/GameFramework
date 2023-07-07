@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace AggroBird.GameFramework
 {
-    public abstract class Widget : MonoBehaviour
+    public class Widget : MonoBehaviour
     {
         private const int OpenID = 71445658; // "Open"
         private const int CloseID = -759124288; // "Close"

@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace AggroBird.GameFramework
 {
-    public abstract class Menu : Widget
+    public class Menu : Widget
     {
         protected virtual Selectable SelectOnFocus => null;
 
