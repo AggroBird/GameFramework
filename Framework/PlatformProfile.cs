@@ -9,7 +9,6 @@ namespace AggroBird.GameFramework
         Controller,
     }
 
-    [CreateAssetMenu(menuName = "Framework/Platform Profile")]
     public abstract class PlatformProfile : ScriptableObject
     {
         public event Action<InputMode> OnInputModeChanged;
