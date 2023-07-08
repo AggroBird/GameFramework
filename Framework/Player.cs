@@ -48,7 +48,6 @@ namespace AggroBird.GameFramework
         public bool TryGetPawn<T>(out T result) where T : Pawn => result = pawn as T;
 
         // Player controller object
-        [SerializeField] private Controller controllerPrefab = default;
         public Controller Controller { get; private set; }
         public bool TryGetController<T>(out T result) where T : Controller => result = Controller as T;
 
@@ -73,14 +72,10 @@ namespace AggroBird.GameFramework
         }
 
 
-        public virtual void Initialize(AppInstance app, bool createController = true)
+        public virtual void Initialize(AppInstance app, Controller controller)
         {
             App = app;
-
-            if (createController && controllerPrefab)
-            {
-                Controller = Instantiate(controllerPrefab);
-            }
+            Controller = controller;
         }
 
         public virtual void Shutdown()

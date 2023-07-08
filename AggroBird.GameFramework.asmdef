@@ -3,7 +3,6 @@
     "rootNamespace": "AggroBird.GameFramework",
     "references": [
         "GUID:e055ce7720bb9a448a03a662462f4be3",
-        "GUID:91bad8fd29d8943418494004d9789b84",
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
         "GUID:75469ad4d38634e559750d17036d5f7c"
     ],

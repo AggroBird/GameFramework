@@ -50,7 +50,7 @@ namespace AggroBird.GameFramework
         {
             if (AppInstance.IsInitialized)
             {
-                AppInstance.Instance.OnInputModeChanged += OnInputModeChanged;
+                AppInstance.Instance.PlatformProfile.OnInputModeChanged += OnInputModeChanged;
             }
 
             this.Owner = Owner;
@@ -59,7 +59,7 @@ namespace AggroBird.GameFramework
         {
             if (AppInstance.IsInitialized)
             {
-                AppInstance.Instance.OnInputModeChanged -= OnInputModeChanged;
+                AppInstance.Instance.PlatformProfile.OnInputModeChanged -= OnInputModeChanged;
             }
         }
 
@@ -172,7 +172,7 @@ namespace AggroBird.GameFramework
         {
             bool confirm = controller.Confirm;
             bool cancel = controller.Cancel;
-            bool direction = controller.Direction != MoveDirection.None;
+            bool direction = controller.DirectionInput != MoveDirection.None;
             if (confirm || cancel || direction)
             {
                 if (stack.Count > 0)
@@ -184,7 +184,7 @@ namespace AggroBird.GameFramework
                             confirm = false;
                         if (cancel && top.OnCancel())
                             cancel = false;
-                        if (direction && top.OnDirection(controller.Direction))
+                        if (direction && top.OnDirection(controller.DirectionInput))
                             direction = false;
                     }
                 }

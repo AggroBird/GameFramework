@@ -1,16 +1,10 @@
-using AggroBird.ReflectionDebugConsole;
+using System;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.Controls;
 
 namespace AggroBird.GameFramework
 {
-    public enum InputMode
-    {
-        KeyboardMouse,
-        Controller,
-    }
-
     [DefaultExecutionOrder(-99999)]
     public abstract class AppInstance : MonoBehaviour
     {
@@ -51,11 +45,11 @@ namespace AggroBird.GameFramework
             inputEnabled = enabled;
         }
         private bool inputEnabled = true;
-        private InputMode inputMode = InputMode.KeyboardMouse;
-        public InputMode InputMode => inputMode;
-        // Temporary bool for forcing controller on demo builds
-        [SerializeField]
-        private bool preferController = false;
+
+        private Type debugConsoleClass;
+        private EventInfo onConsoleFocusChange;
+        private Delegate onConsoleFocusChangeDelegate;
+        private Func<bool> debugConsoleHasFocusGetMethod;
 
         // Players
         public abstract int PlayerCount { get; }
@@ -72,6 +66,13 @@ namespace AggroBird.GameFramework
             return false;
         }
 
+        protected virtual PlatformProfile InstantiatePlatformProfile()
+        {
+            return ScriptableObject.CreateInstance<StandalonePlatformProfile>();
+        }
+
+        public PlatformProfile PlatformProfile { get; private set; }
+
 
         public virtual void Initialize()
         {
@@ -79,14 +80,33 @@ namespace AggroBird.GameFramework
             DontDestroyOnLoad(gameObject);
             instance = this;
 
-            inputMode = Keyboard.current != null ? InputMode.KeyboardMouse : InputMode.Controller;
+            PlatformProfile = InstantiatePlatformProfile();
+            if (!PlatformProfile) throw new FatalGameException("Failed to create platform profile");
+            PlatformProfile.Initialize();
 
-            DebugConsole.onConsoleFocusChange += OnDebugConsoleFocus;
+            // Bind to debug console through reflection
+            debugConsoleClass = Type.GetType("AggroBird.ReflectionDebugConsole.DebugConsole, AggroBird.ReflectionDebugConsole, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null");
+            if (debugConsoleClass != null)
+            {
+                onConsoleFocusChange = debugConsoleClass.GetEvent("onConsoleFocusChange");
+                if (onConsoleFocusChange != null)
+                {
+                    MethodInfo callback = typeof(AppInstance).GetMethod(nameof(OnDebugConsoleFocus), BindingFlags.NonPublic | BindingFlags.Instance);
+                    onConsoleFocusChangeDelegate = Delegate.CreateDelegate(onConsoleFocusChange.EventHandlerType, this, callback);
+                    onConsoleFocusChange.AddEventHandler(this, onConsoleFocusChangeDelegate);
+                }
+
+                PropertyInfo debugConsoleHasFocus = debugConsoleClass.GetProperty("HasFocus");
+                if (debugConsoleHasFocus != null)
+                {
+                    debugConsoleHasFocusGetMethod = (Func<bool>)debugConsoleHasFocus.GetMethod.CreateDelegate(typeof(Func<bool>));
+                }
+            }
         }
 
 
 
-        public static event System.Action OnUpdate;
+        public static event Action OnUpdate;
         protected virtual void Update()
         {
             for (int i = 0; i < PlayerCount; i++)
@@ -100,7 +120,7 @@ namespace AggroBird.GameFramework
             OnUpdate?.Invoke();
         }
 
-        public static event System.Action OnLateUpdate;
+        public static event Action OnLateUpdate;
         protected virtual void LateUpdate()
         {
             for (int i = 0; i < PlayerCount; i++)
@@ -124,7 +144,7 @@ namespace AggroBird.GameFramework
             }
 
             // Gain focus on mouse button click
-            if (!HasFocus && !DebugConsole.HasFocus)
+            if (!HasFocus && (debugConsoleHasFocusGetMethod == null || !debugConsoleHasFocusGetMethod.Invoke()))
             {
                 Mouse mouse = Mouse.current;
                 if (mouse != null && (mouse.leftButton.isPressed || mouse.rightButton.isPressed))
@@ -145,75 +165,14 @@ namespace AggroBird.GameFramework
 
             if (HasFocus)
             {
-                UpdateInputMode();
+                PlatformProfile.UpdateInputMode();
 
-                SetCursorLocked(lockCursor && (inputMode == InputMode.Controller || !uiRequiresInput));
+                SetCursorLocked(lockCursor && (PlatformProfile.ActiveInputMode == InputMode.Controller || !uiRequiresInput));
             }
         }
 
-        public event System.Action<InputMode> OnInputModeChanged;
-        private void UpdateInputMode()
-        {
-            if (inputMode == InputMode.KeyboardMouse)
-            {
-                Gamepad gamepad = Gamepad.current;
-                if (gamepad != null)
-                {
-                    foreach (var control in Gamepad.current.allControls)
-                    {
-                        if (!control.synthetic && control is ButtonControl button && button.wasPressedThisFrame)
-                        {
-                            SwitchInputMode(InputMode.Controller);
-                            return;
-                        }
-                    }
 
-                    if (gamepad.leftStick.ReadValue().magnitude > 0.1f || gamepad.rightStick.ReadValue().magnitude > 0.1f)
-                    {
-                        SwitchInputMode(InputMode.Controller);
-                        return;
-                    }
-                }
-            }
-            else if (!preferController)
-            {
-                Keyboard keyboard = Keyboard.current;
-                if (keyboard != null)
-                {
-                    if (keyboard.anyKey.wasPressedThisFrame)
-                    {
-                        SwitchInputMode(InputMode.KeyboardMouse);
-                        return;
-                    }
-                }
-
-                Mouse mouse = Mouse.current;
-                if (mouse != null)
-                {
-                    if (mouse.delta.ReadValue().magnitude > 0.1f)
-                    {
-                        SwitchInputMode(InputMode.KeyboardMouse);
-                        return;
-                    }
-
-                    if (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame)
-                    {
-                        SwitchInputMode(InputMode.KeyboardMouse);
-                        return;
-                    }
-                }
-            }
-        }
-        private void SwitchInputMode(InputMode newMode)
-        {
-            if (inputMode != newMode)
-            {
-                inputMode = newMode;
-                OnInputModeChanged?.Invoke(inputMode);
-            }
-        }
-
-        public static event System.Action OnShutdown;
+        public static event Action OnShutdown;
         protected virtual void Shutdown()
         {
             OnShutdown?.Invoke();
@@ -221,10 +180,17 @@ namespace AggroBird.GameFramework
 
         protected virtual void OnDestroy()
         {
-            DebugConsole.onConsoleFocusChange -= OnDebugConsoleFocus;
+            if (onConsoleFocusChange != null)
+            {
+                onConsoleFocusChange.RemoveEventHandler(this, onConsoleFocusChangeDelegate);
+            }
 
             Shutdown();
 
+            if (PlatformProfile)
+            {
+                Destroy(PlatformProfile);
+            }
             instance = null;
         }
 
@@ -235,6 +201,8 @@ namespace AggroBird.GameFramework
         }
         private void OnDebugConsoleFocus(bool focus)
         {
+            Debug.Log("CALLED");
+
             if (focus) OnLoseFocus();
         }
 

@@ -56,7 +56,7 @@ namespace AggroBird.GameFramework
         {
             base.OnOpened();
 
-            if (AppInstance.Instance.InputMode == InputMode.Controller)
+            if (AppInstance.Instance.PlatformProfile.ActiveInputMode == InputMode.Controller)
             {
                 FocusSelectable();
             }
@@ -72,7 +72,7 @@ namespace AggroBird.GameFramework
         public virtual bool OnConfirm()
         {
             // Press current selection if controller
-            if (AppInstance.Instance.InputMode == InputMode.Controller)
+            if (AppInstance.Instance.PlatformProfile.ActiveInputMode == InputMode.Controller)
             {
                 EventSystem eventSystem = Parent.EventSystem;
                 if (eventSystem)

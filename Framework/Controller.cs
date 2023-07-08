@@ -171,9 +171,9 @@ namespace AggroBird.GameFramework
 
         public Vector2 CameraInput { get; protected set; }
 
-        protected sealed class WritableInputAction<T> : ControllerInputAction<T>
+        protected sealed class InputAction<T> : ControllerInputAction<T>
         {
-            public WritableInputAction(T defaultValue = default) : base(defaultValue)
+            public InputAction(T defaultValue = default) : base(defaultValue)
             {
 
             }
@@ -193,13 +193,13 @@ namespace AggroBird.GameFramework
             }
         }
 
-        protected readonly WritableInputAction<bool> confirm = new();
-        protected readonly WritableInputAction<bool> cancel = new();
-        protected readonly WritableInputAction<MoveDirection> direction = new(MoveDirection.None);
+        protected readonly InputAction<bool> confirm = new();
+        protected readonly InputAction<bool> cancel = new();
+        protected readonly InputAction<MoveDirection> directionInput = new(MoveDirection.None);
 
         public ControllerInputAction<bool> Confirm => confirm;
         public ControllerInputAction<bool> Cancel => cancel;
-        public ControllerInputAction<MoveDirection> Direction => direction;
+        public ControllerInputAction<MoveDirection> DirectionInput => directionInput;
 
 
         public abstract void UpdateInput(Player player, bool inputEnabled);
