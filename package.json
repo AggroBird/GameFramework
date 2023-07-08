@@ -7,8 +7,7 @@
 	"category": "Utility",
 	"description": "Custom game framework for unity games",
 	"dependencies": {
-		"com.aggrobird.unityengineextend": "1.0.44",
-		"com.aggrobird.reflectiondebugconsole": "2.0.72",
+		"com.aggrobird.unityengineextend": "1.0.53",
 		"com.unity.inputsystem": "1.5.1",
 		"com.cysharp.unitask": "2.3.3"
 	},
