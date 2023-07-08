@@ -3,7 +3,7 @@ using UnityEngine.InputSystem.Controls;
 
 namespace AggroBird.GameFramework
 {
-    internal class StandalonePlatformProfile : PlatformProfile
+    public class StandalonePlatformProfile : PlatformProfile
     {
         private InputMode inputMode;
 

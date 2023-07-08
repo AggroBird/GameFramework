@@ -106,7 +106,7 @@ namespace AggroBird.GameFramework
 
             this.confirm.Value = confirm;
             this.cancel.Value = cancel;
-            this.directionInput.Value = direction;
+            directionInput.Value = direction;
         }
     }
 }
