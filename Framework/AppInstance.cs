@@ -201,8 +201,6 @@ namespace AggroBird.GameFramework
         }
         private void OnDebugConsoleFocus(bool focus)
         {
-            Debug.Log("CALLED");
-
             if (focus) OnLoseFocus();
         }
 
