@@ -17,32 +17,32 @@ namespace AggroBird.GameFramework
         [SerializeField, HideInInspector] private new CapsuleCollider collider;
 
         [Header("Settings")]
-        [SerializeField] private LayerMask _terrainLayer;
-        [SerializeField] private LookDirectionOptions _characterLookDirection = LookDirectionOptions.Velocity;
-        [SerializeField, Min(0)] private float _rotateSpeed = 500;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_terrainLayer")] private LayerMask terrainLayer;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_characterLookDirection")] private LookDirectionOptions characterLookDirection = LookDirectionOptions.Velocity;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_rotateSpeed"), Min(0)] private float rotateSpeed = 500;
         [SerializeField, Min(0.1f)] private float collisionRadius = 0.5f;
         [SerializeField, Min(0.2f)] private float collisionHeight = 1.75f;
 
         [Header("Height")]
-        [SerializeField, Min(0)] private float _rideHeight = 0.25f;
-        [SerializeField, Min(0)] private float _rayToGroundLength = 0.5f;
-        [SerializeField, Min(0)] public float _rideSpringStrength = 200;
-        [SerializeField, Min(0)] private float _rideSpringDamper = 20;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_rideHeight"), Min(0)] private float rideHeight = 0.25f;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_rayToGroundLength"), Min(0)] private float rayToGroundLength = 0.5f;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_rideSpringStrength"), Min(0)] public float rideSpringStrength = 200;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_rideSpringDamper"), Min(0)] private float rideSpringDamper = 20;
 
         [Header("Movement")]
-        [SerializeField, Min(0)] private float _maxSpeed = 6;
-        [SerializeField, Min(0)] private float _acceleration = 400;
-        [SerializeField, Min(0)] private float _maxAccelForce = 300;
-        [SerializeField] private AnimationCurve _accelerationFactorFromDot;
-        [SerializeField] private AnimationCurve _maxAccelerationForceFactorFromDot;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_maxSpeed"), Min(0)] private float maxSpeed = 6;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_acceleration"), Min(0)] private float acceleration = 400;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_maxAccelForce"), Min(0)] private float maxAccelForce = 300;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_accelerationFactorFromDot")] private AnimationCurve accelerationFactorFromDot;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_maxAccelerationForceFactorFromDot")] private AnimationCurve maxAccelerationForceFactorFromDot;
 
         [Header("Jump")]
-        [SerializeField, Min(0)] private float _jumpForceFactor = 16;
-        [SerializeField, Min(0)] private float _riseGravityFactor = 3;
-        [SerializeField, Min(0)] private float _fallGravityFactor = 8;
-        [SerializeField, Min(0)] private float _lowJumpFactor = 10;
-        [SerializeField, Min(0)] private float _jumpBuffer = 0.15f;
-        [SerializeField, Min(0)] private float _coyoteTime = 0.25f;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_jumpForceFactor"), Min(0)] private float jumpForceFactor = 16;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_riseGravityFactor"), Min(0)] private float riseGravityFactor = 3;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_fallGravityFactor"), Min(0)] private float fallGravityFactor = 8;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_lowJumpFactor"), Min(0)] private float lowJumpFactor = 10;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_jumpBuffer"), Min(0)] private float jumpBuffer = 0.15f;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_coyoteTime"), Min(0)] private float coyoteTime = 0.25f;
 
 
         public Vector2 MovementInput { get; set; }
@@ -50,39 +50,38 @@ namespace AggroBird.GameFramework
         {
             get
             {
-                return _jumpInput;
+                return jumpInput;
             }
             set
             {
-                if (value != _jumpInput)
+                if (value != jumpInput)
                 {
-                    _jumpInput = value;
+                    jumpInput = value;
 
                     if (value)
                     {
-                        _jumpInputTime = Time.fixedTime;
+                        jumpInputTime = Time.fixedTime;
                     }
                 }
             }
         }
-        private bool _jumpInput = false;
+        private bool jumpInput = false;
 
-        private Vector3 _gravitationalForce;
-        private Vector2 _previousVelocity = Vector2.zero;
+        private Vector3 gravitationalForce;
         private static PhysicMaterial physicMaterial = default;
 
-        private bool _shouldMaintainHeight = true;
+        private bool shouldMaintainHeight = true;
 
-        private float _speedFactor = 1f;
-        private float _maxAccelForceFactor = 1f;
-        private Vector3 _m_GoalVel = Vector3.zero;
+        private float speedFactor = 1f;
+        private float maxAccelForceFactor = 1f;
+        private Vector3 goalVelocity = Vector3.zero;
 
-        private float? _jumpInputTime = null;
-        private float _timeSinceUngrounded = 0f;
-        private float _timeSinceJump = 0f;
-        private bool _jumpReady = true;
-        private bool _isJumping = false;
-        private bool _isGrounded = false;
+        private float? jumpInputTime = null;
+        private float timeSinceUngrounded = 0f;
+        private float timeSinceJump = 0f;
+        private bool jumpReady = true;
+        private bool isJumping = false;
+        private bool isGrounded = false;
 
         public Rigidbody Rigidbody => rigidbody;
         public CapsuleCollider Collider => collider;
@@ -94,11 +93,11 @@ namespace AggroBird.GameFramework
             get
             {
                 Vector3 position = transform.position;
-                position.y += (_rideHeight + collisionHeight) * 0.5f;
+                position.y += (rideHeight + collisionHeight) * 0.5f;
                 return position;
             }
         }
-        public bool IsGrounded => _isGrounded;
+        public bool IsGrounded => isGrounded;
 
         public Vector3 Velocity
         {
@@ -161,7 +160,7 @@ namespace AggroBird.GameFramework
         protected virtual void Awake()
         {
             rigidbody = GetComponent<Rigidbody>();
-            _gravitationalForce = Physics.gravity * rigidbody.mass;
+            gravitationalForce = Physics.gravity * rigidbody.mass;
 
             if (!physicMaterial)
             {
@@ -186,27 +185,27 @@ namespace AggroBird.GameFramework
                     input /= len;
                 }
 
-                bool rayHitGround = Physics.Raycast(new Ray(transform.position + new Vector3(0, _rideHeight + 0.0001f, 0), Vector3.down), out RaycastHit hit, _rayToGroundLength, _terrainLayer.value);
-                _isGrounded = rayHitGround && hit.distance <= _rideHeight * 1.3f;
-                if (_isGrounded)
+                bool rayHitGround = Physics.Raycast(new Ray(transform.position + new Vector3(0, rideHeight + 0.0001f, 0), Vector3.down), out RaycastHit hit, rayToGroundLength, terrainLayer.value);
+                isGrounded = rayHitGround && hit.distance <= rideHeight * 1.3f;
+                if (isGrounded)
                 {
-                    _timeSinceUngrounded = 0f;
+                    timeSinceUngrounded = 0f;
 
-                    if (_timeSinceJump > 0.2f)
+                    if (timeSinceJump > 0.2f)
                     {
-                        _isJumping = false;
-                        _jumpReady = true;
+                        isJumping = false;
+                        jumpReady = true;
                     }
                 }
                 else
                 {
-                    _timeSinceUngrounded += Time.fixedDeltaTime;
+                    timeSinceUngrounded += Time.fixedDeltaTime;
                 }
 
                 CharacterMove(input);
                 CharacterJump(hit);
 
-                if (rayHitGround && _shouldMaintainHeight)
+                if (rayHitGround && shouldMaintainHeight)
                 {
                     MaintainHeight(hit);
                 }
@@ -228,72 +227,72 @@ namespace AggroBird.GameFramework
             float otherDirVel = Vector3.Dot(Vector3.down, otherVel);
 
             float relVel = rayDirVel - otherDirVel;
-            float currHeight = rayHit.distance - _rideHeight;
-            float springForce = (currHeight * _rideSpringStrength) - (relVel * _rideSpringDamper);
-            Vector3 maintainHeightForce = -_gravitationalForce + springForce * Vector3.down;
+            float currHeight = rayHit.distance - rideHeight;
+            float springForce = (currHeight * rideSpringStrength) - (relVel * rideSpringDamper);
+            Vector3 maintainHeightForce = -gravitationalForce + springForce * Vector3.down;
             rigidbody.AddForce(maintainHeightForce);
         }
 
         private void CharacterMove(Vector2 moveInput)
         {
             Vector3 m_UnitGoal = moveInput.Horizontal3D();
-            Vector3 unitVel = _m_GoalVel.normalized;
+            Vector3 unitVel = goalVelocity.normalized;
             float velDot = Vector3.Dot(m_UnitGoal, unitVel);
-            float accel = _acceleration * _accelerationFactorFromDot.Evaluate(velDot);
-            Vector3 goalVel = m_UnitGoal * _maxSpeed * _speedFactor;
-            _m_GoalVel = Vector3.MoveTowards(_m_GoalVel, goalVel, accel * Time.fixedDeltaTime);
-            Vector3 neededAccel = (_m_GoalVel - rigidbody.velocity) / Time.fixedDeltaTime;
-            float maxAccel = _maxAccelForce * _maxAccelerationForceFactorFromDot.Evaluate(velDot) * _maxAccelForceFactor;
+            float accel = acceleration * accelerationFactorFromDot.Evaluate(velDot);
+            Vector3 goalVel = m_UnitGoal * maxSpeed * speedFactor;
+            goalVelocity = Vector3.MoveTowards(goalVelocity, goalVel, accel * Time.fixedDeltaTime);
+            Vector3 neededAccel = (goalVelocity - rigidbody.velocity) / Time.fixedDeltaTime;
+            float maxAccel = maxAccelForce * maxAccelerationForceFactorFromDot.Evaluate(velDot) * maxAccelForceFactor;
             neededAccel = Vector3.ClampMagnitude(neededAccel, maxAccel);
             rigidbody.AddForce(Vector3.Scale(neededAccel * rigidbody.mass, new Vector3(1, 0, 1)));
         }
 
         private void CharacterJump(RaycastHit rayHit)
         {
-            _timeSinceJump += Time.fixedDeltaTime;
+            timeSinceJump += Time.fixedDeltaTime;
             if (rigidbody.velocity.y < 0)
             {
-                _shouldMaintainHeight = true;
-                if (!_isGrounded)
+                shouldMaintainHeight = true;
+                if (!isGrounded)
                 {
                     // Increase downforce for a sudden plummet.
-                    rigidbody.AddForce(_gravitationalForce * (_fallGravityFactor - 1f)); // Hmm... this feels a bit weird. I want a reactive jump, but I don't want it to dive all the time...
+                    rigidbody.AddForce(gravitationalForce * (fallGravityFactor - 1f)); // Hmm... this feels a bit weird. I want a reactive jump, but I don't want it to dive all the time...
                 }
             }
             else if (rigidbody.velocity.y > 0)
             {
-                if (!_isGrounded)
+                if (!isGrounded)
                 {
-                    if (_isJumping)
+                    if (isJumping)
                     {
-                        rigidbody.AddForce(_gravitationalForce * (_riseGravityFactor - 1f));
+                        rigidbody.AddForce(gravitationalForce * (riseGravityFactor - 1f));
                     }
-                    if (!_jumpInput)
+                    if (!jumpInput)
                     {
                         // Impede the jump height to achieve a low jump.
-                        rigidbody.AddForce(_gravitationalForce * (_lowJumpFactor - 1f));
+                        rigidbody.AddForce(gravitationalForce * (lowJumpFactor - 1f));
                     }
                 }
             }
 
-            if (_jumpInputTime.HasValue)
+            if (jumpInputTime.HasValue)
             {
-                float timeSinceJumpPressed = Time.fixedTime - _jumpInputTime.Value;
-                if (timeSinceJumpPressed < _jumpBuffer && _timeSinceUngrounded < _coyoteTime)
+                float timeSinceJumpPressed = Time.fixedTime - jumpInputTime.Value;
+                if (timeSinceJumpPressed < jumpBuffer && timeSinceUngrounded < coyoteTime)
                 {
-                    if (_jumpReady)
+                    if (jumpReady)
                     {
-                        _jumpReady = false;
-                        _shouldMaintainHeight = false;
-                        _isJumping = true;
+                        jumpReady = false;
+                        shouldMaintainHeight = false;
+                        isJumping = true;
                         rigidbody.velocity = new Vector3(rigidbody.velocity.x, 0f, rigidbody.velocity.z); // Cheat fix... (see comment below when adding force to rigidbody).
                         if (rayHit.distance != 0) // i.e. if the ray has hit
                         {
-                            rigidbody.position = new Vector3(rigidbody.position.x, rigidbody.position.y - (rayHit.distance - _rideHeight), rigidbody.position.z);
+                            rigidbody.position = new Vector3(rigidbody.position.x, rigidbody.position.y - (rayHit.distance - rideHeight), rigidbody.position.z);
                         }
-                        rigidbody.AddForce(Vector3.up * _jumpForceFactor, ForceMode.Impulse); // This does not work very consistently... Jump height is affected by initial y velocity and y position relative to RideHeight... Want to adopt a fancier approach (more like PlayerMovement). A cheat fix to ensure consistency has been issued above...
-                        _jumpInputTime = null;
-                        _timeSinceJump = 0f;
+                        rigidbody.AddForce(Vector3.up * jumpForceFactor, ForceMode.Impulse); // This does not work very consistently... Jump height is affected by initial y velocity and y position relative to RideHeight... Want to adopt a fancier approach (more like PlayerMovement). A cheat fix to ensure consistency has been issued above...
+                        jumpInputTime = null;
+                        timeSinceJump = 0f;
                     }
                 }
             }
@@ -301,10 +300,10 @@ namespace AggroBird.GameFramework
 
         private void UpdateLookDirection()
         {
-            if (_characterLookDirection != LookDirectionOptions.Manual)
+            if (characterLookDirection != LookDirectionOptions.Manual)
             {
                 float target;
-                if (_characterLookDirection == LookDirectionOptions.Velocity)
+                if (characterLookDirection == LookDirectionOptions.Velocity)
                 {
                     Vector2 velocity = HorizontalVelocity;
                     if (velocity.sqrMagnitude > 0.001f)
@@ -325,7 +324,7 @@ namespace AggroBird.GameFramework
                     return;
                 }
 
-                transform.SetYaw(Mathf.MoveTowardsAngle(transform.GetYaw(), target, _rotateSpeed * Time.fixedDeltaTime));
+                transform.SetYaw(Mathf.MoveTowardsAngle(transform.GetYaw(), target, rotateSpeed * Time.fixedDeltaTime));
             }
         }
 
@@ -334,11 +333,11 @@ namespace AggroBird.GameFramework
         protected virtual void OnDrawGizmosSelected()
         {
             Gizmos.color = Color.white;
-            Gizmos.DrawLine(transform.position, transform.position + new Vector3(0, _rideHeight, 0));
+            Gizmos.DrawLine(transform.position, transform.position + new Vector3(0, rideHeight, 0));
         }
         protected virtual void OnValidate()
         {
-            if (_rideHeight > _rayToGroundLength) _rayToGroundLength = _rideHeight;
+            if (rideHeight > rayToGroundLength) rayToGroundLength = rideHeight;
 
             float halfHeight = collisionHeight * 0.5f;
             if (collisionRadius > halfHeight) collisionRadius = halfHeight;
@@ -362,7 +361,7 @@ namespace AggroBird.GameFramework
                 collider.height = collisionHeight;
                 collider.enabled = true;
                 collider.isTrigger = false;
-                collider.center = new Vector3(0, collisionHeight * 0.5f + _rideHeight, 0);
+                collider.center = new Vector3(0, collisionHeight * 0.5f + rideHeight, 0);
                 collider.direction = 1;
             }
         }
