@@ -17,32 +17,32 @@ namespace AggroBird.GameFramework
         [SerializeField, HideInInspector] private new CapsuleCollider collider;
 
         [Header("Settings")]
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_terrainLayer")] private LayerMask terrainLayer;
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_characterLookDirection")] private LookDirectionOptions characterLookDirection = LookDirectionOptions.Velocity;
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_rotateSpeed"), Min(0)] private float rotateSpeed = 500;
+        [SerializeField] private LayerMask terrainLayer;
+        [SerializeField] private LookDirectionOptions characterLookDirection = LookDirectionOptions.Velocity;
+        [SerializeField, Min(0)] private float rotateSpeed = 500;
         [SerializeField, Min(0.1f)] private float collisionRadius = 0.5f;
         [SerializeField, Min(0.2f)] private float collisionHeight = 1.75f;
 
         [Header("Height")]
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_rideHeight"), Min(0)] private float rideHeight = 0.25f;
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_rayToGroundLength"), Min(0)] private float rayToGroundLength = 0.5f;
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_rideSpringStrength"), Min(0)] public float rideSpringStrength = 200;
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_rideSpringDamper"), Min(0)] private float rideSpringDamper = 20;
+        [SerializeField, Min(0)] private float rideHeight = 0.25f;
+        [SerializeField, Min(0)] private float rayToGroundLength = 0.5f;
+        [SerializeField, Min(0)] public float rideSpringStrength = 200;
+        [SerializeField, Min(0)] private float rideSpringDamper = 20;
 
         [Header("Movement")]
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_maxSpeed"), Min(0)] private float maxSpeed = 6;
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_acceleration"), Min(0)] private float acceleration = 400;
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_maxAccelForce"), Min(0)] private float maxAccelForce = 300;
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_accelerationFactorFromDot")] private AnimationCurve accelerationFactorFromDot;
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_maxAccelerationForceFactorFromDot")] private AnimationCurve maxAccelerationForceFactorFromDot;
+        [SerializeField, Min(0)] private float maxSpeed = 6;
+        [SerializeField, Min(0)] private float acceleration = 400;
+        [SerializeField, Min(0)] private float maxAccelForce = 300;
+        [SerializeField] private AnimationCurve accelerationFactorFromDot;
+        [SerializeField] private AnimationCurve maxAccelerationForceFactorFromDot;
 
         [Header("Jump")]
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_jumpForceFactor"), Min(0)] private float jumpForceFactor = 16;
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_riseGravityFactor"), Min(0)] private float riseGravityFactor = 3;
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_fallGravityFactor"), Min(0)] private float fallGravityFactor = 8;
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_lowJumpFactor"), Min(0)] private float lowJumpFactor = 10;
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_jumpBuffer"), Min(0)] private float jumpBuffer = 0.15f;
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("_coyoteTime"), Min(0)] private float coyoteTime = 0.25f;
+        [SerializeField, Min(0)] private float jumpForceFactor = 16;
+        [SerializeField, Min(0)] private float riseGravityFactor = 3;
+        [SerializeField, Min(0)] private float fallGravityFactor = 8;
+        [SerializeField, Min(0)] private float lowJumpFactor = 10;
+        [SerializeField, Min(0)] private float jumpBuffer = 0.15f;
+        [SerializeField, Min(0)] private float coyoteTime = 0.25f;
 
 
         public Vector2 MovementInput { get; set; }
