@@ -24,10 +24,10 @@ namespace AggroBird.GameFramework
         [SerializeField, Min(0.2f)] private float collisionHeight = 1.75f;
 
         [Header("Height")]
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("rideHeight"), Min(0)] private float suspensionHeight = 0.25f;
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("rayToGroundLength"), Min(0)] private float rayExtend = 0.25f;
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("rideSpringStrength"), Min(0)] public float suspensionSpringStrength = 200;
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("rideSpringDamper"), Min(0)] private float suspensionSpringDamper = 20;
+        [SerializeField, Min(0)] private float suspensionHeight = 0.25f;
+        [SerializeField, Min(0)] private float rayExtend = 0.25f;
+        [SerializeField, Min(0)] public float suspensionSpringStrength = 200;
+        [SerializeField, Min(0)] private float suspensionSpringDamper = 20;
 
         [Header("Movement")]
         [SerializeField, Min(0)] private float maxSpeed = 6;
