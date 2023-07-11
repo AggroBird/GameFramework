@@ -5,7 +5,7 @@ using UnityEngine;
 namespace AggroBird.GameFramework
 {
     [RequireComponent(typeof(Rigidbody), typeof(CapsuleCollider))]
-    public class VehicleMovement : Movement
+    public class LegacyVehicleMovement : Movement
     {
         [SerializeField, HideInInspector]
         protected new Rigidbody rigidbody = default;
