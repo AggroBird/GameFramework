@@ -13,8 +13,12 @@ namespace AggroBird.GameFramework
             Manual,
         };
 
-        [SerializeField, HideInInspector] private new Rigidbody rigidbody;
-        [SerializeField, HideInInspector] private new CapsuleCollider collider;
+        [SerializeField, HideInInspector]
+        private new Rigidbody rigidbody = default;
+        public Rigidbody Rigidbody => rigidbody;
+        [SerializeField, HideInInspector]
+        private new CapsuleCollider collider = default;
+        public CapsuleCollider Collider => collider;
 
         [Header("Settings")]
         [SerializeField] private LayerMask terrainLayer;
@@ -26,7 +30,7 @@ namespace AggroBird.GameFramework
         [Header("Height")]
         [SerializeField, Min(0)] private float suspensionHeight = 0.25f;
         [SerializeField, Min(0)] private float rayExtend = 0.25f;
-        [SerializeField, Min(0)] public float suspensionSpringStrength = 200;
+        [SerializeField, Min(0)] private float suspensionSpringStrength = 200;
         [SerializeField, Min(0)] private float suspensionSpringDamper = 20;
 
         [Header("Movement")]
@@ -82,9 +86,6 @@ namespace AggroBird.GameFramework
         private bool jumpReady = true;
         private bool isJumping = false;
         private bool isGrounded = false;
-
-        public Rigidbody Rigidbody => rigidbody;
-        public CapsuleCollider Collider => collider;
 
         public float ColliderRadius => collisionRadius;
         public float ColliderHeight => collisionHeight;
