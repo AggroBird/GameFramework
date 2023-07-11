@@ -31,7 +31,7 @@ namespace AggroBird.GameFramework
         [SerializeField, Min(0)] private float rayExtend = 0.25f;
         [SerializeField, Min(0)] private float suspensionSpringStrength = 200;
         [SerializeField, Min(0)] private float suspensionSpringDamper = 20;
-        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("terrainLayer")] private LayerMask suspensionLayerMask;
+        [SerializeField] private LayerMask suspensionLayerMask;
 
         [Header("Movement")]
         [SerializeField, Min(0)] private float maxSpeed = 6;
