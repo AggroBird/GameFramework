@@ -311,9 +311,15 @@ namespace AggroBird.GameFramework
             {
                 if (ReferenceEquals(stack[i], menu))
                 {
+                    bool isTop = i == stack.Count - 1;
                     stack.RemoveAt(i);
 
                     UpdateFlags();
+                    if (isTop)
+                    {
+                        // Restore focus
+                        FocusStackTop();
+                    }
 
                     return;
                 }
