@@ -21,17 +21,17 @@ namespace AggroBird.GameFramework
         public CapsuleCollider Collider => collider;
 
         [Header("Settings")]
-        [SerializeField] private LayerMask terrainLayer;
         [SerializeField] private LookDirectionOptions characterLookDirection = LookDirectionOptions.Velocity;
         [SerializeField, Min(0)] private float rotateSpeed = 500;
         [SerializeField, Min(0.1f)] private float collisionRadius = 0.5f;
         [SerializeField, Min(0.2f)] private float collisionHeight = 1.75f;
 
-        [Header("Height")]
+        [Header("Suspension")]
         [SerializeField, Min(0)] private float suspensionHeight = 0.25f;
         [SerializeField, Min(0)] private float rayExtend = 0.25f;
         [SerializeField, Min(0)] private float suspensionSpringStrength = 200;
         [SerializeField, Min(0)] private float suspensionSpringDamper = 20;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("terrainLayer")] private LayerMask suspensionLayerMask;
 
         [Header("Movement")]
         [SerializeField, Min(0)] private float maxSpeed = 6;
@@ -158,16 +158,16 @@ namespace AggroBird.GameFramework
         }
 
 
-        protected virtual void Awake()
+        protected virtual void Start()
         {
             rigidbody = GetComponent<Rigidbody>();
             gravitationalForce = Physics.gravity * rigidbody.mass;
 
             if (!physicMaterial)
             {
-                physicMaterial = new PhysicMaterial();
-                physicMaterial.dynamicFriction = physicMaterial.staticFriction = 0;
-                physicMaterial.bounciness = 0;
+                physicMaterial = new PhysicMaterial("Character Physic Material");
+                physicMaterial.hideFlags |= HideFlags.NotEditable;
+                physicMaterial.bounciness = physicMaterial.dynamicFriction = physicMaterial.staticFriction = 0;
                 physicMaterial.frictionCombine = PhysicMaterialCombine.Average;
                 physicMaterial.bounceCombine = PhysicMaterialCombine.Average;
             }
@@ -186,7 +186,7 @@ namespace AggroBird.GameFramework
                     input /= len;
                 }
 
-                bool rayHitGround = Physics.Raycast(new Ray(transform.position + new Vector3(0, suspensionHeight + 0.0001f, 0), Vector3.down), out RaycastHit hit, suspensionHeight + rayExtend, terrainLayer.value);
+                bool rayHitGround = Physics.Raycast(new Ray(transform.position + new Vector3(0, suspensionHeight + 0.0001f, 0), Vector3.down), out RaycastHit hit, suspensionHeight + rayExtend, suspensionLayerMask.value);
                 isGrounded = rayHitGround && hit.distance <= suspensionHeight * 1.3f;
                 if (isGrounded)
                 {
