@@ -37,6 +37,9 @@ namespace AggroBird.GameFramework
         [SerializeField, Min(0)] protected float springConstant = 100;
         [SerializeField, Min(0)] protected float damperConstant = 10;
         [SerializeField] protected LayerMask suspensionLayerMask = ~0;
+        [Space]
+        [SerializeField, Clamped(0, 1)] protected float staticFriction = 0.6f;
+        [SerializeField, Clamped(0, 1)] protected float dynamicFriction = 0.6f;
 
 
         private float GetRollout(float velz) => maxSpeed > 0 ? rolloutCurve.Evaluate(Mathf.Abs(velz) / maxSpeed) : 0;
@@ -118,10 +121,10 @@ namespace AggroBird.GameFramework
         {
             physicMaterial = new PhysicMaterial("Vehicle Physic Material");
             physicMaterial.hideFlags |= HideFlags.NotEditable;
-            physicMaterial.staticFriction = 0;
-            physicMaterial.dynamicFriction = 0;
+            physicMaterial.staticFriction = staticFriction;
+            physicMaterial.dynamicFriction = dynamicFriction;
             physicMaterial.bounciness = 0;
-            physicMaterial.frictionCombine = PhysicMaterialCombine.Multiply;
+            physicMaterial.frictionCombine = PhysicMaterialCombine.Average;
             physicMaterial.bounceCombine = PhysicMaterialCombine.Average;
             collider.sharedMaterial = physicMaterial;
 
