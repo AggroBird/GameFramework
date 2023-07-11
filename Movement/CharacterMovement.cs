@@ -24,10 +24,10 @@ namespace AggroBird.GameFramework
         [SerializeField, Min(0.2f)] private float collisionHeight = 1.75f;
 
         [Header("Height")]
-        [SerializeField, Min(0)] private float rideHeight = 0.25f;
-        [SerializeField, Min(0)] private float rayToGroundLength = 0.5f;
-        [SerializeField, Min(0)] public float rideSpringStrength = 200;
-        [SerializeField, Min(0)] private float rideSpringDamper = 20;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("rideHeight"), Min(0)] private float suspensionHeight = 0.25f;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("rayToGroundLength"), Min(0)] private float rayExtend = 0.25f;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("rideSpringStrength"), Min(0)] public float suspensionSpringStrength = 200;
+        [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("rideSpringDamper"), Min(0)] private float suspensionSpringDamper = 20;
 
         [Header("Movement")]
         [SerializeField, Min(0)] private float maxSpeed = 6;
@@ -93,7 +93,7 @@ namespace AggroBird.GameFramework
             get
             {
                 Vector3 position = transform.position;
-                position.y += (rideHeight + collisionHeight) * 0.5f;
+                position.y += (suspensionHeight + collisionHeight) * 0.5f;
                 return position;
             }
         }
@@ -185,8 +185,8 @@ namespace AggroBird.GameFramework
                     input /= len;
                 }
 
-                bool rayHitGround = Physics.Raycast(new Ray(transform.position + new Vector3(0, rideHeight + 0.0001f, 0), Vector3.down), out RaycastHit hit, rayToGroundLength, terrainLayer.value);
-                isGrounded = rayHitGround && hit.distance <= rideHeight * 1.3f;
+                bool rayHitGround = Physics.Raycast(new Ray(transform.position + new Vector3(0, suspensionHeight + 0.0001f, 0), Vector3.down), out RaycastHit hit, suspensionHeight + rayExtend, terrainLayer.value);
+                isGrounded = rayHitGround && hit.distance <= suspensionHeight * 1.3f;
                 if (isGrounded)
                 {
                     timeSinceUngrounded = 0f;
@@ -227,19 +227,19 @@ namespace AggroBird.GameFramework
             float otherDirVel = Vector3.Dot(Vector3.down, otherVel);
 
             float relVel = rayDirVel - otherDirVel;
-            float currHeight = rayHit.distance - rideHeight;
-            float springForce = (currHeight * rideSpringStrength) - (relVel * rideSpringDamper);
+            float currHeight = rayHit.distance - suspensionHeight;
+            float springForce = (currHeight * suspensionSpringStrength) - (relVel * suspensionSpringDamper);
             Vector3 maintainHeightForce = -gravitationalForce + springForce * Vector3.down;
             rigidbody.AddForce(maintainHeightForce);
         }
 
         private void CharacterMove(Vector2 moveInput)
         {
-            Vector3 m_UnitGoal = moveInput.Horizontal3D();
+            Vector3 unitGoal = moveInput.Horizontal3D();
             Vector3 unitVel = goalVelocity.normalized;
-            float velDot = Vector3.Dot(m_UnitGoal, unitVel);
+            float velDot = Vector3.Dot(unitGoal, unitVel);
             float accel = acceleration * accelerationFactorFromDot.Evaluate(velDot);
-            Vector3 goalVel = m_UnitGoal * maxSpeed * speedFactor;
+            Vector3 goalVel = unitGoal * maxSpeed * speedFactor;
             goalVelocity = Vector3.MoveTowards(goalVelocity, goalVel, accel * Time.fixedDeltaTime);
             Vector3 neededAccel = (goalVelocity - rigidbody.velocity) / Time.fixedDeltaTime;
             float maxAccel = maxAccelForce * maxAccelerationForceFactorFromDot.Evaluate(velDot) * maxAccelForceFactor;
@@ -288,7 +288,7 @@ namespace AggroBird.GameFramework
                         rigidbody.velocity = new Vector3(rigidbody.velocity.x, 0f, rigidbody.velocity.z); // Cheat fix... (see comment below when adding force to rigidbody).
                         if (rayHit.distance != 0) // i.e. if the ray has hit
                         {
-                            rigidbody.position = new Vector3(rigidbody.position.x, rigidbody.position.y - (rayHit.distance - rideHeight), rigidbody.position.z);
+                            rigidbody.position = new Vector3(rigidbody.position.x, rigidbody.position.y - (rayHit.distance - suspensionHeight), rigidbody.position.z);
                         }
                         rigidbody.AddForce(Vector3.up * jumpForceFactor, ForceMode.Impulse); // This does not work very consistently... Jump height is affected by initial y velocity and y position relative to RideHeight... Want to adopt a fancier approach (more like PlayerMovement). A cheat fix to ensure consistency has been issued above...
                         jumpInputTime = null;
@@ -333,12 +333,10 @@ namespace AggroBird.GameFramework
         protected virtual void OnDrawGizmosSelected()
         {
             Gizmos.color = Color.white;
-            Gizmos.DrawLine(transform.position, transform.position + new Vector3(0, rideHeight, 0));
+            Gizmos.DrawLine(transform.position, transform.position + new Vector3(0, suspensionHeight, 0));
         }
         protected virtual void OnValidate()
         {
-            if (rideHeight > rayToGroundLength) rayToGroundLength = rideHeight;
-
             float halfHeight = collisionHeight * 0.5f;
             if (collisionRadius > halfHeight) collisionRadius = halfHeight;
 
@@ -361,7 +359,7 @@ namespace AggroBird.GameFramework
                 collider.height = collisionHeight;
                 collider.enabled = true;
                 collider.isTrigger = false;
-                collider.center = new Vector3(0, collisionHeight * 0.5f + rideHeight, 0);
+                collider.center = new Vector3(0, collisionHeight * 0.5f + suspensionHeight, 0);
                 collider.direction = 1;
             }
         }
