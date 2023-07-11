@@ -28,7 +28,7 @@ namespace AggroBird.GameFramework
         [SerializeField, Min(0)] protected float steerAngle = 70;
         [Space]
         [SerializeField, Min(0)] protected float tyreFriction = 5;
-        [SerializeField, Clamped(min: 0, max: 90)] protected float maxGroundAngle = 30;
+        [SerializeField, Clamped(min: 0, max: 90)] protected float maxGroundAngle = 50;
         [Space]
         [SerializeField] protected AnimationCurve rolloutCurve = new(new Keyframe { time = 0, value = 0.1f, }, new Keyframe { time = 1, value = 2, });
         [Space]
@@ -118,10 +118,10 @@ namespace AggroBird.GameFramework
         {
             physicMaterial = new PhysicMaterial("Vehicle Physic Material");
             physicMaterial.hideFlags |= HideFlags.NotEditable;
-            physicMaterial.staticFriction = 0.6f;
-            physicMaterial.dynamicFriction = 0.6f;
+            physicMaterial.staticFriction = 0;
+            physicMaterial.dynamicFriction = 0;
             physicMaterial.bounciness = 0;
-            physicMaterial.frictionCombine = PhysicMaterialCombine.Average;
+            physicMaterial.frictionCombine = PhysicMaterialCombine.Multiply;
             physicMaterial.bounceCombine = PhysicMaterialCombine.Average;
             collider.sharedMaterial = physicMaterial;
 
@@ -205,16 +205,9 @@ namespace AggroBird.GameFramework
 
             if (isGrounded)
             {
-                float y = groundNormal.y;
-                if (y > 1) y = 1;
-                float normalAngle = Mathf.Acos(y) * Mathf.Rad2Deg;
-                float verticalGrip = normalAngle <= maxGroundAngle ? 1 : 0;
-
                 // Apply sidewards grip
                 localVelocity.x = Mathf.MoveTowards(localVelocity.x, 0, tyreFriction * deltaTime);
-                float horizontalGrip = 1 - Mathf.Clamp01(Mathf.Abs(localVelocity.x) / defaultSpeed);
-
-                float grip = horizontalGrip * verticalGrip;
+                float grip = 1 - Mathf.Clamp01(Mathf.Abs(localVelocity.x) / defaultSpeed);
 
                 if (Brake)
                 {
@@ -312,7 +305,12 @@ namespace AggroBird.GameFramework
                 float y = contact.normal.y;
                 if (y > 0)
                 {
-                    contactNormals.Add(contact.normal);
+                    if (y > 1) y = 1;
+                    float normalAngle = Mathf.Acos(y) * Mathf.Rad2Deg;
+                    if (normalAngle <= maxGroundAngle)
+                    {
+                        contactNormals.Add(contact.normal);
+                    }
                 }
             }
         }
