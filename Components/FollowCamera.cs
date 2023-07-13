@@ -3,11 +3,19 @@ using UnityEngine;
 
 namespace AggroBird.GameFramework
 {
-    [DefaultExecutionOrder(99999)]
     public class FollowCamera : MonoBehaviour, IPlayerCamera
     {
+        public enum UpdateMode
+        {
+            Update,
+            LateUpdate,
+            FixedUpdate,
+        }
+
         [SerializeField] private Camera cameraComponent;
         public Camera Camera => cameraComponent;
+
+        public UpdateMode updateMode = UpdateMode.LateUpdate;
 
         [Clamped(min: 0)] public int playerIndex = 0;
         [Space]
@@ -18,8 +26,8 @@ namespace AggroBird.GameFramework
         [Space]
         [Clamped(0, 90)]
         public float pitch = 10;
-        public Vector3 originOffset = new Vector3(0, 2, 0);
-        public Vector3 followOffset = new Vector3(0, 3, -5);
+        public Vector3 originOffset = new(0, 2, 0);
+        public Vector3 followOffset = new(0, 3, -5);
         [Space]
         [Clamped(min: 0)] public float collisionRadius = 0.35f;
 
@@ -82,7 +90,39 @@ namespace AggroBird.GameFramework
             currentPosition = transform.position - Quaternion.Euler(currentRotation.pitch, currentRotation.yaw, 0) * followOffset;
         }
 
+        protected virtual void Update()
+        {
+            if (updateMode == UpdateMode.Update)
+            {
+                UpdateInput();
+
+                UpdateTransform();
+            }
+        }
+
         protected virtual void LateUpdate()
+        {
+            // Also perform input for fixed update
+            if (updateMode == UpdateMode.LateUpdate || updateMode == UpdateMode.FixedUpdate)
+            {
+                UpdateInput();
+            }
+
+            if (updateMode == UpdateMode.LateUpdate)
+            {
+                UpdateTransform();
+            }
+        }
+
+        protected virtual void FixedUpdate()
+        {
+            if (updateMode == UpdateMode.FixedUpdate)
+            {
+                UpdateTransform();
+            }
+        }
+
+        private void UpdateInput()
         {
             Pawn target = null;
             if (TryGetPlayer(out Player player))
@@ -131,7 +171,7 @@ namespace AggroBird.GameFramework
             if (inputForce < 0) inputForce = 0;
         }
 
-        protected virtual void FixedUpdate()
+        private void UpdateTransform()
         {
             if (CurrentTarget && updatePosition)
             {
