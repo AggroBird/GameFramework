@@ -17,6 +17,7 @@ namespace AggroBird.GameFramework
 
         public UpdateMode updateMode = UpdateMode.LateUpdate;
 
+        [Space]
         [Clamped(min: 0)] public int playerIndex = 0;
         [Space]
         public LayerMask collisionMask;
