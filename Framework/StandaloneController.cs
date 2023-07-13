@@ -6,6 +6,7 @@ using UnityEngine.InputSystem.LowLevel;
 
 namespace AggroBird.GameFramework
 {
+    // Simple controller for standalone applications (with keyboard and mouse)
     internal class StandaloneController : Controller
     {
         private static readonly Key[] KeyboardDirections =

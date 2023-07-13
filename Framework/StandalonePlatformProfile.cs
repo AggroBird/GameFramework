@@ -3,7 +3,8 @@ using UnityEngine.InputSystem.Controls;
 
 namespace AggroBird.GameFramework
 {
-    public class StandalonePlatformProfile : PlatformProfile
+    // Simple platform profile for standalone applications (with keyboard and mouse)
+    internal class StandalonePlatformProfile : PlatformProfile
     {
         private InputMode inputMode;
 
