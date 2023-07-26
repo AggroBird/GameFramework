@@ -1,4 +1,4 @@
-using AggroBird.UnityEngineExtend;
+using AggroBird.UnityExtend;
 using UnityEngine;
 
 namespace AggroBird.GameFramework
