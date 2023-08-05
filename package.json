@@ -2,7 +2,7 @@
 	"name": "com.aggrobird.gameframework",
 	"displayName":"Game Framework",
 	"version": "1.0.28",
-	"unity": "2021.3",
+	"unity": "2022.3",
 	"keywords": ["Game", "Framework"],
 	"category": "Utility",
 	"description": "Custom game framework for unity games",
