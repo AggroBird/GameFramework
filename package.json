@@ -1,13 +1,14 @@
 {
 	"name": "com.aggrobird.gameframework",
-	"displayName":"Game Framework",
+	"displayName": "Game Framework",
 	"version": "1.0.28",
 	"unity": "2022.3",
 	"keywords": ["Game", "Framework"],
 	"category": "Utility",
 	"description": "Custom game framework for unity games",
-	"dependencies": {
-		"com.aggrobird.unityextend": "1.0.53",
+	"dependencies":
+	{
+		"com.aggrobird.unityextend": "1.0.58",
 		"com.unity.inputsystem": "1.5.1",
 		"com.cysharp.unitask": "2.3.3"
 	},
