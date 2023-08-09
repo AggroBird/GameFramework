@@ -32,8 +32,7 @@ namespace AggroBird.GameFramework
         [Space]
         [Clamped(min: 0)] public float collisionRadius = 0.35f;
 
-        public float minPitch = -30;
-        public float maxPitch = 60;
+        public FloatRange pitchRange = new(-30, 60);
 
         public virtual float FieldOfView
         {
@@ -43,7 +42,7 @@ namespace AggroBird.GameFramework
 
 
         [System.NonSerialized]
-        public Rotator2 currentRotation;
+        public Rotator2 rotation;
         [System.NonSerialized]
         public bool updateInput = true;
         [System.NonSerialized]
@@ -51,7 +50,7 @@ namespace AggroBird.GameFramework
 
         protected Pawn CurrentTarget { get; private set; }
 
-        private Vector3 currentPosition;
+        private Vector3 targetCurrentPosition;
         private float inputForce;
         private float offsetLength;
         private Vector3 targetPreviousPosition;
@@ -87,8 +86,8 @@ namespace AggroBird.GameFramework
         {
             offsetLength = followOffset.magnitude;
 
-            currentRotation = new Rotator2(pitch, transform.eulerAngles.y);
-            currentPosition = transform.position - Quaternion.Euler(currentRotation.pitch, currentRotation.yaw, 0) * followOffset;
+            rotation = new Rotator2(pitch, transform.eulerAngles.y);
+            targetCurrentPosition = transform.position - Quaternion.Euler(rotation.pitch, rotation.yaw, 0) * followOffset;
         }
 
         protected virtual void Update()
@@ -145,12 +144,12 @@ namespace AggroBird.GameFramework
                 {
                     player.RegisterCamera(this);
 
-                    Vector3 currentTargetPosition = CurrentTarget.transform.position + originOffset;
-                    if (!hadTarget || Vector3.Distance(currentTargetPosition, currentPosition) > 5)
+                    Vector3 targetPos = CurrentTarget.transform.position + originOffset;
+                    if (!hadTarget || Vector3.Distance(targetPos, targetCurrentPosition) > 5)
                     {
-                        currentRotation.yaw = CurrentTarget.transform.eulerAngles.y;
-                        currentPosition = targetPreviousPosition = currentTargetPosition;
-                        transform.eulerAngles = new Vector3(pitch + currentRotation.pitch, currentRotation.yaw, 0);
+                        rotation.yaw = CurrentTarget.transform.eulerAngles.y;
+                        targetCurrentPosition = targetPreviousPosition = targetPos;
+                        transform.eulerAngles = new Vector3(pitch + rotation.pitch, rotation.yaw, 0);
                     }
                 }
             }
@@ -162,9 +161,9 @@ namespace AggroBird.GameFramework
                     Vector2 cameraInput = controller.CameraInput;
                     inputForce += cameraInput.magnitude;
                     if (inputForce > 1.5f) inputForce = 1.5f;
-                    currentRotation.pitch = Mathf.Clamp(currentRotation.pitch - cameraInput.y, minPitch, maxPitch);
-                    currentRotation.yaw += cameraInput.x;
-                    currentRotation.yaw = Mathfx.ModAbs(currentRotation.yaw, 360);
+                    rotation.pitch = pitchRange.Clamp(rotation.pitch - cameraInput.y);
+                    rotation.yaw += cameraInput.x;
+                    rotation.yaw = Mathfx.ModAbs(rotation.yaw, 360);
                 }
             }
 
@@ -192,24 +191,24 @@ namespace AggroBird.GameFramework
                     if (rotateSpeed > 0)
                     {
                         rotateSpeed *= angularFollowSpeed * deltaTime;
-                        float pitchRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.pitch, currentRotation.pitch)) * rotateSpeed;
-                        currentRotation.pitch = Mathf.MoveTowardsAngle(currentRotation.pitch, 0, pitchRotation);
-                        float yawRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.yaw, currentRotation.yaw)) * rotateSpeed;
-                        currentRotation.yaw = Mathf.MoveTowardsAngle(currentRotation.yaw, targetRot.yaw, yawRotation);
+                        float pitchRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.pitch, rotation.pitch)) * rotateSpeed;
+                        rotation.pitch = Mathf.MoveTowardsAngle(rotation.pitch, 0, pitchRotation);
+                        float yawRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.yaw, rotation.yaw)) * rotateSpeed;
+                        rotation.yaw = Mathf.MoveTowardsAngle(rotation.yaw, targetRot.yaw, yawRotation);
                     }
                 }
-                Quaternion setRotation = Quaternion.Euler(pitch + currentRotation.pitch, currentRotation.yaw, 0);
+                Quaternion setRotation = Quaternion.Euler(pitch + rotation.pitch, rotation.yaw, 0);
 
                 // Update position
                 {
-                    float dist = Vector3.Distance(currentPosition, targetPosition) * linearFollowSpeed * deltaTime;
-                    currentPosition = Vector3.MoveTowards(currentPosition, targetPosition, dist);
+                    float dist = Vector3.Distance(targetCurrentPosition, targetPosition) * linearFollowSpeed * deltaTime;
+                    targetCurrentPosition = Vector3.MoveTowards(targetCurrentPosition, targetPosition, dist);
                 }
 
                 // Raycast for collisions
                 Vector3 setPosition;
                 {
-                    Vector3 cameraPosition = currentPosition + Quaternion.Euler(currentRotation.pitch, currentRotation.yaw, 0) * followOffset;
+                    Vector3 cameraPosition = targetCurrentPosition + Quaternion.Euler(rotation.pitch, rotation.yaw, 0) * followOffset;
                     Vector3 direction = cameraPosition - targetPosition;
                     float length = direction.magnitude;
                     if (length < Mathf.Epsilon)
@@ -252,7 +251,22 @@ namespace AggroBird.GameFramework
                     }
                 }
 
-                transform.SetPositionAndRotation(setPosition, setRotation);
+                doUpdateTransform = true;
+                UpdateTransform(setPosition, setRotation);
+            }
+            else
+            {
+                doUpdateTransform = false;
+                UpdateTransform(transform.position, transform.rotation);
+            }
+        }
+
+        private bool doUpdateTransform = false;
+        protected virtual void UpdateTransform(Vector3 position, Quaternion rotation)
+        {
+            if (doUpdateTransform)
+            {
+                transform.SetPositionAndRotation(position, rotation);
             }
         }
 
@@ -301,12 +315,5 @@ namespace AggroBird.GameFramework
                 overrideStartTime = Time.time;
             }
         }
-
-#if UNITY_EDITOR
-        protected virtual void OnValidate()
-        {
-            if (minPitch > maxPitch) minPitch = maxPitch;
-        }
-#endif
     }
 }
