@@ -34,6 +34,8 @@ namespace AggroBird.GameFramework
 
         public FloatRange pitchRange = new(-30, 60);
 
+        public Vector3 Position => transform.position;
+        public Quaternion Rotation => transform.rotation;
         public virtual float FieldOfView
         {
             get => cameraComponent.fieldOfView;
@@ -173,7 +175,7 @@ namespace AggroBird.GameFramework
 
         private void UpdateTransform()
         {
-            if (CurrentTarget && updatePosition)
+            if (CurrentTarget && updatePosition && Application.IsPlaying(gameObject))
             {
                 float deltaTime = Time.deltaTime;
 
@@ -270,6 +272,10 @@ namespace AggroBird.GameFramework
             }
         }
 
+        protected virtual void OnEnable()
+        {
+
+        }
         protected virtual void OnDisable()
         {
             if (CurrentTarget && CurrentTarget.Owner)
