@@ -20,7 +20,7 @@ namespace AggroBird.GameFramework
         [Space]
         [Clamped(min: 0)] public int playerIndex = 0;
         [Space]
-        public LayerMask collisionMask;
+        public LayerMask collisionMask = 1;
         [Space]
         [Clamped(min: 0)] public float linearFollowSpeed = 10;
         [Clamped(min: 0)] public float angularFollowSpeed = 5;
