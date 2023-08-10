@@ -55,8 +55,8 @@ namespace AggroBird.GameFramework
         public UserInterface UI { get; protected set; }
         public bool TryGetUserInterface<T>(out T result) where T : UserInterface => result = UI as T;
 
-        private readonly List<IPlayerCamera> cameraStack = new List<IPlayerCamera>();
-        public IPlayerCamera CurrentCamera => cameraStack.Count > 0 ? cameraStack[^1] : null;
+        private readonly List<PlayerCamera> cameraStack = new();
+        public PlayerCamera CurrentCamera => cameraStack.Count > 0 ? cameraStack[^1] : null;
 
 
         public bool GamePaused { get; private set; }
@@ -118,14 +118,14 @@ namespace AggroBird.GameFramework
         }
 
 
-        public void RegisterCamera(IPlayerCamera camera)
+        public void RegisterCamera(PlayerCamera camera)
         {
             if (!cameraStack.Contains(camera))
             {
                 cameraStack.Add(camera);
             }
         }
-        public void UnregisterCamera(IPlayerCamera camera)
+        public void UnregisterCamera(PlayerCamera camera)
         {
             cameraStack.Remove(camera);
         }

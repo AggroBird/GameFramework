@@ -3,7 +3,8 @@ using UnityEngine;
 
 namespace AggroBird.GameFramework
 {
-    public class FollowCamera : MonoBehaviour, IPlayerCamera
+    [ExecuteAlways, RequireComponent(typeof(Camera))]
+    public class FollowCamera : PlayerCamera
     {
         public enum UpdateMode
         {
@@ -12,8 +13,8 @@ namespace AggroBird.GameFramework
             FixedUpdate,
         }
 
-        [SerializeField] private Camera cameraComponent;
-        public Camera Camera => cameraComponent;
+        [SerializeField, HideInInspector] private Camera cameraComponent;
+        public override Camera Camera => cameraComponent;
 
         public UpdateMode updateMode = UpdateMode.LateUpdate;
 
@@ -34,14 +35,12 @@ namespace AggroBird.GameFramework
 
         public FloatRange pitchRange = new(-30, 60);
 
-        public Vector3 Position => transform.position;
-        public Quaternion Rotation => transform.rotation;
-        public virtual float FieldOfView
-        {
-            get => cameraComponent.fieldOfView;
-            set => cameraComponent.fieldOfView = value;
-        }
+        private Vector3 followPosition;
+        private Quaternion followRotation;
 
+        // Position/rotation that the follow camera desires
+        public Vector3 FollowPosition => followPosition;
+        public Quaternion FollowRotation => followRotation;
 
         [System.NonSerialized]
         public Rotator2 rotation;
@@ -90,6 +89,9 @@ namespace AggroBird.GameFramework
 
             rotation = new Rotator2(pitch, transform.eulerAngles.y);
             targetCurrentPosition = transform.position - Quaternion.Euler(rotation.pitch, rotation.yaw, 0) * followOffset;
+
+            followPosition = transform.position;
+            followRotation = transform.rotation;
         }
 
         protected virtual void Update()
@@ -175,7 +177,8 @@ namespace AggroBird.GameFramework
 
         private void UpdateTransform()
         {
-            if (CurrentTarget && updatePosition)
+            doUpdateTransform = CurrentTarget && updatePosition;
+            if (doUpdateTransform)
             {
                 float deltaTime = Time.deltaTime;
 
@@ -253,14 +256,10 @@ namespace AggroBird.GameFramework
                     }
                 }
 
-                doUpdateTransform = true;
-                UpdateTransform(setPosition, setRotation);
+                followPosition = setPosition;
+                followRotation = setRotation;
             }
-            else
-            {
-                doUpdateTransform = false;
-                UpdateTransform(transform.position, transform.rotation);
-            }
+            UpdateTransform(followPosition, followRotation);
         }
 
         private bool doUpdateTransform = false;
@@ -320,6 +319,11 @@ namespace AggroBird.GameFramework
                 overrideDuration = Mathf.Max(0.001f, duration);
                 overrideStartTime = Time.time;
             }
+        }
+
+        protected virtual void OnValidate()
+        {
+            Utility.EnsureComponentReference(this, ref cameraComponent);
         }
     }
 }
