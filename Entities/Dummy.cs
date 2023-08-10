@@ -1,7 +1,5 @@
 using AggroBird.UnityExtend;
 using UnityEngine;
-using UnityEngine.Animations;
-using UnityEngine.Playables;
 
 namespace AggroBird.GameFramework
 {

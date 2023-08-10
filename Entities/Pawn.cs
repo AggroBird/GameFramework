@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace AggroBird.GameFramework
 {
-    [DisallowMultipleComponent]
     public class Pawn : Entity
     {
         [SerializeField] private Dummy dummy;
