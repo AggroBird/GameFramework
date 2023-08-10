@@ -6,17 +6,8 @@ namespace AggroBird.GameFramework
     [RequireComponent(typeof(Camera))]
     public class FollowCamera : PlayerCamera
     {
-        public enum UpdateMode
-        {
-            Update,
-            LateUpdate,
-            FixedUpdate,
-        }
-
         [SerializeField, HideInInspector] private Camera cameraComponent;
         public override Camera Camera => cameraComponent;
-
-        public UpdateMode updateMode = UpdateMode.LateUpdate;
 
         [Space]
         [Clamped(min: 0)] public int playerIndex = 0;
@@ -39,14 +30,14 @@ namespace AggroBird.GameFramework
         private Quaternion followRotation;
 
         // Position/rotation that the follow camera desires
-        public Vector3 FollowPosition =>
+        public override Vector3 Position =>
 #if UNITY_EDITOR
-            !Application.IsPlaying(gameObject) ? transform.position :
+            !Application.IsPlaying(gameObject) ? base.Position :
 #endif
             followPosition;
-        public Quaternion FollowRotation =>
+        public override Quaternion Rotation =>
 #if UNITY_EDITOR
-            !Application.IsPlaying(gameObject) ? transform.rotation :
+            !Application.IsPlaying(gameObject) ? base.Rotation :
 # endif
             followRotation;
 
@@ -93,6 +84,13 @@ namespace AggroBird.GameFramework
 
         protected virtual void Awake()
         {
+#if UNITY_EDITOR
+            if (!cameraComponent)
+            {
+                cameraComponent = GetComponent<Camera>();
+            }
+#endif
+
             offsetLength = followOffset.magnitude;
 
             rotation = new Rotator2(pitch, transform.eulerAngles.y);
@@ -102,39 +100,7 @@ namespace AggroBird.GameFramework
             followRotation = transform.rotation;
         }
 
-        protected virtual void Update()
-        {
-            if (updateMode == UpdateMode.Update)
-            {
-                UpdateInput();
-
-                UpdateTransform();
-            }
-        }
-
-        protected virtual void LateUpdate()
-        {
-            // Also perform input for fixed update
-            if (updateMode == UpdateMode.LateUpdate || updateMode == UpdateMode.FixedUpdate)
-            {
-                UpdateInput();
-            }
-
-            if (updateMode == UpdateMode.LateUpdate)
-            {
-                UpdateTransform();
-            }
-        }
-
-        protected virtual void FixedUpdate()
-        {
-            if (updateMode == UpdateMode.FixedUpdate)
-            {
-                UpdateTransform();
-            }
-        }
-
-        private void UpdateInput()
+        protected override void UpdateInput()
         {
             Pawn target = null;
             if (TryGetPlayer(out Player player))
@@ -183,10 +149,9 @@ namespace AggroBird.GameFramework
             if (inputForce < 0) inputForce = 0;
         }
 
-        private void UpdateTransform()
+        protected override void UpdateTransform()
         {
-            doUpdateTransform = Application.IsPlaying(gameObject) && CurrentTarget && updatePosition;
-            if (doUpdateTransform)
+            if (Application.IsPlaying(gameObject) && CurrentTarget && updatePosition)
             {
                 float deltaTime = Time.deltaTime;
 
@@ -266,16 +231,7 @@ namespace AggroBird.GameFramework
 
                 followPosition = setPosition;
                 followRotation = setRotation;
-            }
-            UpdateTransform(followPosition, followRotation);
-        }
-
-        private bool doUpdateTransform = false;
-        protected virtual void UpdateTransform(Vector3 position, Quaternion rotation)
-        {
-            if (doUpdateTransform)
-            {
-                transform.SetPositionAndRotation(position, rotation);
+                transform.SetPositionAndRotation(followPosition, followRotation);
             }
         }
 
