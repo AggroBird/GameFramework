@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace AggroBird.GameFramework
 {
-    [ExecuteAlways, RequireComponent(typeof(Camera))]
+    [RequireComponent(typeof(Camera))]
     public class FollowCamera : PlayerCamera
     {
         public enum UpdateMode
@@ -39,8 +39,16 @@ namespace AggroBird.GameFramework
         private Quaternion followRotation;
 
         // Position/rotation that the follow camera desires
-        public Vector3 FollowPosition => followPosition;
-        public Quaternion FollowRotation => followRotation;
+        public Vector3 FollowPosition =>
+#if UNITY_EDITOR
+            !Application.IsPlaying(gameObject) ? transform.position :
+#endif
+            followPosition;
+        public Quaternion FollowRotation =>
+#if UNITY_EDITOR
+            !Application.IsPlaying(gameObject) ? transform.rotation :
+# endif
+            followRotation;
 
         [System.NonSerialized]
         public Rotator2 rotation;
