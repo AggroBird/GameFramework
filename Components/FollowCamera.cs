@@ -177,7 +177,7 @@ namespace AggroBird.GameFramework
 
         private void UpdateTransform()
         {
-            doUpdateTransform = CurrentTarget && updatePosition;
+            doUpdateTransform = Application.IsPlaying(gameObject) && CurrentTarget && updatePosition;
             if (doUpdateTransform)
             {
                 float deltaTime = Time.deltaTime;
