@@ -10,8 +10,6 @@ namespace AggroBird.GameFramework
         public override Camera Camera => cameraComponent;
 
         [Space]
-        [Clamped(min: 0)] public int playerIndex = 0;
-        [Space]
         public LayerMask collisionMask = 1;
         [Space]
         [Clamped(min: 0)] public float linearFollowSpeed = 10;
@@ -71,16 +69,6 @@ namespace AggroBird.GameFramework
         private float overrideDuration;
         private float overrideStartTime;
 
-        protected bool TryGetPlayer<T>(out T player) where T : Player
-        {
-            if (AppInstance.TryGetInstance(out AppInstance instance) && instance.TryGetPlayer(playerIndex, out player))
-            {
-                return true;
-            }
-            player = null;
-            return false;
-        }
-
 
         protected virtual void Awake()
         {
@@ -102,51 +90,49 @@ namespace AggroBird.GameFramework
 
         protected override void UpdateInput()
         {
-            Pawn target = null;
-            if (TryGetPlayer(out Player player))
+            base.UpdateInput();
+
+            if (Owner)
             {
-                target = player.Pawn;
-            }
-
-            if (!ReferenceEquals(CurrentTarget, target))
-            {
-                bool hadTarget = !ReferenceEquals(CurrentTarget, null);
-                if (CurrentTarget && CurrentTarget.TryGetOwner(out Player currentOwner))
+                Pawn target = Owner.Pawn;
+                if (!ReferenceEquals(CurrentTarget, target))
                 {
-                    currentOwner.UnregisterCamera(this);
-                }
-
-                CurrentTarget = target;
-
-                if (CurrentTarget)
-                {
-                    player.RegisterCamera(this);
-
-                    Vector3 targetPos = CurrentTarget.transform.position + originOffset;
-                    if (!hadTarget || Vector3.Distance(targetPos, targetCurrentPosition) > 5)
+                    bool hadTarget = !ReferenceEquals(CurrentTarget, null);
+                    if (CurrentTarget && CurrentTarget.TryGetOwner(out Player currentOwner))
                     {
-                        rotation.yaw = CurrentTarget.transform.eulerAngles.y;
-                        targetCurrentPosition = targetPreviousPosition = targetPos;
-                        transform.eulerAngles = new Vector3(pitch + rotation.pitch, rotation.yaw, 0);
+                        currentOwner.UnregisterCamera(this);
+                    }
+
+                    CurrentTarget = target;
+
+                    if (CurrentTarget)
+                    {
+                        Vector3 targetPos = CurrentTarget.transform.position + originOffset;
+                        if (!hadTarget || Vector3.Distance(targetPos, targetCurrentPosition) > 5)
+                        {
+                            rotation.yaw = CurrentTarget.transform.eulerAngles.y;
+                            targetCurrentPosition = targetPreviousPosition = targetPos;
+                            transform.eulerAngles = new Vector3(pitch + rotation.pitch, rotation.yaw, 0);
+                        }
                     }
                 }
-            }
 
-            if (updateInput && overrideState != OverrideState.In && CurrentTarget && CurrentTarget.TryGetOwner(out Player owner))
-            {
-                if (owner.TryGetController(out Controller controller))
+                if (updateInput && overrideState != OverrideState.In && CurrentTarget && CurrentTarget.TryGetOwner(out Player owner))
                 {
-                    Vector2 cameraInput = controller.CameraInput;
-                    inputForce += cameraInput.magnitude;
-                    if (inputForce > 1.5f) inputForce = 1.5f;
-                    rotation.pitch = pitchRange.Clamp(rotation.pitch - cameraInput.y);
-                    rotation.yaw += cameraInput.x;
-                    rotation.yaw = Mathfx.ModAbs(rotation.yaw, 360);
+                    if (owner.TryGetController(out Controller controller))
+                    {
+                        Vector2 cameraInput = controller.CameraInput;
+                        inputForce += cameraInput.magnitude;
+                        if (inputForce > 1.5f) inputForce = 1.5f;
+                        rotation.pitch = pitchRange.Clamp(rotation.pitch - cameraInput.y);
+                        rotation.yaw += cameraInput.x;
+                        rotation.yaw = Mathfx.ModAbs(rotation.yaw, 360);
+                    }
                 }
-            }
 
-            inputForce -= Time.deltaTime;
-            if (inputForce < 0) inputForce = 0;
+                inputForce -= Time.deltaTime;
+                if (inputForce < 0) inputForce = 0;
+            }
         }
 
         protected override void UpdateTransform()
@@ -232,18 +218,6 @@ namespace AggroBird.GameFramework
                 followPosition = setPosition;
                 followRotation = setRotation;
                 transform.SetPositionAndRotation(followPosition, followRotation);
-            }
-        }
-
-        protected virtual void OnEnable()
-        {
-
-        }
-        protected virtual void OnDisable()
-        {
-            if (CurrentTarget && CurrentTarget.Owner)
-            {
-                CurrentTarget.Owner.UnregisterCamera(this);
             }
         }
 

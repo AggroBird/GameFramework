@@ -1,3 +1,4 @@
+using AggroBird.UnityExtend;
 using UnityEngine;
 
 namespace AggroBird.GameFramework
@@ -22,6 +23,10 @@ namespace AggroBird.GameFramework
         }
 
         public UpdateMode updateMode = UpdateMode.LateUpdate;
+        [Space]
+        [Clamped(min: 0)] public int playerIndex = 0;
+
+        public Player Owner { get; private set; }
 
 
         protected virtual void Update()
@@ -58,11 +63,42 @@ namespace AggroBird.GameFramework
 
         protected virtual void UpdateInput()
         {
+            if (AppInstance.TryGetInstance(out AppInstance instance) && instance.TryGetPlayer(playerIndex, out Player player))
+            {
+                if (player != Owner)
+                {
+                    if (Owner)
+                    {
+                        Owner.UnregisterCamera(this);
+                    }
 
+                    player.RegisterCamera(this);
+                    Owner = player;
+                }
+            }
+            else if (Owner)
+            {
+                Owner.UnregisterCamera(this);
+                Owner = null;
+            }
         }
         protected virtual void UpdateTransform()
         {
 
+        }
+
+
+        protected virtual void OnEnable()
+        {
+
+        }
+        protected virtual void OnDisable()
+        {
+            if (Owner)
+            {
+                Owner.UnregisterCamera(this);
+                Owner = null;
+            }
         }
     }
 }
