@@ -146,12 +146,13 @@ namespace AggroBird.GameFramework
                 if (value)
                 {
                     rigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
-                    rigidbody.isKinematic = true;
                     rigidbody.velocity = Vector3.zero;
+                    rigidbody.isKinematic = true;
                 }
                 else
                 {
                     rigidbody.isKinematic = false;
+                    rigidbody.velocity = Vector3.zero;
                     rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
                 }
             }
