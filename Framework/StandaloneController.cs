@@ -2,26 +2,27 @@ using AggroBird.UnityExtend;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.LowLevel;
+using GamepadButtonCode = UnityEngine.InputSystem.LowLevel.GamepadButton;
+using KeyCode = UnityEngine.InputSystem.Key;
 
 namespace AggroBird.GameFramework
 {
     // Simple controller for standalone applications (with keyboard and mouse)
     internal class StandaloneController : Controller
     {
-        private static readonly Key[] KeyboardDirections =
+        private static readonly KeyCode[] KeyboardDirections =
         {
-            Key.LeftArrow,
-            Key.UpArrow,
-            Key.RightArrow,
-            Key.DownArrow,
+            KeyCode.LeftArrow,
+            KeyCode.UpArrow,
+            KeyCode.RightArrow,
+            KeyCode.DownArrow,
         };
-        private static readonly GamepadButton[] DpadDirections =
+        private static readonly GamepadButtonCode[] DpadDirections =
         {
-            GamepadButton.DpadLeft,
-            GamepadButton.DpadUp,
-            GamepadButton.DpadRight,
-            GamepadButton.DpadDown,
+            GamepadButtonCode.DpadLeft,
+            GamepadButtonCode.DpadUp,
+            GamepadButtonCode.DpadRight,
+            GamepadButtonCode.DpadDown,
         };
         private bool hasDirectionInput = false;
         private double directionInputTime;
@@ -36,8 +37,8 @@ namespace AggroBird.GameFramework
             Keyboard keyboard = Keyboard.current;
             if (keyboard != null)
             {
-                confirm |= keyboard[Key.Enter].wasPressedThisFrame;
-                cancel |= keyboard[Key.Escape].wasPressedThisFrame;
+                confirm |= keyboard[KeyCode.Enter].wasPressedThisFrame;
+                cancel |= keyboard[KeyCode.Escape].wasPressedThisFrame;
 
                 for (int i = 0; i < 4; i++)
                 {
@@ -52,8 +53,8 @@ namespace AggroBird.GameFramework
             Gamepad gamepad = Gamepad.current;
             if (gamepad != null)
             {
-                confirm |= gamepad[GamepadButton.A].wasPressedThisFrame;
-                cancel |= gamepad[GamepadButton.B].wasPressedThisFrame;
+                confirm |= gamepad[GamepadButtonCode.A].wasPressedThisFrame;
+                cancel |= gamepad[GamepadButtonCode.B].wasPressedThisFrame;
 
                 if (activeDirection == MoveDirection.None)
                 {

@@ -30,12 +30,12 @@ namespace AggroBird.GameFramework
             UpdateInteractables();
         }
 
-        public virtual void UpdateInput(ButtonStateObject input)
+        public virtual void UpdateInput(InputButton input)
         {
             UpdateInteractables();
 
             // Update input
-            switch (input.state)
+            switch (input.State)
             {
                 case ButtonState.Pressed:
                     BeginInteract();
