@@ -70,7 +70,7 @@ namespace AggroBird.GameFramework
             }
         }
 
-        public override Controller CreateController(int player)
+        public override Controller CreateController(Player player)
         {
             return CreateInstance<StandaloneController>();
         }

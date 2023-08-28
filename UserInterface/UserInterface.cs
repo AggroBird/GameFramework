@@ -170,23 +170,17 @@ namespace AggroBird.GameFramework
         }
         public virtual void UpdateInput(Controller controller)
         {
-            bool confirm = controller.Confirm;
-            bool cancel = controller.Cancel;
-            bool direction = controller.DirectionInput != MoveDirection.None;
-            if (confirm || cancel || direction)
+            if (stack.Count > 0)
             {
-                if (stack.Count > 0)
+                Menu top = stack[^1];
+                if (top.IsOpen)
                 {
-                    Menu top = stack[^1];
-                    if (top.IsOpen)
-                    {
-                        if (confirm && top.OnConfirm())
-                            confirm = false;
-                        if (cancel && top.OnCancel())
-                            cancel = false;
-                        if (direction && top.OnDirection(controller.DirectionInput))
-                            direction = false;
-                    }
+                    if (controller.Confirm && top.OnConfirm())
+                        controller.Confirm.Use();
+                    if (controller.Cancel && top.OnCancel())
+                        controller.Cancel.Use();
+                    if (controller.DirectionInput != Direction.None && top.OnDirection(controller.DirectionInput))
+                        controller.DirectionInput.Use();
                 }
             }
         }

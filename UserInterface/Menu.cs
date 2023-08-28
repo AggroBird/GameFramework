@@ -94,7 +94,7 @@ namespace AggroBird.GameFramework
 
             return true;
         }
-        public virtual bool OnDirection(MoveDirection direction)
+        public virtual bool OnDirection(Direction direction)
         {
             EventSystem eventSystem = Parent.EventSystem;
             if (eventSystem)
@@ -103,8 +103,17 @@ namespace AggroBird.GameFramework
                 GameObject selectedGameobject = eventSystem.currentSelectedGameObject;
                 if (selectedGameobject && selectedGameobject.GetComponentInParent<Widget>() == this)
                 {
-                    AxisEventData data = new(Parent.EventSystem);
-                    data.moveDir = direction;
+                    AxisEventData data = new(Parent.EventSystem)
+                    {
+                        moveDir = direction switch
+                        {
+                            Direction.Up => MoveDirection.Up,
+                            Direction.Right => MoveDirection.Right,
+                            Direction.Down => MoveDirection.Down,
+                            Direction.Left => MoveDirection.Left,
+                            _ => MoveDirection.None,
+                        }
+                    };
                     ExecuteEvents.Execute(selectedGameobject, data, ExecuteEvents.moveHandler);
                 }
             }

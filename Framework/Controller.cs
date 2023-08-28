@@ -1,635 +1,30 @@
-using AggroBird.UnityExtend;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.Controls;
-using GamepadButtonCode = UnityEngine.InputSystem.LowLevel.GamepadButton;
-using KeyCode = UnityEngine.InputSystem.Key;
-using MouseButtonCode = UnityEngine.InputSystem.LowLevel.MouseButton;
 
 namespace AggroBird.GameFramework
 {
-    public enum GamepadStickCode
-    {
-        LeftStick,
-        RightStick,
-    }
-
-    public enum AxisDirection
-    {
-        Horizontal,
-        Vertical,
-    }
-
-    public static class InputSystemUtility
-    {
-        public static StickControl GetStickControl(this Gamepad gamepad, GamepadStickCode stick)
-        {
-            return stick == GamepadStickCode.LeftStick ? gamepad.leftStick : gamepad.rightStick;
-        }
-        public static ButtonControl GetMouseButton(this Mouse mouse, MouseButtonCode mouseButton)
-        {
-            return mouseButton switch
-            {
-                MouseButtonCode.Left => mouse.leftButton,
-                MouseButtonCode.Right => mouse.rightButton,
-                MouseButtonCode.Middle => mouse.middleButton,
-                MouseButtonCode.Forward => mouse.forwardButton,
-                MouseButtonCode.Back => mouse.backButton,
-                _ => throw new ArgumentException("Invalid mouse button"),
-            };
-        }
-    }
-
-    public enum ButtonState
-    {
-        None = 0,
-        Pressed,
-        Held,
-        Released,
-    }
-
-    public enum InputDirectionValue
-    {
-        None = 0,
-        Up,
-        Right,
-        Down,
-        Left,
-    }
-
-    // Input elements
-    [Serializable]
-    public abstract class InputElement
-    {
-        public abstract void Update(int index = 0);
-
-        protected static bool TryGetKeyboard(int index, out Keyboard keyboard)
-        {
-            if (index == 0)
-            {
-                keyboard = Keyboard.current;
-                return keyboard != null;
-            }
-
-            keyboard = null;
-            return false;
-        }
-        protected static bool TryGetMouse(int index, out Mouse mouse)
-        {
-            if (index == 0)
-            {
-                mouse = Mouse.current;
-                return mouse != null;
-            }
-
-            mouse = null;
-            return false;
-        }
-        protected static bool TryGetGamepad(int index, out Gamepad gamepad)
-        {
-            var gamepads = Gamepad.all;
-            if ((uint)index < (uint)gamepads.Count)
-            {
-                gamepad = gamepads[index];
-                return true;
-            }
-            gamepad = null;
-            return false;
-        }
-    }
-
-    // Buttons
-    [Serializable]
-    public abstract class InputButton : InputElement
-    {
-        public abstract ButtonState State { get; }
-
-        public bool IsPressed => State == ButtonState.Pressed;
-        public bool IsHeld => State == ButtonState.Held;
-        public bool IsReleased => State == ButtonState.Released;
-
-        protected static void UpdateState(ref ButtonState state, bool isPressed)
-        {
-            switch (state)
-            {
-                case ButtonState.None:
-                    if (isPressed) state = ButtonState.Pressed;
-                    break;
-                case ButtonState.Pressed:
-                    state = isPressed ? ButtonState.Held : ButtonState.Released;
-                    break;
-                case ButtonState.Held:
-                    if (!isPressed) state = ButtonState.Released;
-                    break;
-                case ButtonState.Released:
-                    state = isPressed ? ButtonState.Pressed : ButtonState.None;
-                    break;
-            }
-        }
-    }
-
-    [Serializable]
-    [PolymorphicClassType(Tooltip = "Binary keyboard key switch (true/false)")]
-    public sealed class KeyboardKey : InputButton
-    {
-        public KeyboardKey(KeyCode key)
-        {
-            Key = key;
-        }
-
-        [field: SerializeField] public KeyCode Key { get; private set; }
-
-        public override ButtonState State => state;
-        private ButtonState state;
-
-        public override void Update(int index = 0)
-        {
-            if (Key != KeyCode.None && TryGetKeyboard(index, out Keyboard keyboard))
-            {
-                UpdateState(ref state, keyboard[Key].isPressed);
-                return;
-            }
-
-            UpdateState(ref state, false);
-        }
-    }
-
-    [Serializable]
-    [PolymorphicClassType(Tooltip = "Binary mouse button switch (true/false)")]
-    public sealed class MouseButton : InputButton
-    {
-        public MouseButton(MouseButtonCode button)
-        {
-            Button = button;
-        }
-
-        [field: SerializeField] public MouseButtonCode Button { get; private set; }
-
-        public override ButtonState State => state;
-        private ButtonState state;
-
-        public override void Update(int index = 0)
-        {
-            if (TryGetMouse(index, out Mouse mouse))
-            {
-                UpdateState(ref state, InputSystemUtility.GetMouseButton(mouse, Button).isPressed);
-                return;
-            }
-
-            UpdateState(ref state, false);
-        }
-    }
-
-    [Serializable]
-    [PolymorphicClassType(Tooltip = "Binary gamepad button switch (true/false)")]
-    public sealed class GamepadButton : InputButton
-    {
-        public GamepadButton(GamepadButtonCode button)
-        {
-            Button = button;
-        }
-
-        [field: SerializeField] public GamepadButtonCode Button { get; private set; }
-
-        public override ButtonState State => state;
-        private ButtonState state;
-
-        public override void Update(int index = 0)
-        {
-            if (TryGetGamepad(index, out Gamepad gamepad))
-            {
-                UpdateState(ref state, gamepad[Button].isPressed);
-                return;
-            }
-
-            UpdateState(ref state, false);
-        }
-    }
-
-    // UI Directions
-    [Serializable]
-    public abstract class InputDirection : InputElement
-    {
-        public abstract InputDirectionValue Value { get; }
-    }
-
-    [Serializable]
-    [PolymorphicClassType(Tooltip = "4-dimentional keyboard user interface input (up/down/left/right)")]
-    public sealed class KeyboardInputDirection : InputDirection
-    {
-        public KeyboardInputDirection(KeyCode up, KeyCode right, KeyCode down, KeyCode left)
-        {
-            Up = up;
-            Right = right;
-            Down = down;
-            Left = left;
-        }
-
-        [field: SerializeField] public KeyCode Up { get; private set; }
-        [field: SerializeField] public KeyCode Right { get; private set; }
-        [field: SerializeField] public KeyCode Down { get; private set; }
-        [field: SerializeField] public KeyCode Left { get; private set; }
-
-        public override InputDirectionValue Value => value;
-        private InputDirectionValue value;
-
-        public override void Update(int index = 0)
-        {
-            if (TryGetKeyboard(index, out Keyboard keyboard))
-            {
-                int y = 0;
-                if (keyboard[Up].isPressed) y++;
-                if (keyboard[Down].isPressed) y--;
-                if (y == 1)
-                {
-                    value = InputDirectionValue.Up;
-                    return;
-                }
-                if (y == -1)
-                {
-                    value = InputDirectionValue.Down;
-                    return;
-                }
-
-                int x = 0;
-                if (keyboard[Right].isPressed) x++;
-                if (keyboard[Left].isPressed) x--;
-                if (x == 1)
-                {
-                    value = InputDirectionValue.Right;
-                    return;
-                }
-                else if (x == -1)
-                {
-                    value = InputDirectionValue.Left;
-                    return;
-                }
-            }
-
-            value = InputDirectionValue.None;
-        }
-    }
-
-    [Serializable]
-    [PolymorphicClassType(Tooltip = "4-dimentional gamepad user interface input (up/down/left/right)")]
-    public sealed class GamepadInputDirection : InputDirection
-    {
-        public GamepadInputDirection(GamepadButtonCode up, GamepadButtonCode right, GamepadButtonCode down, GamepadButtonCode left)
-        {
-            Up = up;
-            Right = right;
-            Down = down;
-            Left = left;
-        }
-
-        [field: SerializeField] public GamepadButtonCode Up { get; private set; }
-        [field: SerializeField] public GamepadButtonCode Right { get; private set; }
-        [field: SerializeField] public GamepadButtonCode Down { get; private set; }
-        [field: SerializeField] public GamepadButtonCode Left { get; private set; }
-
-        public override InputDirectionValue Value => value;
-        private InputDirectionValue value;
-
-        public override void Update(int index = 0)
-        {
-            if (TryGetGamepad(index, out Gamepad gamepad))
-            {
-                int y = 0;
-                if (gamepad[Up].isPressed) y++;
-                if (gamepad[Down].isPressed) y--;
-                if (y == 1)
-                {
-                    value = InputDirectionValue.Up;
-                    return;
-                }
-                if (y == -1)
-                {
-                    value = InputDirectionValue.Down;
-                    return;
-                }
-
-                int x = 0;
-                if (gamepad[Right].isPressed) x++;
-                if (gamepad[Left].isPressed) x--;
-                if (x == 1)
-                {
-                    value = InputDirectionValue.Right;
-                    return;
-                }
-                else if (x == -1)
-                {
-                    value = InputDirectionValue.Left;
-                    return;
-                }
-            }
-
-            value = InputDirectionValue.None;
-        }
-    }
-
-    // Axes
-    [Serializable]
-    public abstract class InputAxis : InputElement
-    {
-
-    }
-
-    // Linear axes
-    [Serializable]
-    public abstract class LinearAxis : InputAxis
-    {
-        public abstract float Value { get; }
-    }
-
-    [Serializable]
-    [PolymorphicClassType(Tooltip = "Keyboard single key axis (range 0 to 1)")]
-    public sealed class KeyboardAxisButton : LinearAxis
-    {
-        public KeyboardAxisButton(KeyCode key)
-        {
-            Key = key;
-        }
-
-        [field: SerializeField] public KeyCode Key { get; private set; }
-
-        public override float Value => value;
-        private float value;
-
-        public override void Update(int index = 0)
-        {
-            if (TryGetKeyboard(index, out Keyboard keyboard))
-            {
-                value = keyboard[Key].ReadValue();
-                return;
-            }
-
-            value = 0;
-        }
-    }
-
-    [Serializable]
-    [PolymorphicClassType(Tooltip = "Mouse single button axis (range 0 to 1)")]
-    public sealed class MouseAxisButton : LinearAxis
-    {
-        public MouseAxisButton(MouseButtonCode button)
-        {
-            Button = button;
-        }
-
-        [field: SerializeField] public MouseButtonCode Button { get; private set; }
-
-        public override float Value => value;
-        private float value;
-
-        public override void Update(int index = 0)
-        {
-            if (TryGetMouse(index, out Mouse mouse))
-            {
-                value = InputSystemUtility.GetMouseButton(mouse, Button).ReadValue();
-                return;
-            }
-
-            value = 0;
-        }
-    }
-
-    [Serializable]
-    [PolymorphicClassType(Tooltip = "Gamepad single button axis (range 0 to 1)")]
-    public sealed class GamepadAxisButton : LinearAxis
-    {
-        public GamepadAxisButton(GamepadButtonCode button)
-        {
-            Button = button;
-        }
-
-        [field: SerializeField] public GamepadButtonCode Button { get; private set; }
-
-        public override float Value => value;
-        private float value;
-
-        public override void Update(int index = 0)
-        {
-            if (TryGetGamepad(index, out Gamepad gamepad))
-            {
-                value = gamepad[Button].ReadValue();
-                return;
-            }
-
-            value = 0;
-        }
-    }
-
-    [Serializable]
-    [PolymorphicClassType(Tooltip = "Keyboard linear axis between two keys (range -1 to 1)")]
-    public sealed class KeyboardKeyLinearAxis : LinearAxis
-    {
-        public KeyboardKeyLinearAxis(KeyCode positive, KeyCode negative)
-        {
-            Positive = positive;
-            Negative = negative;
-        }
-
-        [field: SerializeField] public KeyCode Positive { get; private set; }
-        [field: SerializeField] public KeyCode Negative { get; private set; }
-
-        public override float Value => value;
-        private float value;
-
-        public override void Update(int index = 0)
-        {
-            if (TryGetKeyboard(index, out Keyboard keyboard))
-            {
-                value = keyboard[Positive].ReadValue() - keyboard[Negative].ReadValue();
-                return;
-            }
-
-            value = 0;
-        }
-    }
-
-    [Serializable]
-    [PolymorphicClassType(Tooltip = "Gamepad linear axis between two buttons (range -1 to 1)")]
-    public sealed class GamepadButtonLinearAxis : LinearAxis
-    {
-        public GamepadButtonLinearAxis(GamepadButtonCode positive, GamepadButtonCode negative)
-        {
-            Positive = positive;
-            Negative = negative;
-        }
-
-        [field: SerializeField] public GamepadButtonCode Positive { get; private set; }
-        [field: SerializeField] public GamepadButtonCode Negative { get; private set; }
-
-        public override float Value => value;
-        private float value;
-
-        public override void Update(int index = 0)
-        {
-            if (TryGetGamepad(index, out Gamepad gamepad))
-            {
-                value = gamepad[Positive].ReadValue() - gamepad[Negative].ReadValue();
-                return;
-            }
-
-            value = 0;
-        }
-    }
-
-    [Serializable]
-    [PolymorphicClassType(Tooltip = "Gamepad linear axis between along single stick axis (range -1 to 1)")]
-    public sealed class GamepadStickLinearAxis : LinearAxis
-    {
-        public GamepadStickLinearAxis(GamepadStickCode stick, AxisDirection axis)
-        {
-            Stick = stick;
-            Axis = axis;
-        }
-
-        [field: SerializeField] public GamepadStickCode Stick { get; private set; }
-        [field: SerializeField] public AxisDirection Axis { get; private set; }
-
-        public override float Value => value;
-        private float value;
-
-        public override void Update(int index = 0)
-        {
-            if (TryGetGamepad(index, out Gamepad gamepad))
-            {
-                StickControl stick = Stick == GamepadStickCode.RightStick ? gamepad.rightStick : gamepad.leftStick;
-                value = Axis == AxisDirection.Vertical ? stick.ReadValue().y : stick.ReadValue().x;
-                return;
-            }
-
-            value = 0;
-        }
-    }
-
-    // Vector axes
-    [Serializable]
-    public abstract class VectorAxis : InputAxis
-    {
-        public abstract Vector2 Value { get; }
-    }
-
-    [Serializable]
-    [PolymorphicClassType(Tooltip = "4-dimentional keyboard vector input")]
-    public sealed class KeyboardVectorAxis : VectorAxis
-    {
-        public KeyboardVectorAxis(KeyCode up, KeyCode right, KeyCode down, KeyCode left)
-        {
-            Up = up;
-            Right = right;
-            Down = down;
-            Left = left;
-        }
-
-        [field: SerializeField] public KeyCode Up { get; private set; }
-        [field: SerializeField] public KeyCode Right { get; private set; }
-        [field: SerializeField] public KeyCode Down { get; private set; }
-        [field: SerializeField] public KeyCode Left { get; private set; }
-
-        public override Vector2 Value => value;
-        private Vector2 value;
-
-        public override void Update(int index = 0)
-        {
-            value = Vector2.zero;
-
-            if (TryGetKeyboard(index, out Keyboard keyboard))
-            {
-                if (keyboard[Left].isPressed) value.x++;
-                if (keyboard[Right].isPressed) value.x--;
-                if (keyboard[Up].isPressed) value.y++;
-                if (keyboard[Down].isPressed) value.y--;
-            }
-        }
-    }
-
-    [Serializable]
-    [PolymorphicClassType(Tooltip = "4-dimentional gamepad D-Pad vector input")]
-    public sealed class GamepadDPadVectorAxis : VectorAxis
-    {
-        public GamepadDPadVectorAxis(GamepadButtonCode up, GamepadButtonCode right, GamepadButtonCode down, GamepadButtonCode left)
-        {
-            Up = up;
-            Right = right;
-            Down = down;
-            Left = left;
-        }
-
-        [field: SerializeField] public GamepadButtonCode Up { get; private set; }
-        [field: SerializeField] public GamepadButtonCode Right { get; private set; }
-        [field: SerializeField] public GamepadButtonCode Down { get; private set; }
-        [field: SerializeField] public GamepadButtonCode Left { get; private set; }
-
-        public override Vector2 Value => value;
-        private Vector2 value;
-
-        public override void Update(int index = 0)
-        {
-            value = Vector2.zero;
-
-            if (TryGetGamepad(index, out Gamepad gamepad))
-            {
-                if (gamepad[Left].isPressed) value.x++;
-                if (gamepad[Right].isPressed) value.x--;
-                if (gamepad[Up].isPressed) value.y++;
-                if (gamepad[Down].isPressed) value.y--;
-            }
-        }
-    }
-
-    [Serializable]
-    [PolymorphicClassType(Tooltip = "4-dimentional gamepad stick vector input")]
-    public sealed class GamepadStickVectorAxis : VectorAxis
-    {
-        public GamepadStickVectorAxis(GamepadStickCode stick)
-        {
-            Stick = stick;
-        }
-
-        [field: SerializeField] public GamepadStickCode Stick { get; private set; }
-
-        public override Vector2 Value => value;
-        private Vector2 value;
-
-        public override void Update(int index = 0)
-        {
-            if (TryGetGamepad(index, out Gamepad gamepad))
-            {
-                value = (Stick == GamepadStickCode.RightStick ? gamepad.rightStick : gamepad.leftStick).ReadValue();
-                return;
-            }
-
-            value = Vector2.zero;
-        }
-    }
-
-    // User interface input action
+    // Consumable input action
     public abstract class InputAction<T>
     {
-        public InputAction(T defaultValue = default)
+        internal InputAction()
         {
-            this.defaultValue = value = defaultValue;
-            reactive = new(defaultValue);
+            reactive = new(default);
         }
 
+        protected T value = default;
         public T Value => value;
 
-        protected T value = default;
         protected readonly AsyncReactiveProperty<T> reactive;
-        private readonly T defaultValue;
 
         public UniTask<T> WaitAsync(CancellationToken cancellationToken = default) => reactive.WaitAsync(cancellationToken);
 
         public void Use()
         {
-            value = defaultValue;
+            value = default;
         }
         public T GetValue(bool use)
         {
@@ -644,18 +39,56 @@ namespace AggroBird.GameFramework
         }
     }
 
+    // Input axis
+    public abstract class InputAxis<T>
+    {
+        internal InputAxis()
+        {
+
+        }
+
+        protected T value;
+        public T Value => value;
+
+        public static implicit operator T(InputAxis<T> action)
+        {
+            return action.value;
+        }
+    }
+
+    // Add this attribute to InputAction<T> or InputAxis<T> to bind input elements to them
+    // InputButton maps to InputAction<bool>
+    // InputDirection maps to InputAction<Direction>
+    // LinearAxis maps to InputAxis<float>
+    // VectorAxis maps to InputAxis<Vector2>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = true)]
+    public sealed class BindInputAttribute : Attribute
+    {
+        public BindInputAttribute(string memberName)
+        {
+            this.memberName = memberName;
+        }
+
+        public readonly string memberName;
+    }
+
+    // Add this attribute to InputAxis<T> to clamp the magnitude
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]
+    public sealed class ClampAxisMagnitudeAttribute : Attribute
+    {
+        public ClampAxisMagnitudeAttribute(float max)
+        {
+            this.max = max;
+        }
+
+        public readonly float max;
+    }
+
     // Controller base class
     public abstract class Controller : ScriptableObject
     {
-        public Vector2 CameraInput { get; protected set; }
-
-        protected sealed class WritableInputAction<T> : InputAction<T>
+        protected sealed class WriteableInputAction<T> : InputAction<T>
         {
-            public WritableInputAction(T defaultValue = default) : base(defaultValue)
-            {
-
-            }
-
             public new T Value
             {
                 get => value;
@@ -670,16 +103,349 @@ namespace AggroBird.GameFramework
             }
         }
 
-        protected readonly WritableInputAction<bool> confirm = new();
-        protected readonly WritableInputAction<bool> cancel = new();
-        protected readonly WritableInputAction<MoveDirection> directionInput = new(MoveDirection.None);
+        protected sealed class WriteableInputAxis<T> : InputAxis<T>
+        {
+            public new T Value
+            {
+                get => value;
+                set => this.value = value;
+            }
+        }
 
+        public Vector2 CameraInput { get; protected set; }
         public InputAction<bool> Confirm => confirm;
         public InputAction<bool> Cancel => cancel;
-        public InputAction<MoveDirection> DirectionInput => directionInput;
+        public InputAction<Direction> DirectionInput => directionInput;
+
+        protected readonly WriteableInputAction<bool> confirm = new();
+        protected readonly WriteableInputAction<bool> cancel = new();
+        protected readonly WriteableInputAction<Direction> directionInput = new();
 
 
-        public abstract void UpdateInput(Player player, bool inputEnabled);
+        private sealed class ControllerInputBinding
+        {
+            const BindingFlags MemberBindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+            private abstract class MemberBinding
+            {
+                public Type MemberType { get; protected set; }
+                public abstract object GetValue(object target);
+                public abstract void SetValue(object target, object value);
+            }
+
+            private sealed class FieldBinding : MemberBinding
+            {
+                public FieldBinding(FieldInfo fieldInfo)
+                {
+                    this.fieldInfo = fieldInfo;
+                    MemberType = fieldInfo.FieldType;
+                }
+
+                private readonly FieldInfo fieldInfo;
+
+                public override object GetValue(object target) => fieldInfo.GetValue(target);
+                public override void SetValue(object target, object value) => fieldInfo.SetValue(target, value);
+            }
+
+            private sealed class PropertyBinding : MemberBinding
+            {
+                public PropertyBinding(PropertyInfo propertyInfo)
+                {
+                    this.propertyInfo = propertyInfo;
+                    MemberType = propertyInfo.PropertyType;
+                }
+
+                private readonly PropertyInfo propertyInfo;
+
+                public override object GetValue(object target) => propertyInfo.GetValue(target);
+                public override void SetValue(object target, object value) => propertyInfo.SetValue(target, value);
+            }
+
+            private abstract class InputBinding
+            {
+                public abstract void Update(Controller controller, int index);
+                public abstract object Target { get; }
+                public readonly List<MemberBinding> inputs = new();
+                public float clampMax;
+
+                protected struct BindingEnumerator<T>
+                {
+                    public BindingEnumerator(object binding)
+                    {
+                        index = -1;
+                        this.binding = binding;
+                        isArray = binding.GetType().IsArray;
+                        count = isArray ? ((Array)binding).Length : 1;
+                    }
+
+                    private int index;
+                    private readonly object binding;
+                    private readonly bool isArray;
+                    private readonly int count;
+
+                    public readonly T Current => (T)(isArray ? ((Array)binding).GetValue(index) : binding);
+                    public bool MoveNext() => ++index < count;
+                }
+                protected readonly struct BindingIterator<T>
+                {
+                    public BindingIterator(Controller controller, MemberBinding binding)
+                    {
+                        this.binding = binding.GetValue(controller);
+                    }
+
+                    private readonly object binding;
+
+                    public BindingEnumerator<T> GetEnumerator()
+                    {
+                        return new BindingEnumerator<T>(binding);
+                    }
+                }
+            }
+
+            private sealed class BoolActionBinding : InputBinding
+            {
+                public readonly WriteableInputAction<bool> action = new();
+
+                public override object Target => action;
+
+                public override void Update(Controller controller, int index)
+                {
+                    bool value = false;
+                    foreach (var input in inputs)
+                    {
+                        foreach (var inputButton in new BindingIterator<InputButton>(controller, input))
+                        {
+                            if (inputButton != null)
+                            {
+                                inputButton.Update(index);
+                                value |= inputButton.IsPressed;
+                            }
+                        }
+                    }
+                    action.Value = value;
+                }
+            }
+
+            private sealed class DirectionActionBinding : InputBinding
+            {
+                public readonly WriteableInputAction<Direction> action = new();
+
+                public override object Target => action;
+
+                public override void Update(Controller controller, int index)
+                {
+                    Direction value = Direction.None;
+                    foreach (var input in inputs)
+                    {
+                        foreach (var inputDirection in new BindingIterator<InputDirection>(controller, input))
+                        {
+                            if (inputDirection != null)
+                            {
+                                inputDirection.Update(index);
+                                if (value == Direction.None)
+                                {
+                                    value = inputDirection.Value;
+                                }
+                            }
+                        }
+                    }
+                    action.Value = value;
+                }
+            }
+
+            private sealed class LinearAxisBinding : InputBinding
+            {
+                public readonly WriteableInputAxis<float> axis = new();
+
+                public override object Target => axis;
+
+                public override void Update(Controller controller, int index)
+                {
+                    float value = 0;
+                    foreach (var input in inputs)
+                    {
+                        foreach (var linearAxis in new BindingIterator<LinearAxis>(controller, input))
+                        {
+                            if (linearAxis != null)
+                            {
+                                linearAxis.Update(index);
+                                value += linearAxis.Value;
+                            }
+                        }
+                    }
+                    axis.Value = Mathf.Clamp(value, -clampMax, clampMax);
+                }
+            }
+
+            private sealed class VectorAxisBinding : InputBinding
+            {
+                public readonly WriteableInputAxis<Vector2> axis = new();
+
+                public override object Target => axis;
+
+                public override void Update(Controller controller, int index)
+                {
+                    Vector2 value = Vector2.zero;
+                    foreach (var input in inputs)
+                    {
+                        foreach (var vectorAxis in new BindingIterator<VectorAxis>(controller, input))
+                        {
+                            if (vectorAxis != null)
+                            {
+                                vectorAxis.Update(index);
+                                value += vectorAxis.Value;
+                            }
+                        }
+                    }
+                    axis.Value = Vector2.ClampMagnitude(value, clampMax);
+                }
+            }
+
+            public ControllerInputBinding(Controller controller)
+            {
+                Type controllerType = controller.GetType();
+                Dictionary<string, InputBinding> memberInputBindings = new();
+                void Bind<T>(string name, MemberBinding target, MemberBinding input, float clampMax = float.MaxValue) where T : InputBinding, new()
+                {
+                    if (!memberInputBindings.TryGetValue(name, out InputBinding binding))
+                    {
+                        binding = new T { clampMax = clampMax };
+                        target.SetValue(controller, binding.Target);
+                        memberInputBindings.Add(name, binding);
+                        bindings.Add(binding);
+                    }
+                    binding.inputs.Add(input);
+                }
+
+                foreach (var member in controllerType.GetMembers(MemberBindingFlags))
+                {
+                    var enumerable = member.GetCustomAttributes<BindInputAttribute>().GetEnumerator();
+                    if (enumerable.MoveNext())
+                    {
+                        MemberBinding inputBinding;
+                        switch (member)
+                        {
+                            case FieldInfo fieldInfo:
+                                inputBinding = new FieldBinding(fieldInfo);
+                                break;
+                            case PropertyInfo propertyInfo:
+                                inputBinding = new PropertyBinding(propertyInfo);
+                                break;
+                            default:
+                                Debug.LogError("Unexpected member type");
+                                continue;
+                        }
+
+                        Type inputElementType = inputBinding.MemberType.IsArray ? inputBinding.MemberType.GetElementType() : inputBinding.MemberType;
+                        do
+                        {
+                            MemberInfo FindTargetMember(string name)
+                            {
+                                foreach (var target in controllerType.FindMembers(MemberTypes.Property | MemberTypes.Field, MemberBindingFlags, findTargetMemberFilter, name))
+                                {
+                                    return target;
+                                }
+                                return null;
+                            }
+
+                            string memberName = enumerable.Current.memberName;
+                            MemberInfo target = FindTargetMember(memberName);
+                            if (target != null)
+                            {
+                                MemberBinding targetBinding;
+                                switch (target)
+                                {
+                                    case FieldInfo fieldInfo:
+                                        targetBinding = new FieldBinding(fieldInfo);
+                                        break;
+                                    case PropertyInfo propertyInfo:
+                                        if (!propertyInfo.CanWrite)
+                                        {
+                                            Debug.LogError($"Failed to bind member '{target.Name}' ({propertyInfo.PropertyType}), property is not assignable");
+                                            continue;
+                                        }
+                                        targetBinding = new PropertyBinding(propertyInfo);
+                                        break;
+                                    default:
+                                        Debug.LogError("Unexpected member type");
+                                        continue;
+                                }
+
+                                Type targetElementType = targetBinding.MemberType;
+                                Type genericTypeDefinition = targetElementType.GetGenericTypeDefinition();
+                                if (genericTypeDefinition != null)
+                                {
+                                    if (genericTypeDefinition.Equals(typeof(InputAction<>)))
+                                    {
+                                        var genericArgument = targetElementType.GetGenericArguments()[0];
+
+                                        if (inputElementType.Equals(typeof(InputButton)) && genericArgument.Equals(typeof(bool)))
+                                        {
+                                            // InputAction<bool>
+                                            Bind<BoolActionBinding>(memberName, targetBinding, inputBinding);
+                                            continue;
+                                        }
+                                        else if (inputElementType.Equals(typeof(InputDirection)) && genericArgument.Equals(typeof(Direction)))
+                                        {
+                                            // InputAction<Direction>
+                                            Bind<DirectionActionBinding>(memberName, targetBinding, inputBinding);
+                                            continue;
+                                        }
+                                    }
+                                    else if (genericTypeDefinition.Equals(typeof(InputAxis<>)))
+                                    {
+                                        var genericArgument = targetElementType.GetGenericArguments()[0];
+
+                                        ClampAxisMagnitudeAttribute clampAttribute = target.GetCustomAttribute<ClampAxisMagnitudeAttribute>();
+                                        float clampMax = clampAttribute == null ? float.MaxValue : clampAttribute.max;
+
+                                        if (inputElementType.Equals(typeof(LinearAxis)) && genericArgument.Equals(typeof(float)))
+                                        {
+                                            // InputAxis<float>
+                                            Bind<LinearAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                            continue;
+                                        }
+                                        else if (inputElementType.Equals(typeof(VectorAxis)) && genericArgument.Equals(typeof(Vector2)))
+                                        {
+                                            // InputAxis<Vector2>
+                                            Bind<VectorAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                            continue;
+                                        }
+                                    }
+                                    Debug.LogError($"Failed to bind input element '{member.Name}' ({inputBinding.MemberType}) to member '{target.Name}' ({targetBinding.MemberType})");
+                                }
+                            }
+                        }
+                        while (enumerable.MoveNext());
+                    }
+                }
+            }
+
+            private readonly List<InputBinding> bindings = new();
+
+            public void Update(Controller controller, int index)
+            {
+                foreach (var binding in bindings)
+                {
+                    binding.Update(controller, index);
+                }
+            }
+        }
+
+        private static bool FindTargetMember(MemberInfo memberInfo, object search)
+        {
+            return memberInfo.Name.Equals((string)search, StringComparison.Ordinal);
+        }
+        private static readonly MemberFilter findTargetMemberFilter = new(FindTargetMember);
+
+        private ControllerInputBinding inputBinding;
+
+
+        protected internal virtual void UpdateInput(Player player, bool inputEnabled)
+        {
+            inputBinding ??= new(this);
+            inputBinding.Update(this, 0);
+        }
 
         public virtual bool GetInputGlyph(int index, out Sprite background, out string text)
         {

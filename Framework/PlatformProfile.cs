@@ -19,7 +19,7 @@ namespace AggroBird.GameFramework
         public abstract void Initialize();
         public abstract void UpdateInputMode();
 
-        public abstract Controller CreateController(int player);
+        public abstract Controller CreateController(Player player);
 
         protected void InputModeChanged(InputMode inputMode)
         {

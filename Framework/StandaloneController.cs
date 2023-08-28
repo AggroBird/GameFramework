@@ -1,6 +1,4 @@
-using AggroBird.UnityExtend;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using GamepadButtonCode = UnityEngine.InputSystem.LowLevel.GamepadButton;
 using KeyCode = UnityEngine.InputSystem.Key;
@@ -12,27 +10,27 @@ namespace AggroBird.GameFramework
     {
         private static readonly KeyCode[] KeyboardDirections =
         {
-            KeyCode.LeftArrow,
             KeyCode.UpArrow,
             KeyCode.RightArrow,
             KeyCode.DownArrow,
+            KeyCode.LeftArrow,
         };
         private static readonly GamepadButtonCode[] DpadDirections =
         {
-            GamepadButtonCode.DpadLeft,
             GamepadButtonCode.DpadUp,
             GamepadButtonCode.DpadRight,
             GamepadButtonCode.DpadDown,
+            GamepadButtonCode.DpadLeft,
         };
         private bool hasDirectionInput = false;
         private double directionInputTime;
         private int directionInputIndex;
 
-        public override void UpdateInput(Player player, bool inputEnabled)
+        protected internal override void UpdateInput(Player player, bool inputEnabled)
         {
             bool confirm = false;
             bool cancel = false;
-            MoveDirection activeDirection = MoveDirection.None;
+            Direction activeDirection = Direction.None;
 
             Keyboard keyboard = Keyboard.current;
             if (keyboard != null)
@@ -44,7 +42,7 @@ namespace AggroBird.GameFramework
                 {
                     if (keyboard[KeyboardDirections[i]].isPressed)
                     {
-                        activeDirection = (MoveDirection)i;
+                        activeDirection = (Direction)(i + 1);
                         break;
                     }
                 }
@@ -56,29 +54,30 @@ namespace AggroBird.GameFramework
                 confirm |= gamepad[GamepadButtonCode.A].wasPressedThisFrame;
                 cancel |= gamepad[GamepadButtonCode.B].wasPressedThisFrame;
 
-                if (activeDirection == MoveDirection.None)
+                if (activeDirection == Direction.None)
                 {
                     for (int i = 0; i < 4; i++)
                     {
                         if (gamepad[DpadDirections[i]].isPressed)
                         {
-                            activeDirection = (MoveDirection)i;
+                            activeDirection = (Direction)(i + 1);
                             break;
                         }
                     }
-                    if (activeDirection == MoveDirection.None)
+                    if (activeDirection == Direction.None)
                     {
-                        Vector2 stickInput = gamepad.leftStick.ReadValue();
-                        if (stickInput.magnitude > 0.75f)
-                        {
-                            activeDirection = (MoveDirection)(((int)((Mathfx.AngleFromVectorDeg(stickInput) + 495) % 360) / 90) & 3);
-                        }
+                        // TODO: Recalculate angles
+                        //Vector2 stickInput = gamepad.leftStick.ReadValue();
+                        //if (stickInput.magnitude > 0.75f)
+                        //{
+                        //    activeDirection = (Direction)((((int)((Mathfx.AngleFromVectorDeg(stickInput) + 495) % 360) / 90) & 3) + 1);
+                        //}
                     }
                 }
             }
 
-            MoveDirection direction = MoveDirection.None;
-            if (activeDirection != MoveDirection.None)
+            Direction direction = Direction.None;
+            if (activeDirection != Direction.None)
             {
                 if (!hasDirectionInput)
                 {
@@ -106,9 +105,9 @@ namespace AggroBird.GameFramework
                 hasDirectionInput = false;
             }
 
-            this.confirm.Value = confirm;
-            this.cancel.Value = cancel;
-            directionInput.Value = direction;
+            //this.confirm.Value = confirm;
+            //this.cancel.Value = cancel;
+            //directionInput.Value = direction;
         }
     }
 }
