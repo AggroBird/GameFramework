@@ -175,15 +175,25 @@ namespace AggroBird.GameFramework
                         index = -1;
                         this.binding = binding;
                         isArray = binding.GetType().IsArray;
-                        count = isArray ? ((Array)binding).Length : 1;
+                        if (isArray)
+                        {
+                            array = (Array)binding;
+                            count = array.Length;
+                        }
+                        else
+                        {
+                            array = null;
+                            count = 1;
+                        }
                     }
 
                     private int index;
+                    private readonly Array array;
                     private readonly object binding;
                     private readonly bool isArray;
                     private readonly int count;
 
-                    public readonly T Current => (T)(isArray ? ((Array)binding).GetValue(index) : binding);
+                    public readonly T Current => (T)(isArray ? array.GetValue(index) : binding);
                     public bool MoveNext() => ++index < count;
                 }
                 protected readonly struct BindingIterator<T>
