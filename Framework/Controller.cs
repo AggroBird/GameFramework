@@ -364,6 +364,7 @@ namespace AggroBird.GameFramework
                     Vector2 dir = GatherVectorAxisValues(controller, index);
                     if (dir.sqrMagnitude > 0.25f)
                     {
+                        // Calculate from angle
                         axis.Value = (Direction)(((int)((Mathfx.AngleFromVectorDeg(dir) + 360 + 45) % 360) / 90) & 3) + 1;
                     }
                     else
@@ -382,6 +383,7 @@ namespace AggroBird.GameFramework
             }
 
 
+            // Controller binding entry point
             public ControllerInputBinding(Controller controller)
             {
                 Type controllerType = controller.GetType();
