@@ -135,19 +135,19 @@ namespace AggroBird.GameFramework
     {
         public KeyboardKey(KeyCode key)
         {
-            Key = key;
+            this.key = key;
         }
 
-        [field: SerializeField] public KeyCode Key { get; private set; }
+        public KeyCode key;
 
         public override ButtonState State => state;
         private ButtonState state;
 
         public override void Update(int index = 0)
         {
-            if (Key != KeyCode.None && TryGetKeyboard(index, out Keyboard keyboard))
+            if (key != KeyCode.None && TryGetKeyboard(index, out Keyboard keyboard))
             {
-                UpdateState(ref state, keyboard[Key].isPressed);
+                UpdateState(ref state, keyboard[key].isPressed);
                 return;
             }
 
@@ -161,10 +161,10 @@ namespace AggroBird.GameFramework
     {
         public MouseButton(MouseButtonCode button)
         {
-            Button = button;
+            this.button = button;
         }
 
-        [field: SerializeField] public MouseButtonCode Button { get; private set; }
+        public MouseButtonCode button;
 
         public override ButtonState State => state;
         private ButtonState state;
@@ -173,7 +173,7 @@ namespace AggroBird.GameFramework
         {
             if (TryGetMouse(index, out Mouse mouse))
             {
-                UpdateState(ref state, InputSystemUtility.GetMouseButton(mouse, Button).isPressed);
+                UpdateState(ref state, InputSystemUtility.GetMouseButton(mouse, button).isPressed);
                 return;
             }
 
@@ -187,10 +187,10 @@ namespace AggroBird.GameFramework
     {
         public GamepadButton(GamepadButtonCode button)
         {
-            Button = button;
+            this.button = button;
         }
 
-        [field: SerializeField] public GamepadButtonCode Button { get; private set; }
+        public GamepadButtonCode button;
 
         public override ButtonState State => state;
         private ButtonState state;
@@ -199,7 +199,7 @@ namespace AggroBird.GameFramework
         {
             if (TryGetGamepad(index, out Gamepad gamepad))
             {
-                UpdateState(ref state, gamepad[Button].isPressed);
+                UpdateState(ref state, gamepad[button].isPressed);
                 return;
             }
 
@@ -220,23 +220,23 @@ namespace AggroBird.GameFramework
     {
         public KeyboardInputDirection()
         {
-            Up = KeyCode.UpArrow;
-            Right = KeyCode.RightArrow;
-            Down = KeyCode.DownArrow;
-            Left = KeyCode.LeftArrow;
+            up = KeyCode.UpArrow;
+            right = KeyCode.RightArrow;
+            down = KeyCode.DownArrow;
+            left = KeyCode.LeftArrow;
         }
         public KeyboardInputDirection(KeyCode up, KeyCode right, KeyCode down, KeyCode left)
         {
-            Up = up;
-            Right = right;
-            Down = down;
-            Left = left;
+            this.up = up;
+            this.right = right;
+            this.down = down;
+            this.left = left;
         }
 
-        [field: SerializeField] public KeyCode Up { get; private set; }
-        [field: SerializeField] public KeyCode Right { get; private set; }
-        [field: SerializeField] public KeyCode Down { get; private set; }
-        [field: SerializeField] public KeyCode Left { get; private set; }
+        public KeyCode up;
+        public KeyCode right;
+        public KeyCode down;
+        public KeyCode left;
 
         public override Direction Value => value;
         private Direction value;
@@ -246,8 +246,8 @@ namespace AggroBird.GameFramework
             if (TryGetKeyboard(index, out Keyboard keyboard))
             {
                 int y = 0;
-                if (keyboard[Up].wasPressedThisFrame) y++;
-                if (keyboard[Down].wasPressedThisFrame) y--;
+                if (keyboard[up].wasPressedThisFrame) y++;
+                if (keyboard[down].wasPressedThisFrame) y--;
                 if (y != 0)
                 {
                     value = y > 0 ? Direction.Up : Direction.Down;
@@ -255,8 +255,8 @@ namespace AggroBird.GameFramework
                 }
 
                 int x = 0;
-                if (keyboard[Right].wasPressedThisFrame) x++;
-                if (keyboard[Left].wasPressedThisFrame) x--;
+                if (keyboard[right].wasPressedThisFrame) x++;
+                if (keyboard[left].wasPressedThisFrame) x--;
                 if (x != 0)
                 {
                     value = x > 0 ? Direction.Right : Direction.Left;
@@ -274,23 +274,23 @@ namespace AggroBird.GameFramework
     {
         public GamepadInputDirection()
         {
-            Up = GamepadButtonCode.DpadUp;
-            Right = GamepadButtonCode.DpadRight;
-            Down = GamepadButtonCode.DpadDown;
-            Left = GamepadButtonCode.DpadLeft;
+            up = GamepadButtonCode.DpadUp;
+            right = GamepadButtonCode.DpadRight;
+            down = GamepadButtonCode.DpadDown;
+            left = GamepadButtonCode.DpadLeft;
         }
         public GamepadInputDirection(GamepadButtonCode up, GamepadButtonCode right, GamepadButtonCode down, GamepadButtonCode left)
         {
-            Up = up;
-            Right = right;
-            Down = down;
-            Left = left;
+            this.up = up;
+            this.right = right;
+            this.down = down;
+            this.left = left;
         }
 
-        [field: SerializeField] public GamepadButtonCode Up { get; private set; }
-        [field: SerializeField] public GamepadButtonCode Right { get; private set; }
-        [field: SerializeField] public GamepadButtonCode Down { get; private set; }
-        [field: SerializeField] public GamepadButtonCode Left { get; private set; }
+        public GamepadButtonCode up;
+        public GamepadButtonCode right;
+        public GamepadButtonCode down;
+        public GamepadButtonCode left;
 
         public override Direction Value => value;
         private Direction value;
@@ -300,8 +300,8 @@ namespace AggroBird.GameFramework
             if (TryGetGamepad(index, out Gamepad gamepad))
             {
                 int y = 0;
-                if (gamepad[Up].wasPressedThisFrame) y++;
-                if (gamepad[Down].wasPressedThisFrame) y--;
+                if (gamepad[up].wasPressedThisFrame) y++;
+                if (gamepad[down].wasPressedThisFrame) y--;
                 if (y != 0)
                 {
                     value = y > 0 ? Direction.Up : Direction.Down;
@@ -309,8 +309,8 @@ namespace AggroBird.GameFramework
                 }
 
                 int x = 0;
-                if (gamepad[Right].wasPressedThisFrame) x++;
-                if (gamepad[Left].wasPressedThisFrame) x--;
+                if (gamepad[right].wasPressedThisFrame) x++;
+                if (gamepad[left].wasPressedThisFrame) x--;
                 if (x != 0)
                 {
                     value = x > 0 ? Direction.Right : Direction.Left;
@@ -335,10 +335,10 @@ namespace AggroBird.GameFramework
     {
         public KeyboardAxisButton(KeyCode key)
         {
-            Key = key;
+            this.key = key;
         }
 
-        [field: SerializeField] public KeyCode Key { get; private set; }
+        public KeyCode key;
 
         public override float Value => value;
         private float value;
@@ -347,11 +347,12 @@ namespace AggroBird.GameFramework
         {
             if (TryGetKeyboard(index, out Keyboard keyboard))
             {
-                value = keyboard[Key].ReadValue();
-                return;
+                value = keyboard[key].ReadValue();
             }
-
-            value = 0;
+            else
+            {
+                value = 0;
+            }
         }
     }
 
@@ -361,10 +362,10 @@ namespace AggroBird.GameFramework
     {
         public MouseAxisButton(MouseButtonCode button)
         {
-            Button = button;
+            this.button = button;
         }
 
-        [field: SerializeField] public MouseButtonCode Button { get; private set; }
+        public MouseButtonCode button;
 
         public override float Value => value;
         private float value;
@@ -373,11 +374,12 @@ namespace AggroBird.GameFramework
         {
             if (TryGetMouse(index, out Mouse mouse))
             {
-                value = InputSystemUtility.GetMouseButton(mouse, Button).ReadValue();
-                return;
+                value = InputSystemUtility.GetMouseButton(mouse, button).ReadValue();
             }
-
-            value = 0;
+            else
+            {
+                value = 0;
+            }
         }
     }
 
@@ -387,10 +389,10 @@ namespace AggroBird.GameFramework
     {
         public GamepadAxisButton(GamepadButtonCode button)
         {
-            Button = button;
+            this.button = button;
         }
 
-        [field: SerializeField] public GamepadButtonCode Button { get; private set; }
+        public GamepadButtonCode button;
 
         public override float Value => value;
         private float value;
@@ -399,11 +401,12 @@ namespace AggroBird.GameFramework
         {
             if (TryGetGamepad(index, out Gamepad gamepad))
             {
-                value = gamepad[Button].ReadValue();
-                return;
+                value = gamepad[button].ReadValue();
             }
-
-            value = 0;
+            else
+            {
+                value = 0;
+            }
         }
     }
 
@@ -413,12 +416,12 @@ namespace AggroBird.GameFramework
     {
         public KeyboardKeyLinearAxis(KeyCode positive, KeyCode negative)
         {
-            Positive = positive;
-            Negative = negative;
+            this.positive = positive;
+            this.negative = negative;
         }
 
-        [field: SerializeField] public KeyCode Positive { get; private set; }
-        [field: SerializeField] public KeyCode Negative { get; private set; }
+        public KeyCode positive;
+        public KeyCode negative;
 
         public override float Value => value;
         private float value;
@@ -427,11 +430,12 @@ namespace AggroBird.GameFramework
         {
             if (TryGetKeyboard(index, out Keyboard keyboard))
             {
-                value = keyboard[Positive].ReadValue() - keyboard[Negative].ReadValue();
-                return;
+                value = keyboard[positive].ReadValue() - keyboard[negative].ReadValue();
             }
-
-            value = 0;
+            else
+            {
+                value = 0;
+            }
         }
     }
 
@@ -441,12 +445,12 @@ namespace AggroBird.GameFramework
     {
         public GamepadButtonLinearAxis(GamepadButtonCode positive, GamepadButtonCode negative)
         {
-            Positive = positive;
-            Negative = negative;
+            this.positive = positive;
+            this.negative = negative;
         }
 
-        [field: SerializeField] public GamepadButtonCode Positive { get; private set; }
-        [field: SerializeField] public GamepadButtonCode Negative { get; private set; }
+        public GamepadButtonCode positive;
+        public GamepadButtonCode negative;
 
         public override float Value => value;
         private float value;
@@ -455,11 +459,12 @@ namespace AggroBird.GameFramework
         {
             if (TryGetGamepad(index, out Gamepad gamepad))
             {
-                value = gamepad[Positive].ReadValue() - gamepad[Negative].ReadValue();
-                return;
+                value = gamepad[positive].ReadValue() - gamepad[negative].ReadValue();
             }
-
-            value = 0;
+            else
+            {
+                value = 0;
+            }
         }
     }
 
@@ -469,12 +474,12 @@ namespace AggroBird.GameFramework
     {
         public GamepadStickLinearAxis(GamepadStick stick, Axis axis)
         {
-            Stick = stick;
-            Axis = axis;
+            this.stick = stick;
+            this.axis = axis;
         }
 
-        [field: SerializeField] public GamepadStick Stick { get; private set; }
-        [field: SerializeField] public Axis Axis { get; private set; }
+        public GamepadStick stick;
+        public Axis axis;
 
         public override float Value => value;
         private float value;
@@ -483,12 +488,13 @@ namespace AggroBird.GameFramework
         {
             if (TryGetGamepad(index, out Gamepad gamepad))
             {
-                StickControl stick = Stick == GamepadStick.RightStick ? gamepad.rightStick : gamepad.leftStick;
-                value = Axis == Axis.Vertical ? stick.ReadValue().y : stick.ReadValue().x;
-                return;
+                StickControl stickControl = stick == GamepadStick.RightStick ? gamepad.rightStick : gamepad.leftStick;
+                value = axis == Axis.Vertical ? stickControl.ReadValue().y : stickControl.ReadValue().x;
             }
-
-            value = 0;
+            else
+            {
+                value = 0;
+            }
         }
     }
 
@@ -505,23 +511,24 @@ namespace AggroBird.GameFramework
     {
         public KeyboardVectorAxis()
         {
-            Up = KeyCode.UpArrow;
-            Right = KeyCode.RightArrow;
-            Down = KeyCode.DownArrow;
-            Left = KeyCode.LeftArrow;
+            up = KeyCode.UpArrow;
+            right = KeyCode.RightArrow;
+            down = KeyCode.DownArrow;
+            left = KeyCode.LeftArrow;
         }
         public KeyboardVectorAxis(KeyCode up, KeyCode right, KeyCode down, KeyCode left)
         {
-            Up = up;
-            Right = right;
-            Down = down;
-            Left = left;
+            this.up = up;
+            this.right = right;
+            this.down = down;
+            this.left = left;
         }
 
-        [field: SerializeField] public KeyCode Up { get; private set; }
-        [field: SerializeField] public KeyCode Right { get; private set; }
-        [field: SerializeField] public KeyCode Down { get; private set; }
-        [field: SerializeField] public KeyCode Left { get; private set; }
+        public KeyCode up;
+        public KeyCode right;
+        public KeyCode down;
+        public KeyCode left;
+        public bool normalize = true;
 
         public override Vector2 Value => value;
         private Vector2 value;
@@ -532,10 +539,12 @@ namespace AggroBird.GameFramework
 
             if (TryGetKeyboard(index, out Keyboard keyboard))
             {
-                if (keyboard[Up].isPressed) value.y++;
-                if (keyboard[Right].isPressed) value.x++;
-                if (keyboard[Down].isPressed) value.y--;
-                if (keyboard[Left].isPressed) value.x--;
+                if (keyboard[up].isPressed) value.y++;
+                if (keyboard[right].isPressed) value.x++;
+                if (keyboard[down].isPressed) value.y--;
+                if (keyboard[left].isPressed) value.x--;
+
+                if (normalize) value.Normalize();
             }
         }
     }
@@ -546,23 +555,24 @@ namespace AggroBird.GameFramework
     {
         public GamepadDPadVectorAxis()
         {
-            Up = GamepadButtonCode.DpadUp;
-            Right = GamepadButtonCode.DpadRight;
-            Down = GamepadButtonCode.DpadDown;
-            Left = GamepadButtonCode.DpadLeft;
+            up = GamepadButtonCode.DpadUp;
+            right = GamepadButtonCode.DpadRight;
+            down = GamepadButtonCode.DpadDown;
+            left = GamepadButtonCode.DpadLeft;
         }
         public GamepadDPadVectorAxis(GamepadButtonCode up, GamepadButtonCode right, GamepadButtonCode down, GamepadButtonCode left)
         {
-            Up = up;
-            Right = right;
-            Down = down;
-            Left = left;
+            this.up = up;
+            this.right = right;
+            this.down = down;
+            this.left = left;
         }
 
-        [field: SerializeField] public GamepadButtonCode Up { get; private set; }
-        [field: SerializeField] public GamepadButtonCode Right { get; private set; }
-        [field: SerializeField] public GamepadButtonCode Down { get; private set; }
-        [field: SerializeField] public GamepadButtonCode Left { get; private set; }
+        public GamepadButtonCode up;
+        public GamepadButtonCode right;
+        public GamepadButtonCode down;
+        public GamepadButtonCode left;
+        public bool normalize = true;
 
         public override Vector2 Value => value;
         private Vector2 value;
@@ -573,10 +583,12 @@ namespace AggroBird.GameFramework
 
             if (TryGetGamepad(index, out Gamepad gamepad))
             {
-                if (gamepad[Up].isPressed) value.y++;
-                if (gamepad[Right].isPressed) value.x++;
-                if (gamepad[Left].isPressed) value.x--;
-                if (gamepad[Down].isPressed) value.y--;
+                if (gamepad[up].isPressed) value.y++;
+                if (gamepad[right].isPressed) value.x++;
+                if (gamepad[down].isPressed) value.y--;
+                if (gamepad[left].isPressed) value.x--;
+
+                if (normalize) value.Normalize();
             }
         }
     }
@@ -587,23 +599,31 @@ namespace AggroBird.GameFramework
     {
         public GamepadStickVectorAxis(GamepadStick stick)
         {
-            Stick = stick;
+            this.stick = stick;
         }
 
-        [field: SerializeField] public GamepadStick Stick { get; private set; }
+        public GamepadStick stick;
+
+        public bool applyCurve;
+        [ConditionalField(nameof(applyCurve), ConditionalFieldOperator.Equal, true)]
+        public AnimationCurve curve = AnimationCurve.Linear(0, 0, 1, 1);
 
         public override Vector2 Value => value;
         private Vector2 value;
 
         public override void Update(int index = 0)
         {
+            value = Vector2.zero;
+
             if (TryGetGamepad(index, out Gamepad gamepad))
             {
-                value = (Stick == GamepadStick.RightStick ? gamepad.rightStick : gamepad.leftStick).ReadValue();
-                return;
+                value = (stick == GamepadStick.RightStick ? gamepad.rightStick : gamepad.leftStick).ReadValue();
             }
 
-            value = Vector2.zero;
+            if (applyCurve && curve != null)
+            {
+                value = value.normalized * curve.Evaluate(value.magnitude);
+            }
         }
     }
 }
