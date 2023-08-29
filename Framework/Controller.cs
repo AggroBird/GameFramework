@@ -1,3 +1,4 @@
+using AggroBird.UnityExtend;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
@@ -8,8 +9,11 @@ using UnityEngine;
 namespace AggroBird.GameFramework
 {
     // Consumable input action
-    public abstract class InputAction<T>
+    public class InputAction<T>
     {
+        private static InputAction<T> empty = new();
+        public static InputAction<T> Empty => empty;
+
         internal InputAction()
         {
             reactive = new(default);
@@ -40,14 +44,17 @@ namespace AggroBird.GameFramework
     }
 
     // Input axis
-    public abstract class InputAxis<T>
+    public class InputAxis<T>
     {
+        private static InputAxis<T> empty = new();
+        public static InputAxis<T> Empty => empty;
+
         internal InputAxis()
         {
 
         }
 
-        protected T value;
+        protected T value = default;
         public T Value => value;
 
         public static implicit operator T(InputAxis<T> action)
@@ -57,10 +64,9 @@ namespace AggroBird.GameFramework
     }
 
     // Add this attribute to InputAction<T> or InputAxis<T> to bind input elements to them
-    // InputButton maps to InputAction<bool>
-    // InputDirection maps to InputAction<Direction>
-    // LinearAxis maps to InputAxis<float>
-    // VectorAxis maps to InputAxis<Vector2>
+    // InputAction<bool> can only support InputButton.
+    // InputAction<Direction> can only support InputDirection.
+    // InputAxis<T> will try to apply the nearest conversion to the destination operand.
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = true)]
     public sealed class BindInputAttribute : Attribute
     {
@@ -163,11 +169,6 @@ namespace AggroBird.GameFramework
 
             private abstract class InputBinding
             {
-                public abstract void Update(Controller controller, int index);
-                public abstract object Target { get; }
-                public readonly List<MemberBinding> inputs = new();
-                public float clampMax;
-
                 protected struct BindingEnumerator<T>
                 {
                     public BindingEnumerator(object binding)
@@ -194,7 +195,22 @@ namespace AggroBird.GameFramework
                     private readonly int count;
 
                     public readonly T Current => (T)(isArray ? array.GetValue(index) : binding);
-                    public bool MoveNext() => ++index < count;
+                    public bool MoveNext()
+                    {
+                        while (true)
+                        {
+                            index++;
+                            if (index >= count)
+                            {
+                                return false;
+                            }
+                            if (Current == null)
+                            {
+                                continue;
+                            }
+                            return true;
+                        }
+                    }
                 }
                 protected readonly struct BindingIterator<T>
                 {
@@ -210,106 +226,161 @@ namespace AggroBird.GameFramework
                         return new BindingEnumerator<T>(binding);
                     }
                 }
-            }
 
-            private sealed class BoolActionBinding : InputBinding
-            {
-                public readonly WriteableInputAction<bool> action = new();
-
-                public override object Target => action;
-
-                public override void Update(Controller controller, int index)
+                public bool GatherInputButtonValues(Controller controller, int index)
                 {
                     bool value = false;
                     foreach (var input in inputs)
                     {
                         foreach (var inputButton in new BindingIterator<InputButton>(controller, input))
                         {
-                            if (inputButton != null)
-                            {
-                                inputButton.Update(index);
-                                value |= inputButton.IsPressed;
-                            }
+                            inputButton.Update(index);
+                            value |= inputButton.IsPressed;
                         }
                     }
-                    action.Value = value;
+                    return value;
                 }
-            }
-
-            private sealed class DirectionActionBinding : InputBinding
-            {
-                public readonly WriteableInputAction<Direction> action = new();
-
-                public override object Target => action;
-
-                public override void Update(Controller controller, int index)
+                public Direction GatherInputDirectionValues(Controller controller, int index)
                 {
                     Direction value = Direction.None;
                     foreach (var input in inputs)
                     {
                         foreach (var inputDirection in new BindingIterator<InputDirection>(controller, input))
                         {
-                            if (inputDirection != null)
+                            inputDirection.Update(index);
+                            if (value == Direction.None)
                             {
-                                inputDirection.Update(index);
-                                if (value == Direction.None)
-                                {
-                                    value = inputDirection.Value;
-                                }
+                                value = inputDirection.Value;
                             }
                         }
                     }
-                    action.Value = value;
+                    return value;
                 }
-            }
-
-            private sealed class LinearAxisBinding : InputBinding
-            {
-                public readonly WriteableInputAxis<float> axis = new();
-
-                public override object Target => axis;
-
-                public override void Update(Controller controller, int index)
+                public float GatherLinearAxisValues(Controller controller, int index)
                 {
                     float value = 0;
                     foreach (var input in inputs)
                     {
-                        foreach (var linearAxis in new BindingIterator<LinearAxis>(controller, input))
+                        foreach (var inputElement in new BindingIterator<InputElement>(controller, input))
                         {
-                            if (linearAxis != null)
+                            inputElement.Update(index);
+
+                            if (inputElement is LinearAxis linearAxis)
                             {
-                                linearAxis.Update(index);
                                 value += linearAxis.Value;
+                            }
+                            else if (inputElement is InputButton inputButton)
+                            {
+                                var state = inputButton.State;
+                                value += (state == ButtonState.Pressed || state == ButtonState.Held) ? 1 : 0;
                             }
                         }
                     }
-                    axis.Value = Mathf.Clamp(value, -clampMax, clampMax);
+                    return Mathf.Clamp(value, -clampMax, clampMax);
+                }
+                public Vector2 GatherVectorAxisValues(Controller controller, int index)
+                {
+                    Vector2 value = Vector2.zero;
+                    foreach (var input in inputs)
+                    {
+                        foreach (var inputElement in new BindingIterator<InputElement>(controller, input))
+                        {
+                            inputElement.Update(index);
+
+                            if (inputElement is VectorAxis vectorAxis)
+                            {
+                                value += vectorAxis.Value;
+                            }
+                            else if (inputElement is InputDirection inputDirection)
+                            {
+                                switch (inputDirection.Value)
+                                {
+                                    case Direction.Up:
+                                        value += Vector2.up;
+                                        break;
+                                    case Direction.Right:
+                                        value += Vector2.right;
+                                        break;
+                                    case Direction.Down:
+                                        value += Vector2.down;
+                                        break;
+                                    case Direction.Left:
+                                        value += Vector2.left;
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                    return Vector2.ClampMagnitude(value, clampMax);
+                }
+
+                public virtual void Bind(Controller controller) { }
+                public abstract void Update(Controller controller, int index);
+
+                public MemberBinding target;
+                public readonly List<MemberBinding> inputs = new();
+                public float clampMax;
+            }
+
+            private sealed class BoolActionBinding : InputBinding
+            {
+                private readonly WriteableInputAction<bool> action = new();
+
+                public override void Bind(Controller controller) => target.SetValue(controller, action);
+                public override void Update(Controller controller, int index) => action.Value = GatherInputButtonValues(controller, index);
+            }
+
+            private sealed class DirectionActionBinding : InputBinding
+            {
+                private readonly WriteableInputAction<Direction> action = new();
+
+                public override void Bind(Controller controller) => target.SetValue(controller, action);
+                public override void Update(Controller controller, int index) => action.Value = GatherInputDirectionValues(controller, index);
+            }
+
+            private sealed class BoolAxisBinding : InputBinding
+            {
+                private readonly WriteableInputAxis<bool> axis = new();
+
+                public override void Bind(Controller controller) => target.SetValue(controller, axis);
+                public override void Update(Controller controller, int index) => axis.Value = GatherLinearAxisValues(controller, index) > 0.5f;
+            }
+
+            private sealed class LinearAxisBinding : InputBinding
+            {
+                private readonly WriteableInputAxis<float> axis = new();
+
+                public override void Bind(Controller controller) => target.SetValue(controller, axis);
+                public override void Update(Controller controller, int index) => axis.Value = GatherLinearAxisValues(controller, index);
+            }
+
+            private sealed class DirectionAxisBinding : InputBinding
+            {
+                private readonly WriteableInputAxis<Direction> axis = new();
+
+                public override void Bind(Controller controller) => target.SetValue(controller, axis);
+                public override void Update(Controller controller, int index)
+                {
+                    Vector2 dir = GatherVectorAxisValues(controller, index);
+                    if (dir.sqrMagnitude > 0.25f)
+                    {
+                        axis.Value = (Direction)(((int)((Mathfx.AngleFromVectorDeg(dir) + 360 + 45) % 360) / 90) & 3) + 1;
+                    }
+                    else
+                    {
+                        axis.Value = Direction.None;
+                    }
                 }
             }
 
             private sealed class VectorAxisBinding : InputBinding
             {
-                public readonly WriteableInputAxis<Vector2> axis = new();
+                private readonly WriteableInputAxis<Vector2> axis = new();
 
-                public override object Target => axis;
-
-                public override void Update(Controller controller, int index)
-                {
-                    Vector2 value = Vector2.zero;
-                    foreach (var input in inputs)
-                    {
-                        foreach (var vectorAxis in new BindingIterator<VectorAxis>(controller, input))
-                        {
-                            if (vectorAxis != null)
-                            {
-                                vectorAxis.Update(index);
-                                value += vectorAxis.Value;
-                            }
-                        }
-                    }
-                    axis.Value = Vector2.ClampMagnitude(value, clampMax);
-                }
+                public override void Bind(Controller controller) => target.SetValue(controller, axis);
+                public override void Update(Controller controller, int index) => axis.Value = GatherVectorAxisValues(controller, index);
             }
+
 
             public ControllerInputBinding(Controller controller)
             {
@@ -319,8 +390,8 @@ namespace AggroBird.GameFramework
                 {
                     if (!memberInputBindings.TryGetValue(name, out InputBinding binding))
                     {
-                        binding = new T { clampMax = clampMax };
-                        target.SetValue(controller, binding.Target);
+                        binding = new T { target = target, clampMax = clampMax };
+                        binding.Bind(controller);
                         memberInputBindings.Add(name, binding);
                         bindings.Add(binding);
                     }
@@ -382,48 +453,94 @@ namespace AggroBird.GameFramework
                                 }
 
                                 Type targetElementType = targetBinding.MemberType;
-                                Type genericTypeDefinition = targetElementType.GetGenericTypeDefinition();
-                                if (genericTypeDefinition != null)
+                                if (targetElementType.IsGenericType)
                                 {
-                                    if (genericTypeDefinition.Equals(typeof(InputAction<>)))
+                                    Type genericTypeDefinition = targetElementType.GetGenericTypeDefinition();
+                                    if (genericTypeDefinition != null)
                                     {
-                                        var genericArgument = targetElementType.GetGenericArguments()[0];
+                                        if (genericTypeDefinition.Equals(typeof(InputAction<>)))
+                                        {
+                                            var genericArgument = targetElementType.GetGenericArguments()[0];
 
-                                        if (inputElementType.Equals(typeof(InputButton)) && genericArgument.Equals(typeof(bool)))
-                                        {
-                                            // InputAction<bool>
-                                            Bind<BoolActionBinding>(memberName, targetBinding, inputBinding);
-                                            continue;
+                                            if (inputElementType.Equals(typeof(InputButton)) && genericArgument.Equals(typeof(bool)))
+                                            {
+                                                Bind<BoolActionBinding>(memberName, targetBinding, inputBinding);
+                                                continue;
+                                            }
+                                            else if (inputElementType.Equals(typeof(InputDirection)) && genericArgument.Equals(typeof(Direction)))
+                                            {
+                                                Bind<DirectionActionBinding>(memberName, targetBinding, inputBinding);
+                                                continue;
+                                            }
                                         }
-                                        else if (inputElementType.Equals(typeof(InputDirection)) && genericArgument.Equals(typeof(Direction)))
+                                        else if (genericTypeDefinition.Equals(typeof(InputAxis<>)))
                                         {
-                                            // InputAction<Direction>
-                                            Bind<DirectionActionBinding>(memberName, targetBinding, inputBinding);
-                                            continue;
+                                            var genericArgument = targetElementType.GetGenericArguments()[0];
+
+                                            ClampAxisMagnitudeAttribute clampAttribute = target.GetCustomAttribute<ClampAxisMagnitudeAttribute>();
+                                            float clampMax = clampAttribute == null ? float.MaxValue : clampAttribute.max;
+
+                                            if (inputElementType.Equals(typeof(LinearAxis)))
+                                            {
+                                                if (genericArgument.Equals(typeof(bool)))
+                                                {
+                                                    Bind<BoolAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                                    continue;
+                                                }
+                                                else if (genericArgument.Equals(typeof(float)))
+                                                {
+                                                    Bind<LinearAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                                    continue;
+                                                }
+                                            }
+                                            else if (inputElementType.Equals(typeof(VectorAxis)))
+                                            {
+                                                if (genericArgument.Equals(typeof(Direction)))
+                                                {
+                                                    Bind<DirectionAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                                    continue;
+                                                }
+                                                else if (genericArgument.Equals(typeof(Vector2)))
+                                                {
+                                                    Bind<VectorAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                                    continue;
+                                                }
+                                            }
+                                            else if (inputElementType.Equals(typeof(InputButton)))
+                                            {
+                                                if (genericArgument.Equals(typeof(bool)))
+                                                {
+                                                    Bind<BoolAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                                    continue;
+                                                }
+                                                else if (genericArgument.Equals(typeof(float)))
+                                                {
+                                                    Bind<LinearAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                                    continue;
+                                                }
+                                            }
+                                            else if (inputElementType.Equals(typeof(InputDirection)))
+                                            {
+                                                if (genericArgument.Equals(typeof(Direction)))
+                                                {
+                                                    Bind<DirectionAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                                    continue;
+                                                }
+                                                else if (genericArgument.Equals(typeof(Vector2)))
+                                                {
+                                                    Bind<VectorAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                                    continue;
+                                                }
+                                            }
                                         }
                                     }
-                                    else if (genericTypeDefinition.Equals(typeof(InputAxis<>)))
-                                    {
-                                        var genericArgument = targetElementType.GetGenericArguments()[0];
-
-                                        ClampAxisMagnitudeAttribute clampAttribute = target.GetCustomAttribute<ClampAxisMagnitudeAttribute>();
-                                        float clampMax = clampAttribute == null ? float.MaxValue : clampAttribute.max;
-
-                                        if (inputElementType.Equals(typeof(LinearAxis)) && genericArgument.Equals(typeof(float)))
-                                        {
-                                            // InputAxis<float>
-                                            Bind<LinearAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
-                                            continue;
-                                        }
-                                        else if (inputElementType.Equals(typeof(VectorAxis)) && genericArgument.Equals(typeof(Vector2)))
-                                        {
-                                            // InputAxis<Vector2>
-                                            Bind<VectorAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
-                                            continue;
-                                        }
-                                    }
-                                    Debug.LogError($"Failed to bind input element '{member.Name}' ({inputBinding.MemberType}) to member '{target.Name}' ({targetBinding.MemberType})");
                                 }
+
+                                Debug.LogError($"Failed to bind input element '{member.Name}' ({inputBinding.MemberType}) to member '{target.Name}' ({targetBinding.MemberType})");
+                            }
+                            else
+                            {
+                                Debug.LogError($"Failed to find input target member '{memberName}'");
                             }
                         }
                         while (enumerable.MoveNext());
