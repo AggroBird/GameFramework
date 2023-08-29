@@ -27,6 +27,14 @@ namespace AggroBird.GameFramework
                 _ => mouse.leftButton,
             };
         }
+        public static Direction DirectionFromVector(Vector2 vector)
+        {
+            if (vector.sqrMagnitude > 0.25f)
+            {
+                return (Direction)(((int)((Mathfx.AngleFromVectorDeg(vector) + 360 + 45) % 360) / 90) & 3) + 1;
+            }
+            return Direction.None;
+        }
     }
 
     public enum GamepadStick
@@ -211,7 +219,61 @@ namespace AggroBird.GameFramework
     [Serializable]
     public abstract class InputDirection : InputElement
     {
+        public bool repeat;
+        [ConditionalField(nameof(repeat), ConditionalFieldOperator.Equal, true), Min(0)]
+        public float repeatDelay = 0.3f;
+        [ConditionalField(nameof(repeat), ConditionalFieldOperator.Equal, true), Min(0)]
+        public float repeatInterval = 0.1f;
+
         public abstract Direction Value { get; }
+        private Direction lastValue = Direction.None;
+        private double inputTime;
+        private int inputIndex;
+
+        protected Direction MakeDirection(int x, int y)
+        {
+            Direction current = x > 0 ? Direction.Right : x < 0 ? Direction.Left : y > 0 ? Direction.Up : y < 0 ? Direction.Down : Direction.None;
+            if (repeat)
+            {
+                if (current != Direction.None)
+                {
+                    if (current != lastValue)
+                    {
+                        lastValue = current;
+                        inputTime = Time.unscaledTimeAsDouble;
+                        inputIndex = -1;
+                        return current;
+                    }
+                    else if (repeatInterval > 0)
+                    {
+                        double t = Time.unscaledTimeAsDouble - inputTime;
+                        if (t >= repeatDelay)
+                        {
+                            int idx = (int)((t - repeatDelay) / repeatInterval);
+                            if (inputIndex != idx)
+                            {
+                                inputIndex = idx;
+                                return current;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    lastValue = Direction.None;
+                }
+            }
+            else
+            {
+                if (current != lastValue)
+                {
+                    lastValue = current;
+                    return current;
+                }
+            }
+
+            return Direction.None;
+        }
     }
 
     [Serializable]
@@ -246,22 +308,13 @@ namespace AggroBird.GameFramework
             if (TryGetKeyboard(index, out Keyboard keyboard))
             {
                 int y = 0;
-                if (keyboard[up].wasPressedThisFrame) y++;
-                if (keyboard[down].wasPressedThisFrame) y--;
-                if (y != 0)
-                {
-                    value = y > 0 ? Direction.Up : Direction.Down;
-                    return;
-                }
-
+                if (keyboard[up].isPressed) y++;
+                if (keyboard[down].isPressed) y--;
                 int x = 0;
-                if (keyboard[right].wasPressedThisFrame) x++;
-                if (keyboard[left].wasPressedThisFrame) x--;
-                if (x != 0)
-                {
-                    value = x > 0 ? Direction.Right : Direction.Left;
-                    return;
-                }
+                if (keyboard[right].isPressed) x++;
+                if (keyboard[left].isPressed) x--;
+                value = MakeDirection(x, y);
+                return;
             }
 
             value = Direction.None;
@@ -300,22 +353,13 @@ namespace AggroBird.GameFramework
             if (TryGetGamepad(index, out Gamepad gamepad))
             {
                 int y = 0;
-                if (gamepad[up].wasPressedThisFrame) y++;
-                if (gamepad[down].wasPressedThisFrame) y--;
-                if (y != 0)
-                {
-                    value = y > 0 ? Direction.Up : Direction.Down;
-                    return;
-                }
-
+                if (gamepad[up].isPressed) y++;
+                if (gamepad[down].isPressed) y--;
                 int x = 0;
-                if (gamepad[right].wasPressedThisFrame) x++;
-                if (gamepad[left].wasPressedThisFrame) x--;
-                if (x != 0)
-                {
-                    value = x > 0 ? Direction.Right : Direction.Left;
-                    return;
-                }
+                if (gamepad[right].isPressed) x++;
+                if (gamepad[left].isPressed) x--;
+                value = MakeDirection(x, y);
+                return;
             }
 
             value = Direction.None;

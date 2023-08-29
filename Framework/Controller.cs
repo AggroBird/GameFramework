@@ -1,4 +1,3 @@
-using AggroBird.UnityExtend;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
@@ -359,19 +358,7 @@ namespace AggroBird.GameFramework
                 private readonly WriteableInputAxis<Direction> axis = new();
 
                 public override void Bind(Controller controller) => target.SetValue(controller, axis);
-                public override void Update(Controller controller, int index)
-                {
-                    Vector2 dir = GatherVectorAxisValues(controller, index);
-                    if (dir.sqrMagnitude > 0.25f)
-                    {
-                        // Calculate from angle
-                        axis.Value = (Direction)(((int)((Mathfx.AngleFromVectorDeg(dir) + 360 + 45) % 360) / 90) & 3) + 1;
-                    }
-                    else
-                    {
-                        axis.Value = Direction.None;
-                    }
-                }
+                public override void Update(Controller controller, int index) => axis.Value = InputSystemUtility.DirectionFromVector(GatherVectorAxisValues(controller, index));
             }
 
             private sealed class VectorAxisBinding : InputBinding
