@@ -670,6 +670,8 @@ namespace AggroBird.GameFramework
         }
 
         public GamepadStick stick;
+        public bool invertHorizontal;
+        public bool invertVertical;
 
         public bool applyCurve;
         [ConditionalField(nameof(applyCurve), ConditionalFieldOperator.Equal, true)]
@@ -691,6 +693,9 @@ namespace AggroBird.GameFramework
             {
                 value = value.normalized * curve.Evaluate(value.magnitude);
             }
+
+            if (invertHorizontal) value.x = -value.x;
+            if (invertVertical) value.y = -value.y;
         }
     }
 }
