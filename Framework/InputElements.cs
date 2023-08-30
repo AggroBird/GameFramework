@@ -276,9 +276,8 @@ namespace AggroBird.GameFramework
         private double inputTime;
         private int inputIndex;
 
-        protected Direction MakeDirection(int x, int y)
+        protected Direction ApplyRepeat(Direction current)
         {
-            Direction current = x > 0 ? Direction.Right : x < 0 ? Direction.Left : y > 0 ? Direction.Up : y < 0 ? Direction.Down : Direction.None;
             if (repeat)
             {
                 if (current != Direction.None)
@@ -320,6 +319,10 @@ namespace AggroBird.GameFramework
 
             return Direction.None;
         }
+        protected Direction MakeDirection(int x, int y)
+        {
+            return x > 0 ? Direction.Right : x < 0 ? Direction.Left : y > 0 ? Direction.Up : y < 0 ? Direction.Down : Direction.None;
+        }
     }
 
     [Serializable]
@@ -359,7 +362,7 @@ namespace AggroBird.GameFramework
                 int x = 0;
                 if (keyboard[right].isPressed) x++;
                 if (keyboard[left].isPressed) x--;
-                value = MakeDirection(x, y);
+                value = ApplyRepeat(MakeDirection(x, y));
                 return;
             }
 
@@ -404,7 +407,7 @@ namespace AggroBird.GameFramework
                 int x = 0;
                 if (gamepad[right].isPressed) x++;
                 if (gamepad[left].isPressed) x--;
-                value = MakeDirection(x, y);
+                value = value = ApplyRepeat(MakeDirection(x, y));
                 return;
             }
 
