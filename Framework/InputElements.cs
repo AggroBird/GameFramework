@@ -572,6 +572,10 @@ namespace AggroBird.GameFramework
         public Axis axis;
         public bool invert;
 
+        public bool applyCurve;
+        [ConditionalField(nameof(applyCurve), ConditionalFieldOperator.Equal, true)]
+        public AnimationCurve curve = AnimationCurve.Linear(0, 0, 1, 1);
+
         public override float Value => value;
         private float value;
 
@@ -581,12 +585,18 @@ namespace AggroBird.GameFramework
             {
                 StickControl stickControl = stick == GamepadStick.RightStick ? gamepad.rightStick : gamepad.leftStick;
                 value = axis == Axis.Vertical ? stickControl.ReadValue().y : stickControl.ReadValue().x;
-                if (invert) value = -value;
             }
             else
             {
                 value = 0;
             }
+
+            if (applyCurve && curve != null)
+            {
+                value = Mathf.Sign(value) * curve.Evaluate(Mathf.Abs(value));
+            }
+
+            if (invert) value = -value;
         }
     }
 
