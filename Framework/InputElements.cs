@@ -27,6 +27,7 @@ namespace AggroBird.GameFramework
                 _ => mouse.leftButton,
             };
         }
+
         public static Direction DirectionFromVector(Vector2 vector)
         {
             if (vector.sqrMagnitude > 0.25f)
