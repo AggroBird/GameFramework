@@ -547,6 +547,7 @@ namespace AggroBird.GameFramework
 
         public GamepadStick stick;
         public Axis axis;
+        public bool invert;
 
         public override float Value => value;
         private float value;
@@ -557,6 +558,7 @@ namespace AggroBird.GameFramework
             {
                 StickControl stickControl = stick == GamepadStick.RightStick ? gamepad.rightStick : gamepad.leftStick;
                 value = axis == Axis.Vertical ? stickControl.ReadValue().y : stickControl.ReadValue().x;
+                if (invert) value = -value;
             }
             else
             {
