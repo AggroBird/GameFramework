@@ -89,6 +89,40 @@ namespace AggroBird.GameFramework
         Left,
     }
 
+    public struct ButtonSwitch
+    {
+        public ButtonState State { get; private set; }
+
+        public static ButtonState UpdateState(ButtonState state, bool isPressed)
+        {
+            switch (state)
+            {
+                case ButtonState.None:
+                    if (isPressed) state = ButtonState.Pressed;
+                    break;
+                case ButtonState.Pressed:
+                    state = isPressed ? ButtonState.Held : ButtonState.Released;
+                    break;
+                case ButtonState.Held:
+                    if (!isPressed) state = ButtonState.Released;
+                    break;
+                case ButtonState.Released:
+                    state = isPressed ? ButtonState.Pressed : ButtonState.None;
+                    break;
+            }
+            return state;
+        }
+        public static void UpdateState(ref ButtonState state, bool isPressed)
+        {
+            state = UpdateState(state, isPressed);
+        }
+
+        public void Update(bool isPressed)
+        {
+            State = UpdateState(State, isPressed);
+        }
+    }
+
     // Input elements
     [Serializable]
     public abstract class InputElement
@@ -139,25 +173,6 @@ namespace AggroBird.GameFramework
         public bool IsPressed => State == ButtonState.Pressed;
         public bool IsHeld => State == ButtonState.Held;
         public bool IsReleased => State == ButtonState.Released;
-
-        protected static void UpdateState(ref ButtonState state, bool isPressed)
-        {
-            switch (state)
-            {
-                case ButtonState.None:
-                    if (isPressed) state = ButtonState.Pressed;
-                    break;
-                case ButtonState.Pressed:
-                    state = isPressed ? ButtonState.Held : ButtonState.Released;
-                    break;
-                case ButtonState.Held:
-                    if (!isPressed) state = ButtonState.Released;
-                    break;
-                case ButtonState.Released:
-                    state = isPressed ? ButtonState.Pressed : ButtonState.None;
-                    break;
-            }
-        }
     }
 
     [Serializable]
@@ -178,11 +193,12 @@ namespace AggroBird.GameFramework
         {
             if (key != KeyCode.None && TryGetKeyboard(index, out Keyboard keyboard))
             {
-                UpdateState(ref state, keyboard[key].isPressed);
-                return;
+                ButtonSwitch.UpdateState(ref state, keyboard[key].isPressed);
             }
-
-            UpdateState(ref state, false);
+            else
+            {
+                ButtonSwitch.UpdateState(ref state, false);
+            }
         }
     }
 
@@ -204,11 +220,12 @@ namespace AggroBird.GameFramework
         {
             if (TryGetMouse(index, out Mouse mouse))
             {
-                UpdateState(ref state, InputSystemUtility.GetMouseButton(mouse, button).isPressed);
-                return;
+                ButtonSwitch.UpdateState(ref state, InputSystemUtility.GetMouseButton(mouse, button).isPressed);
             }
-
-            UpdateState(ref state, false);
+            else
+            {
+                ButtonSwitch.UpdateState(ref state, false);
+            }
         }
     }
 
@@ -230,11 +247,12 @@ namespace AggroBird.GameFramework
         {
             if (TryGetGamepad(index, out Gamepad gamepad))
             {
-                UpdateState(ref state, gamepad[button].isPressed);
-                return;
+                ButtonSwitch.UpdateState(ref state, gamepad[button].isPressed);
             }
-
-            UpdateState(ref state, false);
+            else
+            {
+                ButtonSwitch.UpdateState(ref state, false);
+            }
         }
     }
 
