@@ -121,6 +121,11 @@ namespace AggroBird.GameFramework
         {
             State = UpdateState(State, isPressed);
         }
+
+        public static implicit operator ButtonState(ButtonSwitch buttonSwitch)
+        {
+            return buttonSwitch.State;
+        }
     }
 
     // Input elements
