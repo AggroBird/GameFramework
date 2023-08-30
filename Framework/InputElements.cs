@@ -35,6 +35,28 @@ namespace AggroBird.GameFramework
             }
             return Direction.None;
         }
+        public static Vector2 ToVector2(this Direction direction)
+        {
+            return direction switch
+            {
+                Direction.Up => Vector2.up,
+                Direction.Right => Vector2.right,
+                Direction.Down => Vector2.down,
+                Direction.Left => Vector2.left,
+                _ => Vector2.zero,
+            };
+        }
+        public static Vector2Int ToVector2Int(this Direction direction)
+        {
+            return direction switch
+            {
+                Direction.Up => Vector2Int.up,
+                Direction.Right => Vector2Int.right,
+                Direction.Down => Vector2Int.down,
+                Direction.Left => Vector2Int.left,
+                _ => Vector2Int.zero,
+            };
+        }
     }
 
     public enum GamepadStick
