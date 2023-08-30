@@ -117,10 +117,10 @@ namespace AggroBird.GameFramework
             }
         }
 
-        public InputAxis<Vector2> CameraInput { get; private set; } = InputAxis<Vector2>.Empty;
-        public InputAction<bool> Confirm { get; private set; } = InputAction<bool>.Empty;
-        public InputAction<bool> Cancel { get; private set; } = InputAction<bool>.Empty;
-        public InputAction<Direction> DirectionInput { get; private set; } = InputAction<Direction>.Empty;
+        public InputAxis<Vector2> CameraInput { get; protected set; } = InputAxis<Vector2>.Empty;
+        public InputAction<bool> Confirm { get; protected set; } = InputAction<bool>.Empty;
+        public InputAction<bool> Cancel { get; protected set; } = InputAction<bool>.Empty;
+        public InputAction<Direction> DirectionInput { get; protected set; } = InputAction<Direction>.Empty;
 
 
         private sealed class ControllerInputBinding
