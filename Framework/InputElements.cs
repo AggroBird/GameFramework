@@ -415,6 +415,27 @@ namespace AggroBird.GameFramework
         }
     }
 
+    [Serializable]
+    [PolymorphicClassType(Tooltip = "4-directional gamepad stick user interface input")]
+    public sealed class GamepadStickInputDirection : InputDirection
+    {
+        public GamepadStick stick;
+
+        public override Direction Value => value;
+        private Direction value;
+
+        public override void Update(int index = 0)
+        {
+            if (TryGetGamepad(index, out Gamepad gamepad))
+            {
+                value = ApplyRepeat(InputSystemUtility.DirectionFromVector(gamepad.GetStickControl(stick).ReadValue()));
+                return;
+            }
+
+            value = Direction.None;
+        }
+    }
+
     // Linear axes
     [Serializable]
     public abstract class LinearAxis : InputElement
@@ -650,6 +671,33 @@ namespace AggroBird.GameFramework
                 if (keyboard[left].isPressed) value.x--;
 
                 if (normalize) value.Normalize();
+            }
+        }
+    }
+
+    [Serializable]
+    [PolymorphicClassType(Tooltip = "2-dimentional mouse delta input")]
+    public sealed class MouseDeltaVectorAxis : VectorAxis
+    {
+        public float sensitivity = 1;
+        public bool invertHorizontal;
+        public bool invertVertical;
+
+        public override Vector2 Value => value;
+        private Vector2 value;
+
+        public override void Update(int index = 0)
+        {
+            if (TryGetMouse(index, out var mouse))
+            {
+                value = mouse.delta.ReadValue() * sensitivity;
+
+                if (invertHorizontal) value.x = -value.x;
+                if (invertVertical) value.y = -value.y;
+            }
+            else
+            {
+                value = Vector2.zero;
             }
         }
     }
