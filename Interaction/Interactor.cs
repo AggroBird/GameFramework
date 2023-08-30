@@ -13,6 +13,8 @@ namespace AggroBird.GameFramework
 
         public Interactable CurrentInteractable => currentInteractable ? currentInteractable : nearestInteractable;
 
+        private ButtonSwitch inputState;
+
 
         protected virtual void Start()
         {
@@ -30,12 +32,13 @@ namespace AggroBird.GameFramework
             UpdateInteractables();
         }
 
-        public virtual void UpdateInput(InputButton input)
+        public virtual void UpdateInput(bool interact)
         {
             UpdateInteractables();
 
             // Update input
-            switch (input.State)
+            inputState.Update(interact);
+            switch (inputState.State)
             {
                 case ButtonState.Pressed:
                     BeginInteract();
