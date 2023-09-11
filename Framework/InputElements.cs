@@ -3,6 +3,7 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
+using UnityEngine.InputSystem.LowLevel;
 using GamepadButtonCode = UnityEngine.InputSystem.LowLevel.GamepadButton;
 using KeyCode = UnityEngine.InputSystem.Key;
 using MouseButtonCode = UnityEngine.InputSystem.LowLevel.MouseButton;
@@ -175,6 +176,12 @@ namespace AggroBird.GameFramework
     {
         public abstract ButtonState State { get; }
 
+        public virtual bool ReadValueFromEvent(InputEventPtr inputEvent, out float value, int index = 0)
+        {
+            value = default;
+            return false;
+        }
+
         public bool IsPressed => State == ButtonState.Pressed;
         public bool IsHeld => State == ButtonState.Held;
         public bool IsReleased => State == ButtonState.Released;
@@ -205,6 +212,19 @@ namespace AggroBird.GameFramework
                 ButtonSwitch.UpdateState(ref state, false);
             }
         }
+
+        public override bool ReadValueFromEvent(InputEventPtr inputEvent, out float value, int index = 0)
+        {
+            if (key != KeyCode.None && TryGetKeyboard(index, out Keyboard keyboard))
+            {
+                return keyboard[key].ReadValueFromEvent(inputEvent, out value);
+            }
+            else
+            {
+                value = default;
+                return false;
+            }
+        }
     }
 
     [Serializable]
@@ -232,6 +252,19 @@ namespace AggroBird.GameFramework
                 ButtonSwitch.UpdateState(ref state, false);
             }
         }
+
+        public override bool ReadValueFromEvent(InputEventPtr inputEvent, out float value, int index = 0)
+        {
+            if (TryGetMouse(index, out Mouse mouse))
+            {
+                return InputSystemUtility.GetMouseButton(mouse, button).ReadValueFromEvent(inputEvent, out value);
+            }
+            else
+            {
+                value = default;
+                return false;
+            }
+        }
     }
 
     [Serializable]
@@ -257,6 +290,19 @@ namespace AggroBird.GameFramework
             else
             {
                 ButtonSwitch.UpdateState(ref state, false);
+            }
+        }
+
+        public override bool ReadValueFromEvent(InputEventPtr inputEvent, out float value, int index = 0)
+        {
+            if (TryGetGamepad(index, out Gamepad gamepad))
+            {
+                return gamepad[button].ReadValueFromEvent(inputEvent, out value);
+            }
+            else
+            {
+                value = default;
+                return false;
             }
         }
     }
