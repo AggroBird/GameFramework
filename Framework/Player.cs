@@ -84,7 +84,7 @@ namespace AggroBird.GameFramework
             if (UI) Destroy(UI.gameObject);
         }
 
-        public virtual void Update()
+        public virtual void UpdateInput()
         {
             if (Controller)
             {
@@ -94,19 +94,20 @@ namespace AggroBird.GameFramework
                 {
                     pawn.UpdateInput(Controller);
                 }
+
+                if (UI)
+                {
+                    // Update widgets
+                    UI.UpdateUserInterface();
+                    // Update input (after widgets have consumed input events)
+                    UI.UpdateInput(Controller);
+                }
             }
         }
         public virtual void UpdateUserInterface()
         {
             if (UI)
             {
-                // Update widgets
-                UI.UpdateUserInterface();
-                // Update input (after widgets have consumed input events)
-                if (Controller)
-                {
-                    UI.UpdateInput(Controller);
-                }
                 // Update layout
                 UI.UpdateLayout();
             }

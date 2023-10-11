@@ -105,19 +105,51 @@ namespace AggroBird.GameFramework
         }
 
 
+        private InputSettings.UpdateMode InputUpdateMode
+        {
+            get
+            {
+                if (InputSystem.settings)
+                {
+                    return InputSystem.settings.updateMode;
+                }
+                else
+                {
+                    return InputSettings.UpdateMode.ProcessEventsInDynamicUpdate;
+                }
+            }
+        }
 
         public static event Action OnUpdate;
         protected virtual void Update()
         {
-            for (int i = 0; i < PlayerCount; i++)
+            if (InputUpdateMode == InputSettings.UpdateMode.ProcessEventsInDynamicUpdate)
             {
-                if (TryGetPlayer(i, out Player player))
+                for (int i = 0; i < PlayerCount; i++)
                 {
-                    player.Update();
+                    if (TryGetPlayer(i, out Player player))
+                    {
+                        player.UpdateInput();
+                    }
                 }
             }
-
             OnUpdate?.Invoke();
+        }
+
+        public static event Action OnFixedUpdate;
+        protected virtual void FixedUpdate()
+        {
+            if (InputUpdateMode == InputSettings.UpdateMode.ProcessEventsInFixedUpdate)
+            {
+                for (int i = 0; i < PlayerCount; i++)
+                {
+                    if (TryGetPlayer(i, out Player player))
+                    {
+                        player.UpdateInput();
+                    }
+                }
+            }
+            OnFixedUpdate?.Invoke();
         }
 
         public static event Action OnLateUpdate;
@@ -130,7 +162,6 @@ namespace AggroBird.GameFramework
                     player.UpdateUserInterface();
                 }
             }
-
             OnLateUpdate?.Invoke();
 
             // Check if UI still requires input
