@@ -22,7 +22,8 @@ namespace AggroBird.GameFramework
             set => Camera.fieldOfView = value;
         }
 
-        public UpdateMode updateMode = UpdateMode.LateUpdate;
+        public UpdateMode updateInputMode = UpdateMode.LateUpdate;
+        public UpdateMode updateTransformMode = UpdateMode.LateUpdate;
         [Space]
         [Clamped(min: 0)] public int playerIndex = 0;
 
@@ -31,31 +32,33 @@ namespace AggroBird.GameFramework
 
         protected virtual void Update()
         {
-            if (updateMode == UpdateMode.Update)
+            if (updateInputMode == UpdateMode.Update)
             {
                 UpdateInput();
-
+            }
+            if (updateTransformMode == UpdateMode.Update)
+            {
                 UpdateTransform();
             }
         }
-
         protected virtual void LateUpdate()
         {
-            // Also perform input for fixed update
-            if (updateMode == UpdateMode.LateUpdate || updateMode == UpdateMode.FixedUpdate)
+            if (updateInputMode == UpdateMode.LateUpdate)
             {
                 UpdateInput();
             }
-
-            if (updateMode == UpdateMode.LateUpdate)
+            if (updateTransformMode == UpdateMode.LateUpdate)
             {
                 UpdateTransform();
             }
         }
-
         protected virtual void FixedUpdate()
         {
-            if (updateMode == UpdateMode.FixedUpdate)
+            if (updateInputMode == UpdateMode.FixedUpdate)
+            {
+                UpdateInput();
+            }
+            if (updateTransformMode == UpdateMode.FixedUpdate)
             {
                 UpdateTransform();
             }
