@@ -3,6 +3,14 @@ using UnityEngine;
 
 namespace AggroBird.GameFramework
 {
+    public enum AutoFollowRotationMode
+    {
+        None = 0,
+        Pitch = 1,
+        Yaw = 2,
+        BothPitchAndYaw = 3,
+    }
+
     [RequireComponent(typeof(Camera))]
     public class FollowCamera : PlayerCamera
     {
@@ -49,6 +57,8 @@ namespace AggroBird.GameFramework
         protected Pawn CurrentTarget { get; private set; }
         protected virtual Vector3 CurrentTargetPosition => CurrentTarget.Center + originOffset;
         protected virtual Quaternion AdditionalRotation => Quaternion.identity;
+
+        public AutoFollowRotationMode autoFollowRotationMode = AutoFollowRotationMode.BothPitchAndYaw;
 
         private Vector3 targetCurrentPosition;
         private float inputForce;
@@ -149,7 +159,8 @@ namespace AggroBird.GameFramework
                 targetPreviousPosition = targetPosition;
 
                 // Update rotation
-                if (CurrentTarget.rotateCamera)
+                AutoFollowRotationMode followMode = CurrentTarget.cameraAutoFollowRotationMode & autoFollowRotationMode;
+                if (followMode != AutoFollowRotationMode.None)
                 {
                     Rotator3 targetRot = Rotator3.FromEuler(CurrentTarget.transform.eulerAngles);
                     float rotateSpeed = (1 - Mathf.Clamp01(inputForce)) * Mathf.Clamp01((velocity.magnitude - 0.1f) / 3);
@@ -157,10 +168,16 @@ namespace AggroBird.GameFramework
                     if (rotateSpeed > 0)
                     {
                         rotateSpeed *= angularFollowSpeed * deltaTime;
-                        float pitchRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.pitch, rotation.pitch)) * rotateSpeed;
-                        rotation.pitch = Mathf.MoveTowardsAngle(rotation.pitch, 0, pitchRotation);
-                        float yawRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.yaw, rotation.yaw)) * rotateSpeed;
-                        rotation.yaw = Mathf.MoveTowardsAngle(rotation.yaw, targetRot.yaw, yawRotation);
+                        if ((followMode & AutoFollowRotationMode.Pitch) != AutoFollowRotationMode.None)
+                        {
+                            float pitchRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.pitch, rotation.pitch)) * rotateSpeed;
+                            rotation.pitch = Mathf.MoveTowardsAngle(rotation.pitch, 0, pitchRotation);
+                        }
+                        if ((followMode & AutoFollowRotationMode.Yaw) != AutoFollowRotationMode.None)
+                        {
+                            float yawRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.yaw, rotation.yaw)) * rotateSpeed;
+                            rotation.yaw = Mathf.MoveTowardsAngle(rotation.yaw, targetRot.yaw, yawRotation);
+                        }
                     }
                 }
                 Quaternion setRotation = Quaternion.Euler(pitch + rotation.pitch, rotation.yaw, 0);
