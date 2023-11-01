@@ -47,6 +47,8 @@ namespace AggroBird.GameFramework
         public bool updatePosition = true;
 
         protected Pawn CurrentTarget { get; private set; }
+        protected virtual Vector3 CurrentTargetPosition => CurrentTarget.Center + originOffset;
+        protected virtual Quaternion AdditionalRotation => Quaternion.identity;
 
         private Vector3 targetCurrentPosition;
         private float inputForce;
@@ -107,12 +109,12 @@ namespace AggroBird.GameFramework
 
                     if (CurrentTarget)
                     {
-                        Vector3 targetPos = CurrentTarget.transform.position + originOffset;
-                        if (!hadTarget || Vector3.Distance(targetPos, targetCurrentPosition) > 5)
+                        Vector3 targetPosition = CurrentTargetPosition;
+                        if (!hadTarget || Vector3.Distance(targetPosition, targetCurrentPosition) > 5)
                         {
                             rotation.yaw = CurrentTarget.transform.eulerAngles.y;
-                            targetCurrentPosition = targetPreviousPosition = targetPos;
-                            transform.eulerAngles = new Vector3(pitch + rotation.pitch, rotation.yaw, 0);
+                            targetCurrentPosition = targetPreviousPosition = targetPosition;
+                            transform.rotation = Quaternion.Euler(pitch + rotation.pitch, rotation.yaw, 0) * AdditionalRotation;
                         }
                     }
                 }
@@ -142,7 +144,7 @@ namespace AggroBird.GameFramework
                 float deltaTime = Time.deltaTime;
 
                 // Calculate current target velocity
-                Vector3 targetPosition = CurrentTarget.Center + originOffset;
+                Vector3 targetPosition = CurrentTargetPosition;
                 Vector2 velocity = (targetPreviousPosition.GetXZ() - targetPosition.GetXZ()) / deltaTime;
                 targetPreviousPosition = targetPosition;
 
