@@ -55,8 +55,7 @@ namespace AggroBird.GameFramework
         public bool updatePosition = true;
 
         protected Pawn CurrentTarget { get; private set; }
-        protected virtual Vector3 CurrentTargetPosition => CurrentTarget.Center + originOffset;
-        protected virtual Quaternion AdditionalRotation => Quaternion.identity;
+        protected Vector3 CurrentTargetPosition => CurrentTarget.Center + originOffset;
 
         public AutoFollowRotationMode autoFollowRotationMode = AutoFollowRotationMode.BothPitchAndYaw;
 
