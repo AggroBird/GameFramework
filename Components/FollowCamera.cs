@@ -21,7 +21,7 @@ namespace AggroBird.GameFramework
         public LayerMask collisionMask = 1;
         [Space]
         [Clamped(min: 0)] public float linearFollowSpeed = 10;
-        [Clamped(min: 0)] public float angularFollowSpeed = 5;
+        public Rotator2 angularFollowSpeed = new(5, 5);
         [Space]
         [Clamped(0, 90)]
         public float pitch = 10;
@@ -123,7 +123,7 @@ namespace AggroBird.GameFramework
                         {
                             rotation.yaw = CurrentTarget.transform.eulerAngles.y;
                             targetCurrentPosition = targetPreviousPosition = targetPosition;
-                            transform.rotation = Quaternion.Euler(pitch + rotation.pitch, rotation.yaw, 0) * AdditionalRotation;
+                            transform.rotation = Quaternion.Euler(pitch + rotation.pitch, rotation.yaw, 0);
                         }
                     }
                 }
@@ -166,15 +166,16 @@ namespace AggroBird.GameFramework
                     // Only rotate if the player is moving and we havent changed the camera recently
                     if (rotateSpeed > 0)
                     {
-                        rotateSpeed *= angularFollowSpeed * deltaTime;
+                        Rotator2 multiplier = CurrentTarget.cameraAutoFollowSpeedMultiplier;
+                        Rotator2 speed = new(angularFollowSpeed.pitch * multiplier.pitch, angularFollowSpeed.yaw * multiplier.yaw);
                         if ((followMode & AutoFollowRotationMode.Pitch) != AutoFollowRotationMode.None)
                         {
-                            float pitchRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.pitch, rotation.pitch)) * rotateSpeed;
+                            float pitchRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.pitch, rotation.pitch)) * rotateSpeed * speed.pitch * deltaTime;
                             rotation.pitch = Mathf.MoveTowardsAngle(rotation.pitch, 0, pitchRotation);
                         }
                         if ((followMode & AutoFollowRotationMode.Yaw) != AutoFollowRotationMode.None)
                         {
-                            float yawRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.yaw, rotation.yaw)) * rotateSpeed;
+                            float yawRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.yaw, rotation.yaw)) * rotateSpeed * speed.yaw * deltaTime;
                             rotation.yaw = Mathf.MoveTowardsAngle(rotation.yaw, targetRot.yaw, yawRotation);
                         }
                     }

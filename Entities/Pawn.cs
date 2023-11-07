@@ -1,3 +1,4 @@
+using AggroBird.UnityExtend;
 using System;
 using UnityEngine;
 
@@ -37,6 +38,7 @@ namespace AggroBird.GameFramework
         }
 
         public AutoFollowRotationMode cameraAutoFollowRotationMode = AutoFollowRotationMode.None;
+        [NonSerialized] public Rotator2 cameraAutoFollowSpeedMultiplier = new(1, 1);
 
         public Player Owner { get; internal set; }
         public bool TryGetOwner<T>(out T result) where T : Player => result = Owner as T;
