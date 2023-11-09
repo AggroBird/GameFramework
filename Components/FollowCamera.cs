@@ -58,6 +58,7 @@ namespace AggroBird.GameFramework
         protected Vector3 CurrentTargetPosition => CurrentTarget.Center + originOffset;
 
         public AutoFollowRotationMode autoFollowRotationMode = AutoFollowRotationMode.BothPitchAndYaw;
+        public QueryTriggerInteraction queryTriggerInteraction = QueryTriggerInteraction.Ignore;
 
         private Vector3 targetCurrentPosition;
         private float inputForce;
@@ -201,7 +202,7 @@ namespace AggroBird.GameFramework
                     else
                     {
                         Vector3 normal = direction / length;
-                        if (Physics.SphereCast(targetPosition, collisionRadius, normal, out RaycastHit hit, length, collisionMask))
+                        if (Physics.SphereCast(targetPosition, collisionRadius, normal, out RaycastHit hit, length, collisionMask, queryTriggerInteraction))
                         {
                             offsetLength = hit.distance;
                         }
