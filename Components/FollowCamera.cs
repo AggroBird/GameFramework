@@ -155,7 +155,7 @@ namespace AggroBird.GameFramework
 
                 // Calculate current target velocity
                 Vector3 targetPosition = CurrentTargetPosition;
-                Vector2 velocity = (targetPreviousPosition.GetXZ() - targetPosition.GetXZ()) / deltaTime;
+                Vector2 velocity = deltaTime > Mathf.Epsilon ? (targetPreviousPosition.GetXZ() - targetPosition.GetXZ()) / deltaTime : Vector2.zero;
                 targetPreviousPosition = targetPosition;
 
                 // Update rotation
