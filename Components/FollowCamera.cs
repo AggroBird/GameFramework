@@ -167,16 +167,14 @@ namespace AggroBird.GameFramework
                     // Only rotate if the player is moving and we havent changed the camera recently
                     if (rotateSpeed > 0)
                     {
-                        Rotator2 multiplier = CurrentTarget.cameraAutoFollowSpeedMultiplier;
-                        Rotator2 speed = new(angularFollowSpeed.pitch * multiplier.pitch, angularFollowSpeed.yaw * multiplier.yaw);
                         if ((followMode & AutoFollowRotationMode.Pitch) != AutoFollowRotationMode.None)
                         {
-                            float pitchRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.pitch, rotation.pitch)) * rotateSpeed * speed.pitch * deltaTime;
+                            float pitchRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.pitch, rotation.pitch)) * rotateSpeed * angularFollowSpeed.pitch * deltaTime;
                             rotation.pitch = Mathf.MoveTowardsAngle(rotation.pitch, 0, pitchRotation);
                         }
                         if ((followMode & AutoFollowRotationMode.Yaw) != AutoFollowRotationMode.None)
                         {
-                            float yawRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.yaw, rotation.yaw)) * rotateSpeed * speed.yaw * deltaTime;
+                            float yawRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.yaw, rotation.yaw)) * rotateSpeed * angularFollowSpeed.yaw * deltaTime;
                             rotation.yaw = Mathf.MoveTowardsAngle(rotation.yaw, targetRot.yaw, yawRotation);
                         }
                     }
