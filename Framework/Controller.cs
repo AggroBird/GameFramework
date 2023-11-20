@@ -42,25 +42,6 @@ namespace AggroBird.GameFramework
         }
     }
 
-    // Input switch
-    public class InputSwitch<T>
-    {
-        private static readonly InputSwitch<T> empty = new();
-        public static InputSwitch<T> Empty => empty;
-
-        protected ButtonState value = default;
-        public ButtonState Value => value;
-
-        public static implicit operator ButtonState(InputSwitch<T> action)
-        {
-            return action.value;
-        }
-
-        public bool IsPressed => value == ButtonState.Pressed;
-        public bool IsHeld => value == ButtonState.Held;
-        public bool IsReleased => value == ButtonState.Released;
-    }
-
     // Input axis
     public class InputAxis<T>
     {
@@ -125,15 +106,6 @@ namespace AggroBird.GameFramework
                         reactive.Value = this.value = value;
                     }
                 }
-            }
-        }
-
-        protected sealed class WriteableInputSwitch<T> : InputSwitch<T>
-        {
-            public new ButtonState Value
-            {
-                get => value;
-                set => this.value = value;
             }
         }
 
@@ -251,7 +223,7 @@ namespace AggroBird.GameFramework
                     }
                 }
 
-                public bool GatherInputButtonValues(Controller controller, int index, bool includeHeld = false)
+                public bool GatherInputButtonValues(Controller controller, int index)
                 {
                     bool value = false;
                     foreach (var input in inputs)
@@ -259,7 +231,7 @@ namespace AggroBird.GameFramework
                         foreach (var inputButton in new BindingIterator<InputButton>(controller, input))
                         {
                             inputButton.Update(index);
-                            value |= inputButton.IsPressed || (includeHeld && inputButton.IsHeld);
+                            value |= inputButton.IsPressed;
                         }
                     }
                     return value;
@@ -360,22 +332,6 @@ namespace AggroBird.GameFramework
 
                 public override void Bind(Controller controller) => target.SetValue(controller, action);
                 public override void Update(Controller controller, int index) => action.Value = GatherInputDirectionValues(controller, index);
-            }
-
-            private sealed class BoolSwitchBinding : InputBinding
-            {
-                private readonly WriteableInputSwitch<ButtonState> action = new();
-
-                public override void Bind(Controller controller) => target.SetValue(controller, action);
-                public override void Update(Controller controller, int index) => action.Value = ButtonSwitch.UpdateState(action.Value, GatherInputButtonValues(controller, index, true));
-            }
-
-            private sealed class LinearSwitchBinding : InputBinding
-            {
-                private readonly WriteableInputSwitch<ButtonState> action = new();
-
-                public override void Bind(Controller controller) => target.SetValue(controller, action);
-                public override void Update(Controller controller, int index) => action.Value = ButtonSwitch.UpdateState(action.Value, GatherLinearAxisValues(controller, index) > 0.5f);
             }
 
             private sealed class BoolAxisBinding : InputBinding
@@ -507,24 +463,6 @@ namespace AggroBird.GameFramework
                                             if (genericArgument.Equals(typeof(Direction)))
                                             {
                                                 Bind<DirectionActionBinding>(memberName, targetBinding, inputBinding);
-                                                continue;
-                                            }
-                                        }
-                                    }
-                                    else if (genericTypeDefinition.Equals(typeof(InputSwitch<>)))
-                                    {
-                                        // Switch type is always ButtonState
-                                        var genericArgument = targetElementType.GetGenericArguments()[0];
-                                        if (genericArgument.Equals(typeof(ButtonState)))
-                                        {
-                                            if (inputElementType.Equals(typeof(InputButton)))
-                                            {
-                                                Bind<BoolSwitchBinding>(memberName, targetBinding, inputBinding);
-                                                continue;
-                                            }
-                                            else if (inputElementType.Equals(typeof(LinearAxis)))
-                                            {
-                                                Bind<LinearSwitchBinding>(memberName, targetBinding, inputBinding);
                                                 continue;
                                             }
                                         }
