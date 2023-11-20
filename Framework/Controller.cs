@@ -251,7 +251,7 @@ namespace AggroBird.GameFramework
                     }
                 }
 
-                public bool GatherInputButtonValues(Controller controller, int index)
+                public bool GatherInputButtonValues(Controller controller, int index, bool includeHeld = false)
                 {
                     bool value = false;
                     foreach (var input in inputs)
@@ -259,7 +259,7 @@ namespace AggroBird.GameFramework
                         foreach (var inputButton in new BindingIterator<InputButton>(controller, input))
                         {
                             inputButton.Update(index);
-                            value |= inputButton.IsPressed;
+                            value |= inputButton.IsPressed || (includeHeld && inputButton.IsHeld);
                         }
                     }
                     return value;
@@ -367,7 +367,7 @@ namespace AggroBird.GameFramework
                 private readonly WriteableInputSwitch<ButtonState> action = new();
 
                 public override void Bind(Controller controller) => target.SetValue(controller, action);
-                public override void Update(Controller controller, int index) => action.Value = ButtonSwitch.UpdateState(action.Value, GatherInputButtonValues(controller, index));
+                public override void Update(Controller controller, int index) => action.Value = ButtonSwitch.UpdateState(action.Value, GatherInputButtonValues(controller, index, true));
             }
 
             private sealed class LinearSwitchBinding : InputBinding
