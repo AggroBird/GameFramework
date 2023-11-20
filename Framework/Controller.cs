@@ -69,12 +69,13 @@ namespace AggroBird.GameFramework
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = true)]
     public sealed class BindInputAttribute : Attribute
     {
-        public BindInputAttribute(string memberName)
+        public BindInputAttribute(params string[] memberNames)
         {
-            this.memberName = memberName;
+            this.memberNames = memberNames;
         }
 
-        public readonly string memberName;
+        private readonly string[] memberNames;
+        public ReadOnlySpan<string> MemberNames => memberNames;
     }
 
     // Add this attribute to InputAxis<T> to clamp the magnitude
@@ -325,6 +326,14 @@ namespace AggroBird.GameFramework
                 public override void Update(Controller controller, int index) => action.Value = GatherInputButtonValues(controller, index);
             }
 
+            private sealed class ButtonStateActionBinding : InputBinding
+            {
+                private readonly WriteableInputAction<ButtonState> action = new();
+
+                public override void Bind(Controller controller) => target.SetValue(controller, action);
+                public override void Update(Controller controller, int index) => action.Value = ButtonSwitch.UpdateState(action.Value, GatherInputButtonValues(controller, index));
+            }
+
             private sealed class DirectionActionBinding : InputBinding
             {
                 private readonly WriteableInputAction<Direction> action = new();
@@ -339,6 +348,14 @@ namespace AggroBird.GameFramework
 
                 public override void Bind(Controller controller) => target.SetValue(controller, axis);
                 public override void Update(Controller controller, int index) => axis.Value = GatherLinearAxisValues(controller, index) > 0.5f;
+            }
+
+            private sealed class ButtonStateAxisBinding : InputBinding
+            {
+                private readonly WriteableInputAxis<ButtonState> action = new();
+
+                public override void Bind(Controller controller) => target.SetValue(controller, action);
+                public override void Update(Controller controller, int index) => action.Value = ButtonSwitch.UpdateState(action.Value, GatherInputButtonValues(controller, index));
             }
 
             private sealed class LinearAxisBinding : InputBinding
@@ -385,8 +402,7 @@ namespace AggroBird.GameFramework
 
                 foreach (var member in controllerType.GetMembers(MemberBindingFlags))
                 {
-                    var enumerable = member.GetCustomAttributes<BindInputAttribute>().GetEnumerator();
-                    if (enumerable.MoveNext())
+                    foreach (var attribute in member.GetCustomAttributes<BindInputAttribute>())
                     {
                         MemberBinding inputBinding;
                         switch (member)
@@ -403,7 +419,7 @@ namespace AggroBird.GameFramework
                         }
 
                         Type inputElementType = inputBinding.MemberType.IsArray ? inputBinding.MemberType.GetElementType() : inputBinding.MemberType;
-                        do
+                        foreach (string memberName in attribute.MemberNames)
                         {
                             MemberInfo FindTargetMember(string name)
                             {
@@ -414,121 +430,136 @@ namespace AggroBird.GameFramework
                                 return null;
                             }
 
-                            string memberName = enumerable.Current.memberName;
                             MemberInfo target = FindTargetMember(memberName);
-                            if (target != null)
+                            if (target == null)
                             {
-                                MemberBinding targetBinding;
-                                switch (target)
-                                {
-                                    case FieldInfo fieldInfo:
-                                        targetBinding = new FieldBinding(fieldInfo);
-                                        break;
-                                    case PropertyInfo propertyInfo:
-                                        if (!propertyInfo.CanWrite)
-                                        {
-                                            Debug.LogError($"Failed to bind member '{target.Name}' ({propertyInfo.PropertyType}), property is not assignable");
-                                            continue;
-                                        }
-                                        targetBinding = new PropertyBinding(propertyInfo);
-                                        break;
-                                    default:
-                                        Debug.LogError("Unexpected member type");
-                                        continue;
-                                }
+                                Debug.LogError($"Failed to find input target member '{memberName}'");
+                                continue;
+                            }
 
-                                Type targetElementType = targetBinding.MemberType;
-                                if (targetElementType.IsGenericType)
-                                {
-                                    Type genericTypeDefinition = targetElementType.GetGenericTypeDefinition();
-                                    if (genericTypeDefinition != null)
+                            MemberBinding targetBinding;
+                            switch (target)
+                            {
+                                case FieldInfo fieldInfo:
+                                    targetBinding = new FieldBinding(fieldInfo);
+                                    break;
+                                case PropertyInfo propertyInfo:
+                                    if (!propertyInfo.CanWrite)
                                     {
-                                        if (genericTypeDefinition.Equals(typeof(InputAction<>)))
-                                        {
-                                            var genericArgument = targetElementType.GetGenericArguments()[0];
+                                        Debug.LogError($"Failed to bind member '{target.Name}' ({propertyInfo.PropertyType}), property is not assignable");
+                                        continue;
+                                    }
+                                    targetBinding = new PropertyBinding(propertyInfo);
+                                    break;
+                                default:
+                                    Debug.LogError("Unexpected member type");
+                                    continue;
+                            }
 
-                                            if (inputElementType.Equals(typeof(InputButton)) && genericArgument.Equals(typeof(bool)))
+                            Type targetElementType = targetBinding.MemberType;
+                            if (targetElementType.IsGenericType)
+                            {
+                                Type genericTypeDefinition = targetElementType.GetGenericTypeDefinition();
+                                if (genericTypeDefinition != null)
+                                {
+                                    if (genericTypeDefinition.Equals(typeof(InputAction<>)))
+                                    {
+                                        var genericArgument = targetElementType.GetGenericArguments()[0];
+
+                                        if (inputElementType.Equals(typeof(InputButton)))
+                                        {
+                                            if (genericArgument.Equals(typeof(bool)))
                                             {
                                                 Bind<BoolActionBinding>(memberName, targetBinding, inputBinding);
                                                 continue;
                                             }
-                                            else if (inputElementType.Equals(typeof(InputDirection)) && genericArgument.Equals(typeof(Direction)))
+                                            else if (genericArgument.Equals(typeof(ButtonState)))
                                             {
-                                                Bind<DirectionActionBinding>(memberName, targetBinding, inputBinding);
+                                                Bind<ButtonStateActionBinding>(memberName, targetBinding, inputBinding);
                                                 continue;
                                             }
                                         }
-                                        else if (genericTypeDefinition.Equals(typeof(InputAxis<>)))
+                                        else if (inputElementType.Equals(typeof(InputDirection)) && genericArgument.Equals(typeof(Direction)))
                                         {
-                                            var genericArgument = targetElementType.GetGenericArguments()[0];
+                                            Bind<DirectionActionBinding>(memberName, targetBinding, inputBinding);
+                                            continue;
+                                        }
+                                    }
+                                    else if (genericTypeDefinition.Equals(typeof(InputAxis<>)))
+                                    {
+                                        var genericArgument = targetElementType.GetGenericArguments()[0];
 
-                                            ClampAxisMagnitudeAttribute clampAttribute = target.GetCustomAttribute<ClampAxisMagnitudeAttribute>();
-                                            float clampMax = clampAttribute == null ? float.MaxValue : clampAttribute.max;
+                                        ClampAxisMagnitudeAttribute clampAttribute = target.GetCustomAttribute<ClampAxisMagnitudeAttribute>();
+                                        float clampMax = clampAttribute == null ? float.MaxValue : clampAttribute.max;
 
-                                            if (inputElementType.Equals(typeof(LinearAxis)))
+                                        if (inputElementType.Equals(typeof(LinearAxis)))
+                                        {
+                                            if (genericArgument.Equals(typeof(bool)))
                                             {
-                                                if (genericArgument.Equals(typeof(bool)))
-                                                {
-                                                    Bind<BoolAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
-                                                    continue;
-                                                }
-                                                else if (genericArgument.Equals(typeof(float)))
-                                                {
-                                                    Bind<LinearAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
-                                                    continue;
-                                                }
+                                                Bind<BoolAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                                continue;
                                             }
-                                            else if (inputElementType.Equals(typeof(VectorAxis)))
+                                            else if (genericArgument.Equals(typeof(float)))
                                             {
-                                                if (genericArgument.Equals(typeof(Direction)))
-                                                {
-                                                    Bind<DirectionAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
-                                                    continue;
-                                                }
-                                                else if (genericArgument.Equals(typeof(Vector2)))
-                                                {
-                                                    Bind<VectorAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
-                                                    continue;
-                                                }
+                                                Bind<LinearAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                                continue;
                                             }
-                                            else if (inputElementType.Equals(typeof(InputButton)))
+                                            else if (genericArgument.Equals(typeof(ButtonState)))
                                             {
-                                                if (genericArgument.Equals(typeof(bool)))
-                                                {
-                                                    Bind<BoolAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
-                                                    continue;
-                                                }
-                                                else if (genericArgument.Equals(typeof(float)))
-                                                {
-                                                    Bind<LinearAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
-                                                    continue;
-                                                }
+                                                Bind<ButtonStateAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                                continue;
                                             }
-                                            else if (inputElementType.Equals(typeof(InputDirection)))
+                                        }
+                                        else if (inputElementType.Equals(typeof(VectorAxis)))
+                                        {
+                                            if (genericArgument.Equals(typeof(Direction)))
                                             {
-                                                if (genericArgument.Equals(typeof(Direction)))
-                                                {
-                                                    Bind<DirectionAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
-                                                    continue;
-                                                }
-                                                else if (genericArgument.Equals(typeof(Vector2)))
-                                                {
-                                                    Bind<VectorAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
-                                                    continue;
-                                                }
+                                                Bind<DirectionAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                                continue;
+                                            }
+                                            else if (genericArgument.Equals(typeof(Vector2)))
+                                            {
+                                                Bind<VectorAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                                continue;
+                                            }
+                                        }
+                                        else if (inputElementType.Equals(typeof(InputButton)))
+                                        {
+                                            if (genericArgument.Equals(typeof(bool)))
+                                            {
+                                                Bind<BoolAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                                continue;
+                                            }
+                                            else if (genericArgument.Equals(typeof(float)))
+                                            {
+                                                Bind<LinearAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                                continue;
+                                            }
+                                            else if (genericArgument.Equals(typeof(ButtonState)))
+                                            {
+                                                Bind<ButtonStateAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                                continue;
+                                            }
+                                        }
+                                        else if (inputElementType.Equals(typeof(InputDirection)))
+                                        {
+                                            if (genericArgument.Equals(typeof(Direction)))
+                                            {
+                                                Bind<DirectionAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                                continue;
+                                            }
+                                            else if (genericArgument.Equals(typeof(Vector2)))
+                                            {
+                                                Bind<VectorAxisBinding>(memberName, targetBinding, inputBinding, clampMax);
+                                                continue;
                                             }
                                         }
                                     }
                                 }
+                            }
 
-                                Debug.LogError($"Failed to bind input element '{member.Name}' ({inputBinding.MemberType}) to member '{target.Name}' ({targetBinding.MemberType})");
-                            }
-                            else
-                            {
-                                Debug.LogError($"Failed to find input target member '{memberName}'");
-                            }
+                            Debug.LogError($"Failed to bind input element '{member.Name}' ({inputBinding.MemberType}) to member '{target.Name}' ({targetBinding.MemberType})");
                         }
-                        while (enumerable.MoveNext());
                     }
                 }
             }
