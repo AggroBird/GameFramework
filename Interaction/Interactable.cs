@@ -17,18 +17,22 @@ namespace AggroBird.GameFramework
 
         public abstract bool CanInteract(Interactor interactor);
 
+        public event Action<Interactor> OnBeginInteract;
+        public event Action<Interactor> OnUpdateInteract;
+        public event Action<Interactor> OnEndInteract;
+
 
         protected internal virtual void BeginInteract(Interactor interactor)
         {
-
+            OnBeginInteract?.Invoke(interactor);
         }
         protected internal virtual void UpdateInteract(Interactor interactor)
         {
-
+            OnUpdateInteract?.Invoke(interactor);
         }
         protected internal virtual void EndInteract(Interactor interactor)
         {
-
+            OnEndInteract?.Invoke(interactor);
         }
 
 
