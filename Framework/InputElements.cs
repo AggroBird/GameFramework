@@ -31,11 +31,15 @@ namespace AggroBird.GameFramework
 
         public static Direction DirectionFromVector(Vector2 vector)
         {
-            if (vector.sqrMagnitude > 0.25f)
+            if (vector.sqrMagnitude > Mathf.Epsilon)
             {
-                return (Direction)(((int)((Mathfx.AngleFromVectorDeg(vector) + 360 + 45) % 360) / 90) & 3) + 1;
+                return DirectionFromAngle(Mathfx.AngleFromVectorDeg(vector));
             }
             return Direction.None;
+        }
+        public static Direction DirectionFromAngle(float angle)
+        {
+            return (Direction)(((int)((Mathfx.ModAbs(angle, 360) + 45) % 360) / 90) & 3) + 1;
         }
         public static Vector2 ToVector2(this Direction direction)
         {
