@@ -3,16 +3,16 @@ using UnityEngine;
 
 namespace AggroBird.GameFramework
 {
+    public enum LookDirectionOptions
+    {
+        Velocity,
+        Input,
+        Manual,
+    };
+
     // Based on physics based character controller by Toyful games https://www.toyfulgames.com/
     public class CharacterMovement : Movement
     {
-        private enum LookDirectionOptions
-        {
-            Velocity,
-            Input,
-            Manual,
-        };
-
         [SerializeField, HideInInspector]
         private new Rigidbody rigidbody = default;
         public Rigidbody Rigidbody => rigidbody;
@@ -21,7 +21,7 @@ namespace AggroBird.GameFramework
         public CapsuleCollider Collider => collider;
 
         [Header("Settings")]
-        [SerializeField] private LookDirectionOptions characterLookDirection = LookDirectionOptions.Velocity;
+        public LookDirectionOptions characterLookDirection = LookDirectionOptions.Velocity;
         [SerializeField, Min(0)] private float rotateSpeed = 500;
         [SerializeField, Min(0.1f)] private float collisionRadius = 0.5f;
         [SerializeField, Min(0.2f)] private float collisionHeight = 1.75f;
