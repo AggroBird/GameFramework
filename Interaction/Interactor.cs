@@ -7,11 +7,20 @@ namespace AggroBird.GameFramework
     {
         [field: SerializeField] public Entity Entity { get; private set; }
 
-        private readonly List<Interactable> interactables = new();
-        private Interactable nearestInteractable = null;
-        private Interactable currentInteractable = null;
+        private static bool IsValid(IInteractable iteractable)
+        {
+            if (iteractable is Object obj)
+            {
+                return obj;
+            }
+            return iteractable != null;
+        }
 
-        public Interactable CurrentInteractable => currentInteractable ? currentInteractable : nearestInteractable;
+        private readonly List<IInteractable> interactables = new();
+        private IInteractable nearestInteractable = null;
+        private IInteractable currentInteractable = null;
+
+        public IInteractable CurrentInteractable => IsValid(currentInteractable) ? currentInteractable : IsValid(nearestInteractable) ? nearestInteractable : null;
 
         private ButtonSwitch inputState;
 
@@ -48,7 +57,7 @@ namespace AggroBird.GameFramework
                     break;
             }
 
-            if (currentInteractable)
+            if (IsValid(currentInteractable))
             {
                 currentInteractable.UpdateInteract(this);
             }
@@ -59,7 +68,7 @@ namespace AggroBird.GameFramework
             // Filter invalids
             for (int i = 0; i < interactables.Count;)
             {
-                if (!interactables[i])
+                if (!IsValid(interactables[i]))
                 {
                     interactables.RemoveAt(i);
                     continue;
@@ -75,7 +84,7 @@ namespace AggroBird.GameFramework
                 for (int i = 0; i < interactables.Count; i++)
                 {
                     var interactable = interactables[i];
-                    if (interactable.isActiveAndEnabled && interactable.CanInteract(this))
+                    if ((interactable is not Behaviour component || component.isActiveAndEnabled) && interactable.CanInteract(this))
                     {
                         float dist = (interactable.InteractPosition - transform.position).sqrMagnitude;
                         if (dist < nearestDist)
@@ -94,9 +103,9 @@ namespace AggroBird.GameFramework
 
         public virtual void BeginInteract()
         {
-            if (!currentInteractable)
+            if (!IsValid(currentInteractable))
             {
-                if (nearestInteractable)
+                if (IsValid(nearestInteractable))
                 {
                     currentInteractable = nearestInteractable;
                     currentInteractable.BeginInteract(this);
@@ -105,8 +114,8 @@ namespace AggroBird.GameFramework
         }
         public virtual void EndInteract()
         {
-            Interactable interactable = currentInteractable;
-            if (interactable)
+            IInteractable interactable = currentInteractable;
+            if (IsValid(interactable))
             {
                 currentInteractable = null;
                 interactable.EndInteract(this);
@@ -114,7 +123,7 @@ namespace AggroBird.GameFramework
         }
 
 
-        private readonly List<Interactable> overlap = new List<Interactable>();
+        private readonly List<IInteractable> overlap = new List<IInteractable>();
 
         protected virtual void OnTriggerEnter(Collider trigger)
         {

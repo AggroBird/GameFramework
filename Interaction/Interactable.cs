@@ -9,7 +9,18 @@ namespace AggroBird.GameFramework
 
     }
 
-    public abstract class Interactable : MonoBehaviour
+    public interface IInteractable
+    {
+        InteractTooltipContent TooltipContent { get; }
+        Vector3 InteractPosition { get; }
+        bool CanInteract(Interactor interactor);
+
+        void BeginInteract(Interactor interactor);
+        void UpdateInteract(Interactor interactor);
+        void EndInteract(Interactor interactor);
+    }
+
+    public abstract class Interactable : MonoBehaviour, IInteractable
     {
         public abstract InteractTooltipContent TooltipContent { get; }
         [SerializeField] private Vector3 interactOffset = Vector3.zero;
@@ -22,15 +33,15 @@ namespace AggroBird.GameFramework
         public event Action<Interactor> OnEndInteract;
 
 
-        protected internal virtual void BeginInteract(Interactor interactor)
+        public virtual void BeginInteract(Interactor interactor)
         {
             OnBeginInteract?.Invoke(interactor);
         }
-        protected internal virtual void UpdateInteract(Interactor interactor)
+        public virtual void UpdateInteract(Interactor interactor)
         {
             OnUpdateInteract?.Invoke(interactor);
         }
-        protected internal virtual void EndInteract(Interactor interactor)
+        public virtual void EndInteract(Interactor interactor)
         {
             OnEndInteract?.Invoke(interactor);
         }
