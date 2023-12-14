@@ -204,9 +204,14 @@ namespace AggroBird.GameFramework
 
 
         public static event Action OnShutdown;
+        public static event Action OnShutdownEditor;
         protected virtual void Shutdown()
         {
             OnShutdown?.Invoke();
+            if (Application.isEditor)
+            {
+                OnShutdownEditor?.Invoke();
+            }
         }
 
         protected virtual void OnDestroy()
