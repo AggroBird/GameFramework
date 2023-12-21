@@ -14,7 +14,7 @@ namespace AggroBird.GameFramework
         public bool PauseGame { get; private set; }
 
         public UserInterface Parent { get; internal set; }
-        public bool IsTop => Parent ? object.ReferenceEquals(Parent.Top, this) : false;
+        public bool IsTop => Parent ? ReferenceEquals(Parent.Top, this) : false;
 
 
         protected override void OnClosed()
@@ -33,20 +33,23 @@ namespace AggroBird.GameFramework
 
         public void FocusSelectable()
         {
-            Selectable selectOnFocus = SelectOnFocus;
-            if (selectOnFocus)
+            if (Parent)
             {
-                Parent.SetSelection(selectOnFocus);
-            }
-            else
-            {
-                Selectable[] selectables = GetComponentsInChildren<Selectable>();
-                foreach (var selectable in selectables)
+                Selectable selectOnFocus = SelectOnFocus;
+                if (selectOnFocus)
                 {
-                    if (selectable.interactable && selectable.gameObject.activeInHierarchy)
+                    Parent.SetSelection(selectOnFocus);
+                }
+                else
+                {
+                    Selectable[] selectables = GetComponentsInChildren<Selectable>();
+                    foreach (var selectable in selectables)
                     {
-                        Parent.SetSelection(selectable);
-                        break;
+                        if (selectable.interactable && selectable.gameObject.activeInHierarchy)
+                        {
+                            Parent.SetSelection(selectable);
+                            break;
+                        }
                     }
                 }
             }
@@ -72,7 +75,7 @@ namespace AggroBird.GameFramework
         public virtual bool OnConfirm()
         {
             // Press current selection if controller
-            if (AppInstance.Instance.PlatformProfile.ActiveInputMode == InputMode.Controller)
+            if (AppInstance.Instance.PlatformProfile.ActiveInputMode == InputMode.Controller && Parent)
             {
                 EventSystem eventSystem = Parent.EventSystem;
                 if (eventSystem)
@@ -96,25 +99,28 @@ namespace AggroBird.GameFramework
         }
         public virtual bool OnDirection(Direction direction)
         {
-            EventSystem eventSystem = Parent.EventSystem;
-            if (eventSystem)
+            if (Parent)
             {
-                // Send move event
-                GameObject selectedGameobject = eventSystem.currentSelectedGameObject;
-                if (selectedGameobject && selectedGameobject.GetComponentInParent<Widget>() == this)
+                EventSystem eventSystem = Parent.EventSystem;
+                if (eventSystem)
                 {
-                    AxisEventData data = new(Parent.EventSystem)
+                    // Send move event
+                    GameObject selectedGameobject = eventSystem.currentSelectedGameObject;
+                    if (selectedGameobject && selectedGameobject.GetComponentInParent<Widget>() == this)
                     {
-                        moveDir = direction switch
+                        AxisEventData data = new(Parent.EventSystem)
                         {
-                            Direction.Up => MoveDirection.Up,
-                            Direction.Right => MoveDirection.Right,
-                            Direction.Down => MoveDirection.Down,
-                            Direction.Left => MoveDirection.Left,
-                            _ => MoveDirection.None,
-                        }
-                    };
-                    ExecuteEvents.Execute(selectedGameobject, data, ExecuteEvents.moveHandler);
+                            moveDir = direction switch
+                            {
+                                Direction.Up => MoveDirection.Up,
+                                Direction.Right => MoveDirection.Right,
+                                Direction.Down => MoveDirection.Down,
+                                Direction.Left => MoveDirection.Left,
+                                _ => MoveDirection.None,
+                            }
+                        };
+                        ExecuteEvents.Execute(selectedGameobject, data, ExecuteEvents.moveHandler);
+                    }
                 }
             }
 
