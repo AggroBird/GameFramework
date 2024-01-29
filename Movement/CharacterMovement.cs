@@ -134,6 +134,7 @@ namespace AggroBird.GameFramework
                 Velocity = new Vector3(vel.x, value, vel.z);
             }
         }
+        public float GroundPeneration { get; private set; }
 
         public bool IsKinematic
         {
@@ -212,15 +213,17 @@ namespace AggroBird.GameFramework
                     MaintainHeight(hit);
                 }
 
+                GroundPeneration = rayHitGround ? (hit.distance - suspensionHeight) : 0;
+
                 UpdateLookDirection();
             }
         }
 
-        private void MaintainHeight(RaycastHit rayHit)
+        private void MaintainHeight(RaycastHit hit)
         {
             Vector3 vel = rigidbody.velocity;
             Vector3 otherVel = Vector3.zero;
-            Rigidbody hitBody = rayHit.rigidbody;
+            Rigidbody hitBody = hit.rigidbody;
             if (hitBody != null)
             {
                 otherVel = hitBody.velocity;
@@ -229,7 +232,7 @@ namespace AggroBird.GameFramework
             float otherDirVel = Vector3.Dot(Vector3.down, otherVel);
 
             float relVel = rayDirVel - otherDirVel;
-            float currHeight = rayHit.distance - suspensionHeight;
+            float currHeight = hit.distance - suspensionHeight;
             float springForce = (currHeight * suspensionSpringStrength) - (relVel * suspensionSpringDamper);
             Vector3 maintainHeightForce = -gravitationalForce + springForce * Vector3.down;
             rigidbody.AddForce(maintainHeightForce);
