@@ -37,7 +37,7 @@ namespace AggroBird.GameFramework
         private bool lockCursor = true;
         private bool uiRequiresInput = false;
 
-        public bool HasFocus { get; private set; }
+        public bool HasFocus { get; private set; } = true;
 
         public virtual bool InputEnabled => HasFocus && inputEnabled && !uiRequiresInput;
         public void SetInputEnabled(bool enabled)
