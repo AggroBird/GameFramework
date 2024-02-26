@@ -231,7 +231,7 @@ namespace AggroBird.GameFramework
                         foreach (var inputButton in new BindingIterator<InputButton>(controller, input))
                         {
                             inputButton.Update(index);
-                            value |= inputButton.IsPressed;
+                            value |= inputButton.Value;
                         }
                     }
                     return value;
@@ -267,8 +267,7 @@ namespace AggroBird.GameFramework
                             }
                             else if (inputElement is InputButton inputButton)
                             {
-                                var state = inputButton.State;
-                                value += (state == ButtonState.Pressed || state == ButtonState.Held) ? 1 : 0;
+                                value += inputButton.Value ? 1 : 0;
                             }
                         }
                     }
