@@ -315,22 +315,13 @@ namespace AggroBird.GameFramework
             {
                 private readonly WriteableInputAction<bool> action = new();
 
-                private bool value = false;
+                private ButtonSwitch buttonSwitch = new();
 
                 public override void Bind(Controller controller) => target.SetValue(controller, action);
                 public override void Update(Controller controller, int index)
                 {
-                    if (GatherInputButtonValues(controller, index))
-                    {
-                        if (!value)
-                        {
-                            action.Value = value = true;
-                        }
-                    }
-                    else if (value)
-                    {
-                        action.Value = value = false;
-                    }
+                    buttonSwitch.Update(GatherInputButtonValues(controller, index));
+                    action.Value = buttonSwitch.State == ButtonState.Pressed;
                 }
             }
 
@@ -338,8 +329,14 @@ namespace AggroBird.GameFramework
             {
                 private readonly WriteableInputAction<Direction> action = new();
 
+                private DirectionSwitch directionSwitch = new();
+
                 public override void Bind(Controller controller) => target.SetValue(controller, action);
-                public override void Update(Controller controller, int index) => action.Value = GatherInputDirectionValues(controller, index);
+                public override void Update(Controller controller, int index)
+                {
+                    directionSwitch.Update(GatherInputDirectionValues(controller, index));
+                    action.Value = directionSwitch.State;
+                }
             }
 
             private sealed class BoolAxisBinding : InputBinding
