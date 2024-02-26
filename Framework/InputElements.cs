@@ -178,17 +178,13 @@ namespace AggroBird.GameFramework
     [Serializable]
     public abstract class InputButton : InputElement
     {
-        public abstract ButtonState State { get; }
+        public abstract bool Value { get; }
 
         public virtual bool ReadValueFromEvent(InputEventPtr inputEvent, out float value, int index = 0)
         {
             value = default;
             return false;
         }
-
-        public bool IsPressed => State == ButtonState.Pressed;
-        public bool IsHeld => State == ButtonState.Held;
-        public bool IsReleased => State == ButtonState.Released;
     }
 
     [Serializable]
@@ -202,19 +198,12 @@ namespace AggroBird.GameFramework
 
         public KeyCode key;
 
-        public override ButtonState State => state;
-        private ButtonState state;
+        public override bool Value => value;
+        private bool value;
 
         public override void Update(int index = 0)
         {
-            if (key != KeyCode.None && TryGetKeyboard(index, out Keyboard keyboard))
-            {
-                ButtonSwitch.UpdateState(ref state, keyboard[key].isPressed);
-            }
-            else
-            {
-                ButtonSwitch.UpdateState(ref state, false);
-            }
+            value = key != KeyCode.None && TryGetKeyboard(index, out Keyboard keyboard) && keyboard[key].isPressed;
         }
 
         public override bool ReadValueFromEvent(InputEventPtr inputEvent, out float value, int index = 0)
@@ -242,19 +231,12 @@ namespace AggroBird.GameFramework
 
         public MouseButtonCode button;
 
-        public override ButtonState State => state;
-        private ButtonState state;
+        public override bool Value => value;
+        private bool value;
 
         public override void Update(int index = 0)
         {
-            if (TryGetMouse(index, out Mouse mouse))
-            {
-                ButtonSwitch.UpdateState(ref state, InputSystemUtility.GetMouseButton(mouse, button).isPressed);
-            }
-            else
-            {
-                ButtonSwitch.UpdateState(ref state, false);
-            }
+            value = TryGetMouse(index, out Mouse mouse) && InputSystemUtility.GetMouseButton(mouse, button).isPressed;
         }
 
         public override bool ReadValueFromEvent(InputEventPtr inputEvent, out float value, int index = 0)
@@ -282,19 +264,12 @@ namespace AggroBird.GameFramework
 
         public GamepadButtonCode button;
 
-        public override ButtonState State => state;
-        private ButtonState state;
+        public override bool Value => value;
+        private bool value;
 
         public override void Update(int index = 0)
         {
-            if (TryGetGamepad(index, out Gamepad gamepad))
-            {
-                ButtonSwitch.UpdateState(ref state, gamepad[button].isPressed);
-            }
-            else
-            {
-                ButtonSwitch.UpdateState(ref state, false);
-            }
+            value = TryGetGamepad(index, out Gamepad gamepad) && gamepad[button].isPressed;
         }
 
         public override bool ReadValueFromEvent(InputEventPtr inputEvent, out float value, int index = 0)
