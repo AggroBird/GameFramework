@@ -321,8 +321,23 @@ namespace AggroBird.GameFramework
             {
                 private readonly WriteableInputAction<bool> action = new();
 
+                private bool value = false;
+
                 public override void Bind(Controller controller) => target.SetValue(controller, action);
-                public override void Update(Controller controller, int index) => action.Value = GatherInputButtonValues(controller, index);
+                public override void Update(Controller controller, int index)
+                {
+                    if (GatherInputButtonValues(controller, index))
+                    {
+                        if (!value)
+                        {
+                            action.Value = value = true;
+                        }
+                    }
+                    else if (value)
+                    {
+                        action.Value = value = false;
+                    }
+                }
             }
 
             private sealed class DirectionActionBinding : InputBinding
