@@ -63,6 +63,11 @@ namespace AggroBird.GameFramework
                 _ => Vector2Int.zero,
             };
         }
+
+        public static Direction MakeDirection(int x, int y)
+        {
+            return x > 0 ? Direction.Right : x < 0 ? Direction.Left : y > 0 ? Direction.Up : y < 0 ? Direction.Down : Direction.None;
+        }
     }
 
     public enum GamepadStick
@@ -96,6 +101,12 @@ namespace AggroBird.GameFramework
 
     public struct ButtonSwitch
     {
+        public bool repeat;
+        [ConditionalField(nameof(repeat), ConditionalFieldOperator.Equal, true), Min(0)]
+        public float repeatDelay;
+        [ConditionalField(nameof(repeat), ConditionalFieldOperator.Equal, true), Min(0)]
+        public float repeatInterval;
+
         public ButtonState State { get; private set; }
 
         public static ButtonState UpdateState(ButtonState state, bool isPressed)
@@ -133,12 +144,88 @@ namespace AggroBird.GameFramework
         }
     }
 
+    public struct DirectionSwitch
+    {
+        public DirectionSwitch(bool repeat, float repeatDelay = 0.3f, float repeatInterval = 0.1f)
+        {
+            this.repeat = repeat;
+            this.repeatDelay = repeatDelay;
+            this.repeatInterval = repeatInterval;
+
+            lastValue = State = Direction.None;
+            inputTime = 0;
+            inputIndex = 0;
+        }
+
+        public bool repeat;
+        [ConditionalField(nameof(repeat), ConditionalFieldOperator.Equal, true), Min(0)]
+        public float repeatDelay;
+        [ConditionalField(nameof(repeat), ConditionalFieldOperator.Equal, true), Min(0)]
+        public float repeatInterval;
+
+        public Direction State { get; private set; }
+
+        private Direction lastValue;
+        private double inputTime;
+        private int inputIndex;
+
+        public void Update(Direction direction)
+        {
+            if (repeat)
+            {
+                if (direction != Direction.None)
+                {
+                    if (direction != lastValue)
+                    {
+                        lastValue = direction;
+                        inputTime = Time.unscaledTimeAsDouble;
+                        inputIndex = -1;
+                        State = direction;
+                        return;
+                    }
+                    else if (repeatInterval > 0)
+                    {
+                        double t = Time.unscaledTimeAsDouble - inputTime;
+                        if (t >= repeatDelay)
+                        {
+                            int idx = (int)((t - repeatDelay) / repeatInterval);
+                            if (inputIndex != idx)
+                            {
+                                inputIndex = idx;
+                                State = direction;
+                                return;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    lastValue = Direction.None;
+                }
+            }
+            else
+            {
+                if (direction != lastValue)
+                {
+                    lastValue = direction;
+                    State = direction;
+                    return;
+                }
+            }
+
+            State = Direction.None;
+        }
+
+        public static implicit operator Direction(DirectionSwitch directionSwitch)
+        {
+            return directionSwitch.State;
+        }
+    }
+
     // Input elements
     [Serializable]
     public abstract class InputElement
     {
-        public abstract void Update(int index = 0);
-
         protected static bool TryGetKeyboard(int index, out Keyboard keyboard)
         {
             if (index == 0)
@@ -178,7 +265,7 @@ namespace AggroBird.GameFramework
     [Serializable]
     public abstract class InputButton : InputElement
     {
-        public abstract bool Value { get; }
+        public abstract bool GetValue(int index = 0);
 
         public virtual bool ReadValueFromEvent(InputEventPtr inputEvent, out float value, int index = 0)
         {
@@ -198,12 +285,9 @@ namespace AggroBird.GameFramework
 
         public KeyCode key;
 
-        public override bool Value => value;
-        private bool value;
-
-        public override void Update(int index = 0)
+        public override bool GetValue(int index = 0)
         {
-            value = key != KeyCode.None && TryGetKeyboard(index, out Keyboard keyboard) && keyboard[key].isPressed;
+            return key != KeyCode.None && TryGetKeyboard(index, out Keyboard keyboard) && keyboard[key].isPressed;
         }
 
         public override bool ReadValueFromEvent(InputEventPtr inputEvent, out float value, int index = 0)
@@ -231,12 +315,9 @@ namespace AggroBird.GameFramework
 
         public MouseButtonCode button;
 
-        public override bool Value => value;
-        private bool value;
-
-        public override void Update(int index = 0)
+        public override bool GetValue(int index = 0)
         {
-            value = TryGetMouse(index, out Mouse mouse) && InputSystemUtility.GetMouseButton(mouse, button).isPressed;
+            return TryGetMouse(index, out Mouse mouse) && InputSystemUtility.GetMouseButton(mouse, button).isPressed;
         }
 
         public override bool ReadValueFromEvent(InputEventPtr inputEvent, out float value, int index = 0)
@@ -264,12 +345,9 @@ namespace AggroBird.GameFramework
 
         public GamepadButtonCode button;
 
-        public override bool Value => value;
-        private bool value;
-
-        public override void Update(int index = 0)
+        public override bool GetValue(int index = 0)
         {
-            value = TryGetGamepad(index, out Gamepad gamepad) && gamepad[button].isPressed;
+            return TryGetGamepad(index, out Gamepad gamepad) && gamepad[button].isPressed;
         }
 
         public override bool ReadValueFromEvent(InputEventPtr inputEvent, out float value, int index = 0)
@@ -290,64 +368,7 @@ namespace AggroBird.GameFramework
     [Serializable]
     public abstract class InputDirection : InputElement
     {
-        public bool repeat;
-        [ConditionalField(nameof(repeat), ConditionalFieldOperator.Equal, true), Min(0)]
-        public float repeatDelay = 0.3f;
-        [ConditionalField(nameof(repeat), ConditionalFieldOperator.Equal, true), Min(0)]
-        public float repeatInterval = 0.1f;
-
-        public abstract Direction Value { get; }
-        private Direction lastValue = Direction.None;
-        private double inputTime;
-        private int inputIndex;
-
-        protected Direction ApplyRepeat(Direction current)
-        {
-            if (repeat)
-            {
-                if (current != Direction.None)
-                {
-                    if (current != lastValue)
-                    {
-                        lastValue = current;
-                        inputTime = Time.unscaledTimeAsDouble;
-                        inputIndex = -1;
-                        return current;
-                    }
-                    else if (repeatInterval > 0)
-                    {
-                        double t = Time.unscaledTimeAsDouble - inputTime;
-                        if (t >= repeatDelay)
-                        {
-                            int idx = (int)((t - repeatDelay) / repeatInterval);
-                            if (inputIndex != idx)
-                            {
-                                inputIndex = idx;
-                                return current;
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    lastValue = Direction.None;
-                }
-            }
-            else
-            {
-                if (current != lastValue)
-                {
-                    lastValue = current;
-                    return current;
-                }
-            }
-
-            return Direction.None;
-        }
-        protected Direction MakeDirection(int x, int y)
-        {
-            return x > 0 ? Direction.Right : x < 0 ? Direction.Left : y > 0 ? Direction.Up : y < 0 ? Direction.Down : Direction.None;
-        }
+        public abstract Direction GetValue(int index = 0);
     }
 
     [Serializable]
@@ -374,10 +395,7 @@ namespace AggroBird.GameFramework
         public KeyCode down;
         public KeyCode left;
 
-        public override Direction Value => value;
-        private Direction value;
-
-        public override void Update(int index = 0)
+        public override Direction GetValue(int index = 0)
         {
             if (TryGetKeyboard(index, out Keyboard keyboard))
             {
@@ -387,11 +405,10 @@ namespace AggroBird.GameFramework
                 int x = 0;
                 if (keyboard[right].isPressed) x++;
                 if (keyboard[left].isPressed) x--;
-                value = ApplyRepeat(MakeDirection(x, y));
-                return;
+                return InputSystemUtility.MakeDirection(x, y);
             }
 
-            value = Direction.None;
+            return Direction.None;
         }
     }
 
@@ -419,10 +436,7 @@ namespace AggroBird.GameFramework
         public GamepadButtonCode down;
         public GamepadButtonCode left;
 
-        public override Direction Value => value;
-        private Direction value;
-
-        public override void Update(int index = 0)
+        public override Direction GetValue(int index = 0)
         {
             if (TryGetGamepad(index, out Gamepad gamepad))
             {
@@ -432,11 +446,10 @@ namespace AggroBird.GameFramework
                 int x = 0;
                 if (gamepad[right].isPressed) x++;
                 if (gamepad[left].isPressed) x--;
-                value = value = ApplyRepeat(MakeDirection(x, y));
-                return;
+                return InputSystemUtility.MakeDirection(x, y);
             }
 
-            value = Direction.None;
+            return Direction.None;
         }
     }
 
@@ -446,18 +459,16 @@ namespace AggroBird.GameFramework
     {
         public GamepadStick stick;
 
-        public override Direction Value => value;
-        private Direction value;
-
-        public override void Update(int index = 0)
+        public override Direction GetValue(int index = 0)
         {
             if (TryGetGamepad(index, out Gamepad gamepad))
             {
-                value = ApplyRepeat(InputSystemUtility.DirectionFromVector(gamepad.GetStickControl(stick).ReadValue()));
-                return;
+                return InputSystemUtility.DirectionFromVector(gamepad.GetStickControl(stick).ReadValue());
             }
-
-            value = Direction.None;
+            else
+            {
+                return Direction.None;
+            }
         }
     }
 
@@ -465,7 +476,7 @@ namespace AggroBird.GameFramework
     [Serializable]
     public abstract class LinearAxis : InputElement
     {
-        public abstract float Value { get; }
+        public abstract float GetValue(int index = 0);
     }
 
     [Serializable]
@@ -479,19 +490,9 @@ namespace AggroBird.GameFramework
 
         public KeyCode key;
 
-        public override float Value => value;
-        private float value;
-
-        public override void Update(int index = 0)
+        public override float GetValue(int index = 0)
         {
-            if (TryGetKeyboard(index, out Keyboard keyboard))
-            {
-                value = keyboard[key].ReadValue();
-            }
-            else
-            {
-                value = 0;
-            }
+            return TryGetKeyboard(index, out Keyboard keyboard) ? keyboard[key].ReadValue() : 0;
         }
     }
 
@@ -506,19 +507,9 @@ namespace AggroBird.GameFramework
 
         public MouseButtonCode button;
 
-        public override float Value => value;
-        private float value;
-
-        public override void Update(int index = 0)
+        public override float GetValue(int index = 0)
         {
-            if (TryGetMouse(index, out Mouse mouse))
-            {
-                value = InputSystemUtility.GetMouseButton(mouse, button).ReadValue();
-            }
-            else
-            {
-                value = 0;
-            }
+            return TryGetMouse(index, out Mouse mouse) ? mouse.GetMouseButton(button).ReadValue() : 0;
         }
     }
 
@@ -533,19 +524,9 @@ namespace AggroBird.GameFramework
 
         public GamepadButtonCode button;
 
-        public override float Value => value;
-        private float value;
-
-        public override void Update(int index = 0)
+        public override float GetValue(int index = 0)
         {
-            if (TryGetGamepad(index, out Gamepad gamepad))
-            {
-                value = gamepad[button].ReadValue();
-            }
-            else
-            {
-                value = 0;
-            }
+            return TryGetGamepad(index, out Gamepad gamepad) ? gamepad[button].ReadValue() : 0;
         }
     }
 
@@ -562,19 +543,9 @@ namespace AggroBird.GameFramework
         public KeyCode positive;
         public KeyCode negative;
 
-        public override float Value => value;
-        private float value;
-
-        public override void Update(int index = 0)
+        public override float GetValue(int index = 0)
         {
-            if (TryGetKeyboard(index, out Keyboard keyboard))
-            {
-                value = keyboard[positive].ReadValue() - keyboard[negative].ReadValue();
-            }
-            else
-            {
-                value = 0;
-            }
+            return TryGetKeyboard(index, out Keyboard keyboard) ? (keyboard[positive].ReadValue() - keyboard[negative].ReadValue()) : 0;
         }
     }
 
@@ -591,19 +562,9 @@ namespace AggroBird.GameFramework
         public GamepadButtonCode positive;
         public GamepadButtonCode negative;
 
-        public override float Value => value;
-        private float value;
-
-        public override void Update(int index = 0)
+        public override float GetValue(int index = 0)
         {
-            if (TryGetGamepad(index, out Gamepad gamepad))
-            {
-                value = gamepad[positive].ReadValue() - gamepad[negative].ReadValue();
-            }
-            else
-            {
-                value = 0;
-            }
+            return TryGetGamepad(index, out Gamepad gamepad) ? (gamepad[positive].ReadValue() - gamepad[negative].ReadValue()) : 0;
         }
     }
 
@@ -625,11 +586,10 @@ namespace AggroBird.GameFramework
         [ConditionalField(nameof(applyCurve), ConditionalFieldOperator.Equal, true)]
         public AnimationCurve curve = AnimationCurve.Linear(0, 0, 1, 1);
 
-        public override float Value => value;
-        private float value;
-
-        public override void Update(int index = 0)
+        public override float GetValue(int index = 0)
         {
+            float value;
+
             if (TryGetGamepad(index, out Gamepad gamepad))
             {
                 StickControl stickControl = stick == GamepadStick.RightStick ? gamepad.rightStick : gamepad.leftStick;
@@ -646,6 +606,8 @@ namespace AggroBird.GameFramework
             }
 
             if (invert) value = -value;
+
+            return value;
         }
     }
 
@@ -653,7 +615,7 @@ namespace AggroBird.GameFramework
     [Serializable]
     public abstract class VectorAxis : InputElement
     {
-        public abstract Vector2 Value { get; }
+        public abstract Vector2 GetValue(int index = 0);
     }
 
     [Serializable]
@@ -681,12 +643,9 @@ namespace AggroBird.GameFramework
         public KeyCode left;
         public bool normalize = true;
 
-        public override Vector2 Value => value;
-        private Vector2 value;
-
-        public override void Update(int index = 0)
+        public override Vector2 GetValue(int index = 0)
         {
-            value = Vector2.zero;
+            Vector2 value = Vector2.zero;
 
             if (TryGetKeyboard(index, out Keyboard keyboard))
             {
@@ -697,6 +656,8 @@ namespace AggroBird.GameFramework
 
                 if (normalize) value.Normalize();
             }
+
+            return value;
         }
     }
 
@@ -708,21 +669,20 @@ namespace AggroBird.GameFramework
         public bool invertHorizontal;
         public bool invertVertical;
 
-        public override Vector2 Value => value;
-        private Vector2 value;
-
-        public override void Update(int index = 0)
+        public override Vector2 GetValue(int index = 0)
         {
             if (TryGetMouse(index, out var mouse))
             {
-                value = mouse.delta.ReadValue() * sensitivity;
+                Vector2 value = mouse.delta.ReadValue() * sensitivity;
 
                 if (invertHorizontal) value.x = -value.x;
                 if (invertVertical) value.y = -value.y;
+
+                return value;
             }
             else
             {
-                value = Vector2.zero;
+                return Vector2.zero;
             }
         }
     }
@@ -752,21 +712,24 @@ namespace AggroBird.GameFramework
         public GamepadButtonCode left;
         public bool normalize = true;
 
-        public override Vector2 Value => value;
-        private Vector2 value;
-
-        public override void Update(int index = 0)
+        public override Vector2 GetValue(int index = 0)
         {
-            value = Vector2.zero;
-
             if (TryGetGamepad(index, out Gamepad gamepad))
             {
+                Vector2 value = Vector2.zero;
+
                 if (gamepad[up].isPressed) value.y++;
                 if (gamepad[right].isPressed) value.x++;
                 if (gamepad[down].isPressed) value.y--;
                 if (gamepad[left].isPressed) value.x--;
 
                 if (normalize) value.Normalize();
+
+                return value;
+            }
+            else
+            {
+                return Vector2.zero;
             }
         }
     }
@@ -788,12 +751,9 @@ namespace AggroBird.GameFramework
         [ConditionalField(nameof(applyCurve), ConditionalFieldOperator.Equal, true)]
         public AnimationCurve curve = AnimationCurve.Linear(0, 0, 1, 1);
 
-        public override Vector2 Value => value;
-        private Vector2 value;
-
-        public override void Update(int index = 0)
+        public override Vector2 GetValue(int index = 0)
         {
-            value = Vector2.zero;
+            Vector2 value = Vector2.zero;
 
             if (TryGetGamepad(index, out Gamepad gamepad))
             {
@@ -807,6 +767,8 @@ namespace AggroBird.GameFramework
 
             if (invertHorizontal) value.x = -value.x;
             if (invertVertical) value.y = -value.y;
+
+            return value;
         }
     }
 }

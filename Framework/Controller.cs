@@ -230,8 +230,7 @@ namespace AggroBird.GameFramework
                     {
                         foreach (var inputButton in new BindingIterator<InputButton>(controller, input))
                         {
-                            inputButton.Update(index);
-                            value |= inputButton.Value;
+                            value |= inputButton.GetValue(index);
                         }
                     }
                     return value;
@@ -243,10 +242,9 @@ namespace AggroBird.GameFramework
                     {
                         foreach (var inputDirection in new BindingIterator<InputDirection>(controller, input))
                         {
-                            inputDirection.Update(index);
                             if (value == Direction.None)
                             {
-                                value = inputDirection.Value;
+                                value = inputDirection.GetValue(0);
                             }
                         }
                     }
@@ -259,15 +257,13 @@ namespace AggroBird.GameFramework
                     {
                         foreach (var inputElement in new BindingIterator<InputElement>(controller, input))
                         {
-                            inputElement.Update(index);
-
                             if (inputElement is LinearAxis linearAxis)
                             {
-                                value += linearAxis.Value;
+                                value += linearAxis.GetValue(index);
                             }
                             else if (inputElement is InputButton inputButton)
                             {
-                                value += inputButton.Value ? 1 : 0;
+                                value += inputButton.GetValue(index) ? 1 : 0;
                             }
                         }
                     }
@@ -280,15 +276,13 @@ namespace AggroBird.GameFramework
                     {
                         foreach (var inputElement in new BindingIterator<InputElement>(controller, input))
                         {
-                            inputElement.Update(index);
-
                             if (inputElement is VectorAxis vectorAxis)
                             {
-                                value += vectorAxis.Value;
+                                value += vectorAxis.GetValue(index);
                             }
                             else if (inputElement is InputDirection inputDirection)
                             {
-                                switch (inputDirection.Value)
+                                switch (inputDirection.GetValue(index))
                                 {
                                     case Direction.Up:
                                         value += Vector2.up;
