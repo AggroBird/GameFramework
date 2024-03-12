@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace AggroBird.GameFramework
 {
-    public class Menu : Widget
+    public abstract class Menu : Widget
     {
         protected virtual Selectable SelectOnFocus => null;
 
@@ -81,7 +81,7 @@ namespace AggroBird.GameFramework
                 if (eventSystem)
                 {
                     GameObject selectedGameobject = eventSystem.currentSelectedGameObject;
-                    if (selectedGameobject && selectedGameobject.GetComponentInParent<Widget>() == this)
+                    if (selectedGameobject && selectedGameobject.GetComponentInParent<Menu>() == this)
                     {
                         PointerEventData data = new(EventSystem.current);
                         ExecuteEvents.Execute(selectedGameobject, data, ExecuteEvents.pointerClickHandler);
@@ -106,7 +106,7 @@ namespace AggroBird.GameFramework
                 {
                     // Send move event
                     GameObject selectedGameobject = eventSystem.currentSelectedGameObject;
-                    if (selectedGameobject && selectedGameobject.GetComponentInParent<Widget>() == this)
+                    if (selectedGameobject && selectedGameobject.GetComponentInParent<Menu>() == this)
                     {
                         AxisEventData data = new(Parent.EventSystem)
                         {

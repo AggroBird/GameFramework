@@ -4,11 +4,8 @@ using UnityEngine;
 
 namespace AggroBird.GameFramework
 {
-    public class Widget : MonoBehaviour
+    public abstract class Widget : MonoBehaviour
     {
-        private const int OpenID = 71445658; // "Open"
-        private const int CloseID = -759124288; // "Close"
-
         public enum WidgetState
         {
             Closed = 0,
@@ -16,10 +13,6 @@ namespace AggroBird.GameFramework
             Open,
             Closing,
         }
-
-        [Header("Animator")]
-        [SerializeField] private Animator animator;
-        protected Animator Animator => animator;
 
         public WidgetState State { get; private set; }
         public bool IsOpen => State == WidgetState.Open;
@@ -30,7 +23,6 @@ namespace AggroBird.GameFramework
             switch (State)
             {
                 case WidgetState.Closed:
-                    animator.SetTrigger(OpenID);
                     State = WidgetState.Opening;
                     OnOpen();
                     return true;
@@ -45,7 +37,6 @@ namespace AggroBird.GameFramework
             switch (State)
             {
                 case WidgetState.Open:
-                    animator.SetTrigger(CloseID);
                     State = WidgetState.Closing;
                     OnClose();
                     return true;
@@ -91,7 +82,6 @@ namespace AggroBird.GameFramework
                     OnOpened();
                     break;
                 case WidgetState.Closing:
-                    animator.SetTrigger(CloseID);
                     OnClose();
                     break;
             }
@@ -105,7 +95,6 @@ namespace AggroBird.GameFramework
                     OnClosed();
                     break;
                 case WidgetState.Opening:
-                    animator.SetTrigger(OpenID);
                     OnOpen();
                     break;
             }
@@ -132,15 +121,5 @@ namespace AggroBird.GameFramework
         {
             onClosed?.Invoke();
         }
-
-#if UNITY_EDITOR
-        protected virtual void OnValidate()
-        {
-            if (!animator)
-            {
-                animator = GetComponent<Animator>();
-            }
-        }
-#endif
     }
 }

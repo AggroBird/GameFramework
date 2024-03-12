@@ -1,7 +1,7 @@
 {
 	"name": "com.aggrobird.gameframework",
 	"displayName": "Game Framework",
-	"version": "1.0.46",
+	"version": "1.0.47",
 	"unity": "2022.3",
 	"keywords": ["Game", "Framework"],
 	"category": "Utility",
