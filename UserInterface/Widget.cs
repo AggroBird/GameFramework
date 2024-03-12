@@ -73,33 +73,6 @@ namespace AggroBird.GameFramework
             }
         }
 
-        private void OnOpenAnimationFinished()
-        {
-            switch (State)
-            {
-                case WidgetState.Opening:
-                    State = WidgetState.Open;
-                    OnOpened();
-                    break;
-                case WidgetState.Closing:
-                    OnClose();
-                    break;
-            }
-        }
-        private void OnCloseAnimationFinished()
-        {
-            switch (State)
-            {
-                case WidgetState.Closing:
-                    State = WidgetState.Closed;
-                    OnClosed();
-                    break;
-                case WidgetState.Opening:
-                    OnOpen();
-                    break;
-            }
-        }
-
         public event Action onOpen;
         public event Action onOpened;
         public event Action onClose;
@@ -107,18 +80,22 @@ namespace AggroBird.GameFramework
 
         protected virtual void OnOpen()
         {
+            State = WidgetState.Opening;
             onOpen?.Invoke();
         }
         protected virtual void OnOpened()
         {
+            State = WidgetState.Open;
             onOpened?.Invoke();
         }
         protected virtual void OnClose()
         {
+            State = WidgetState.Closing;
             onClose?.Invoke();
         }
         protected virtual void OnClosed()
         {
+            State = WidgetState.Closed;
             onClosed?.Invoke();
         }
     }
