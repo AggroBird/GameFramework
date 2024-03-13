@@ -98,5 +98,30 @@ namespace AggroBird.GameFramework
             State = WidgetState.Closed;
             onClosed?.Invoke();
         }
+
+        protected void OnOpenAnimationFinished()
+        {
+            switch (State)
+            {
+                case WidgetState.Opening:
+                    OnOpened();
+                    break;
+                case WidgetState.Closing:
+                    OnClose();
+                    break;
+            }
+        }
+        protected void OnCloseAnimationFinished()
+        {
+            switch (State)
+            {
+                case WidgetState.Closing:
+                    OnClosed();
+                    break;
+                case WidgetState.Opening:
+                    OnOpen();
+                    break;
+            }
+        }
     }
 }
