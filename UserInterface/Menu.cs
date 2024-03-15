@@ -9,7 +9,7 @@ namespace AggroBird.GameFramework
         protected virtual Selectable SelectOnFocus => null;
 
         [field: SerializeField]
-        public bool AllowInput { get; private set; }
+        public bool AllowInput { get; protected set; }
         [field: SerializeField]
         public bool PauseGame { get; private set; }
 

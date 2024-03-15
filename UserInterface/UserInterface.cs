@@ -167,6 +167,8 @@ namespace AggroBird.GameFramework
                     }
                 }
             }
+
+            UpdateFlags();
         }
         public virtual void UpdateInput(Controller controller)
         {
