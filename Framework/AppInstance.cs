@@ -198,7 +198,7 @@ namespace AggroBird.GameFramework
             {
                 PlatformProfile.UpdateInputMode();
 
-                SetCursorLocked(lockCursor && (PlatformProfile.ActiveInputMode == InputMode.Controller || !uiRequiresInput));
+                SetCursorLocked(lockCursor && (PlatformProfile.ActiveInputMode == InputMode.Gamepad || !uiRequiresInput));
             }
         }
 

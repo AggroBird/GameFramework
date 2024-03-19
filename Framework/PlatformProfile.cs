@@ -6,7 +6,7 @@ namespace AggroBird.GameFramework
     public enum InputMode
     {
         KeyboardMouse,
-        Controller,
+        Gamepad,
     }
 
     public abstract class PlatformProfile : ScriptableObject
@@ -17,6 +17,8 @@ namespace AggroBird.GameFramework
         public abstract InputMode ActiveInputMode { get; }
 
         public abstract void Initialize();
+        public abstract void Shutdown();
+
         public abstract void UpdateInputMode();
 
         public abstract Controller CreateController(Player player);

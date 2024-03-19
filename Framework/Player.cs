@@ -48,7 +48,7 @@ namespace AggroBird.GameFramework
         public bool TryGetPawn<T>(out T result) where T : Pawn => result = pawn as T;
 
         // Player controller object
-        public Controller Controller { get; private set; }
+        public Controller Controller { get; protected set; }
         public bool TryGetController<T>(out T result) where T : Controller => result = Controller as T;
 
         // User interface (optional)
@@ -72,16 +72,14 @@ namespace AggroBird.GameFramework
         }
 
 
-        public virtual void Initialize(AppInstance app, Controller controller)
+        public virtual void Initialize(AppInstance app)
         {
             App = app;
-            Controller = controller;
         }
 
         public virtual void Shutdown()
         {
-            if (Controller) Destroy(Controller);
-            if (UI) Destroy(UI.gameObject);
+
         }
 
         public virtual void UpdateInput()

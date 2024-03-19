@@ -1,3 +1,4 @@
+using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 
@@ -11,14 +12,25 @@ namespace AggroBird.GameFramework
         public override bool SupportsMouseKeyboard => true;
         public override InputMode ActiveInputMode => inputMode;
 
+        private double lastSwitchTime = 0;
+
 
         public override void Initialize()
         {
-            inputMode = Keyboard.current != null && SupportsMouseKeyboard ? InputMode.KeyboardMouse : InputMode.Controller;
+            inputMode = Keyboard.current != null && SupportsMouseKeyboard ? InputMode.KeyboardMouse : InputMode.Gamepad;
+        }
+        public override void Shutdown()
+        {
+
         }
 
         public override void UpdateInputMode()
         {
+            if (Time.realtimeSinceStartupAsDouble - lastSwitchTime < 1)
+            {
+                return;
+            }
+
             if (inputMode == InputMode.KeyboardMouse)
             {
                 Gamepad gamepad = Gamepad.current;
@@ -28,14 +40,14 @@ namespace AggroBird.GameFramework
                     {
                         if (!control.synthetic && control is ButtonControl button && button.wasPressedThisFrame)
                         {
-                            SwitchInputMode(InputMode.Controller);
+                            SwitchInputMode(InputMode.Gamepad);
                             return;
                         }
                     }
 
                     if (gamepad.leftStick.ReadValue().magnitude > 0.1f || gamepad.rightStick.ReadValue().magnitude > 0.1f)
                     {
-                        SwitchInputMode(InputMode.Controller);
+                        SwitchInputMode(InputMode.Gamepad);
                         return;
                     }
                 }
@@ -81,6 +93,7 @@ namespace AggroBird.GameFramework
             {
                 inputMode = newMode;
                 InputModeChanged(inputMode);
+                lastSwitchTime = Time.realtimeSinceStartupAsDouble;
             }
         }
     }

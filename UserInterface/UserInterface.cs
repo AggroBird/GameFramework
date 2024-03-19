@@ -136,7 +136,7 @@ namespace AggroBird.GameFramework
 
         private void OnInputModeChanged(InputMode inputMode)
         {
-            if (inputMode == InputMode.Controller)
+            if (inputMode == InputMode.Gamepad)
             {
                 FocusStackTop();
             }
