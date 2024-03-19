@@ -32,11 +32,6 @@ namespace AggroBird.GameFramework
         // Inheriting classes write to this value
         protected internal T value = default;
 
-        public static implicit operator T(InputMapping<T> action)
-        {
-            return action != null ? action.value : default;
-        }
-
         protected static void CheckModifiers(InputButton[] modifiers, int index, ref int value)
         {
             if (!Utility.IsNullOrEmpty(modifiers))
