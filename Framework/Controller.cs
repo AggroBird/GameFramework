@@ -14,7 +14,7 @@ namespace AggroBird.GameFramework
     {
         public static T GetValue<T>(this InputMapping<T> mapping)
         {
-            return mapping != null ? mapping.value : default;
+            return mapping != null ? mapping.GetValue() : default;
         }
 
         public static void Use<T>(this InputActionMapping<T> mapping)
@@ -30,7 +30,9 @@ namespace AggroBird.GameFramework
     public abstract class InputMapping<T> : InputMappingBase
     {
         // Inheriting classes write to this value
-        protected internal T value = default;
+        protected T value = default;
+
+        protected virtual T GetValue() => value;
 
         protected static void CheckModifiers(InputButton[] modifiers, int index, ref int value)
         {
@@ -71,7 +73,7 @@ namespace AggroBird.GameFramework
         }
         internal T GetValue(bool use)
         {
-            T result = value;
+            T result = GetValue();
             if (use) Use();
             return result;
         }

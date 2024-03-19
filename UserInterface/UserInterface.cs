@@ -177,11 +177,11 @@ namespace AggroBird.GameFramework
                 Menu top = stack[^1];
                 if (top.IsOpen)
                 {
-                    if (controller.Confirm && top.OnConfirm())
+                    if (controller.Confirm.GetValue() && top.OnConfirm())
                         controller.Confirm.Use();
-                    if (controller.Cancel && top.OnCancel())
+                    if (controller.Cancel.GetValue() && top.OnCancel())
                         controller.Cancel.Use();
-                    if (controller.DirectionInput != Direction.None && top.OnDirection(controller.DirectionInput))
+                    if (controller.DirectionInput.GetValue() != Direction.None && top.OnDirection(controller.DirectionInput.GetValue()))
                         controller.DirectionInput.Use();
                 }
             }

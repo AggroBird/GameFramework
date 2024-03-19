@@ -133,7 +133,7 @@ namespace AggroBird.GameFramework
                 {
                     if (owner.TryGetController(out Controller controller))
                     {
-                        Vector2 cameraInput = controller.CameraInput;
+                        Vector2 cameraInput = controller.CameraInput.GetValue();
                         inputForce += cameraInput.magnitude;
                         if (inputForce > 1.5f) inputForce = 1.5f;
                         rotation.pitch = pitchRange.Clamp(rotation.pitch - cameraInput.y);
