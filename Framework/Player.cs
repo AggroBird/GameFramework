@@ -82,11 +82,11 @@ namespace AggroBird.GameFramework
 
         }
 
-        public virtual void UpdateInput()
+        public virtual void UpdateInput(int index)
         {
             if (Controller)
             {
-                Controller.UpdateInput(this, InputEnabled);
+                Controller.UpdateInput(this, index, InputEnabled);
 
                 if (pawn)
                 {
