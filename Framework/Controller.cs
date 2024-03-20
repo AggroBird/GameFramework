@@ -17,22 +17,34 @@ namespace AggroBird.GameFramework
             return mapping != null ? mapping.GetValue() : default;
         }
 
-        public static void Use<T>(this InputActionMapping<T> mapping)
+        public static void Use<T>(this InputMapping<T> mapping)
         {
             mapping?.Use();
         }
-        public static T GetValue<T>(this InputActionMapping<T> mapping, bool use)
+        public static T GetValue<T>(this InputMapping<T> mapping, bool use)
         {
             return mapping != null ? mapping.GetValue(use) : default;
         }
     }
 
+    // Generic base class
     public abstract class InputMapping<T> : InputMappingBase
     {
         // Inheriting classes write to this value
         protected T value = default;
 
-        protected virtual T GetValue() => value;
+        protected internal virtual T GetValue() => value;
+
+        internal void Use()
+        {
+            value = default;
+        }
+        internal T GetValue(bool use)
+        {
+            T result = GetValue();
+            if (use) Use();
+            return result;
+        }
 
         protected static void CheckModifiers(InputButton[] modifiers, int index, ref int value)
         {
@@ -65,24 +77,15 @@ namespace AggroBird.GameFramework
         }
     }
 
-    public abstract class InputActionMapping<T> : InputMapping<T>
-    {
-        internal void Use()
-        {
-            value = default;
-        }
-        internal T GetValue(bool use)
-        {
-            T result = GetValue();
-            if (use) Use();
-            return result;
-        }
-    }
-
     // Input button(s)
     [Serializable]
-    public class InputButtonMapping : InputActionMapping<bool>
+    public class InputButtonMapping : InputMapping<bool>
     {
+        public InputButtonMapping(InputButton input, InputButton[] modifiers = null)
+        {
+            inputs = new InputButton[1] { input };
+            this.modifiers = modifiers;
+        }
         public InputButtonMapping(InputButton[] inputs, InputButton[] modifiers = null)
         {
             this.inputs = inputs;
@@ -94,6 +97,11 @@ namespace AggroBird.GameFramework
 
         [SerializeReference, PolymorphicField] private InputButton[] modifiers;
         public ReadOnlySpan<InputButton> Modifiers => modifiers;
+
+        [SerializeField]
+        private bool axis = false;
+        [SerializeField, ConditionalField(nameof(axis), ConditionalFieldOperator.Equal, false)]
+        private ButtonSwitch @switch;
 
         private int modifiersDown = 0;
         private int mainButtonDown = 0;
@@ -109,14 +117,23 @@ namespace AggroBird.GameFramework
                     mainButtonValue &= input != null && input.GetValue(index);
                 }
                 mainButtonDown = mainButtonValue ? ++mainButtonDown : 0;
-                value = modifiersDown >= mainButtonDown && mainButtonDown > 0;
+                bool currentValue = modifiersDown >= mainButtonDown && mainButtonDown > 0;
+                if (axis)
+                {
+                    value = currentValue;
+                }
+                else
+                {
+                    @switch.Update(currentValue);
+                    value = @switch.State == ButtonState.Pressed;
+                }
             }
         }
     }
 
     // Input direction
     [Serializable]
-    public class InputDirectionMapping : InputActionMapping<Direction>
+    public class InputDirectionMapping : InputMapping<Direction>
     {
         public InputDirectionMapping(InputDirection input, InputButton[] modifiers = null)
         {
@@ -129,6 +146,10 @@ namespace AggroBird.GameFramework
         [field: SerializeReference, PolymorphicField] private InputButton[] modifiers;
         public ReadOnlySpan<InputButton> Modifiers => modifiers;
 
+        [SerializeField] private bool axis = false;
+        [SerializeField, ConditionalField(nameof(axis), ConditionalFieldOperator.Equal, false)]
+        private DirectionSwitch @switch = new(false);
+
         private int modifiersDown = 0;
         private int mainButtonDown = 0;
 
@@ -139,7 +160,16 @@ namespace AggroBird.GameFramework
                 CheckModifiers(modifiers, index, ref modifiersDown);
                 Direction mainButtonValue = Input.GetValue(index);
                 mainButtonDown = (mainButtonValue != Direction.None) ? ++mainButtonDown : 0;
-                value = modifiersDown >= mainButtonDown && mainButtonDown > 0 ? mainButtonValue : Direction.None;
+                var currentValue = modifiersDown >= mainButtonDown && mainButtonDown > 0 ? mainButtonValue : Direction.None;
+                if (axis)
+                {
+                    value = currentValue;
+                }
+                else
+                {
+                    @switch.Update(currentValue);
+                    value = @switch.State;
+                }
             }
         }
     }

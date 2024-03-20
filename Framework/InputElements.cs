@@ -3,7 +3,6 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
-using UnityEngine.InputSystem.LowLevel;
 using GamepadButtonCode = UnityEngine.InputSystem.LowLevel.GamepadButton;
 using KeyCode = UnityEngine.InputSystem.Key;
 using MouseButtonCode = UnityEngine.InputSystem.LowLevel.MouseButton;
@@ -29,9 +28,9 @@ namespace AggroBird.GameFramework
             };
         }
 
-        public static Direction DirectionFromVector(Vector2 vector)
+        public static Direction DirectionFromVector(Vector2 vector, float sensitivity = 0.5f)
         {
-            if (vector.sqrMagnitude > Mathf.Epsilon)
+            if (vector.sqrMagnitude > sensitivity)
             {
                 return DirectionFromAngle(Mathfx.AngleFromVectorDeg(vector));
             }
@@ -62,6 +61,30 @@ namespace AggroBird.GameFramework
                 Direction.Left => Vector2Int.left,
                 _ => Vector2Int.zero,
             };
+        }
+
+        public static ButtonState UpdateState(ButtonState state, bool isPressed)
+        {
+            switch (state)
+            {
+                case ButtonState.None:
+                    if (isPressed) state = ButtonState.Pressed;
+                    break;
+                case ButtonState.Pressed:
+                    state = isPressed ? ButtonState.Held : ButtonState.Released;
+                    break;
+                case ButtonState.Held:
+                    if (!isPressed) state = ButtonState.Released;
+                    break;
+                case ButtonState.Released:
+                    state = isPressed ? ButtonState.Pressed : ButtonState.None;
+                    break;
+            }
+            return state;
+        }
+        public static void UpdateState(ref ButtonState state, bool isPressed)
+        {
+            state = UpdateState(state, isPressed);
         }
 
         public static Direction MakeDirection(int x, int y)
@@ -99,8 +122,23 @@ namespace AggroBird.GameFramework
         Left,
     }
 
+    [Serializable]
     public struct ButtonSwitch
     {
+        public static ButtonSwitch Default => new(false);
+
+        public ButtonSwitch(bool repeat, float repeatDelay = 0.3f, float repeatInterval = 0.1f)
+        {
+            this.repeat = repeat;
+            this.repeatDelay = repeatDelay;
+            this.repeatInterval = repeatInterval;
+
+            State = ButtonState.None;
+            lastValue = false;
+            inputTime = 0;
+            inputIndex = 0;
+        }
+
         public bool repeat;
         [ConditionalField(nameof(repeat), ConditionalFieldOperator.Equal, true), Min(0)]
         public float repeatDelay;
@@ -109,33 +147,49 @@ namespace AggroBird.GameFramework
 
         public ButtonState State { get; private set; }
 
-        public static ButtonState UpdateState(ButtonState state, bool isPressed)
-        {
-            switch (state)
-            {
-                case ButtonState.None:
-                    if (isPressed) state = ButtonState.Pressed;
-                    break;
-                case ButtonState.Pressed:
-                    state = isPressed ? ButtonState.Held : ButtonState.Released;
-                    break;
-                case ButtonState.Held:
-                    if (!isPressed) state = ButtonState.Released;
-                    break;
-                case ButtonState.Released:
-                    state = isPressed ? ButtonState.Pressed : ButtonState.None;
-                    break;
-            }
-            return state;
-        }
-        public static void UpdateState(ref ButtonState state, bool isPressed)
-        {
-            state = UpdateState(state, isPressed);
-        }
+        private bool lastValue;
+        private double inputTime;
+        private int inputIndex;
 
         public void Update(bool isPressed)
         {
-            State = UpdateState(State, isPressed);
+            if (repeat)
+            {
+                if (isPressed)
+                {
+                    if (!lastValue)
+                    {
+                        // First press
+                        lastValue = isPressed;
+                        inputTime = Time.unscaledTimeAsDouble;
+                        inputIndex = -1;
+                        State = ButtonState.Pressed;
+                        return;
+                    }
+                    else if (repeatInterval > 0)
+                    {
+                        // Repeating interval presses
+                        double t = Time.unscaledTimeAsDouble - inputTime;
+                        if (t >= repeatDelay)
+                        {
+                            int idx = (int)((t - repeatDelay) / repeatInterval);
+                            if (inputIndex != idx)
+                            {
+                                inputIndex = idx;
+                                State = ButtonState.Pressed;
+                                return;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    // Release
+                    lastValue = false;
+                }
+            }
+
+            State = InputSystemUtility.UpdateState(State, isPressed);
         }
 
         public static implicit operator ButtonState(ButtonSwitch buttonSwitch)
@@ -144,8 +198,11 @@ namespace AggroBird.GameFramework
         }
     }
 
+    [Serializable]
     public struct DirectionSwitch
     {
+        public static DirectionSwitch Default => new(false);
+
         public DirectionSwitch(bool repeat, float repeatDelay = 0.3f, float repeatInterval = 0.1f)
         {
             this.repeat = repeat;
@@ -177,6 +234,7 @@ namespace AggroBird.GameFramework
                 {
                     if (direction != lastValue)
                     {
+                        // First press
                         lastValue = direction;
                         inputTime = Time.unscaledTimeAsDouble;
                         inputIndex = -1;
@@ -185,6 +243,7 @@ namespace AggroBird.GameFramework
                     }
                     else if (repeatInterval > 0)
                     {
+                        // Repeating interval presses
                         double t = Time.unscaledTimeAsDouble - inputTime;
                         if (t >= repeatDelay)
                         {
@@ -200,11 +259,13 @@ namespace AggroBird.GameFramework
                 }
                 else
                 {
+                    // Release
                     lastValue = Direction.None;
                 }
             }
             else
             {
+                // Non-repeating, only change once per frame
                 if (direction != lastValue)
                 {
                     lastValue = direction;
@@ -266,12 +327,6 @@ namespace AggroBird.GameFramework
     public abstract class InputButton : InputElement
     {
         public abstract bool GetValue(int index = 0);
-
-        public virtual bool ReadValueFromEvent(InputEventPtr inputEvent, out float value, int index = 0)
-        {
-            value = default;
-            return false;
-        }
     }
 
     [Serializable]
@@ -288,19 +343,6 @@ namespace AggroBird.GameFramework
         public override bool GetValue(int index = 0)
         {
             return key != KeyCode.None && TryGetKeyboard(index, out Keyboard keyboard) && keyboard[key].isPressed;
-        }
-
-        public override bool ReadValueFromEvent(InputEventPtr inputEvent, out float value, int index = 0)
-        {
-            if (key != KeyCode.None && TryGetKeyboard(index, out Keyboard keyboard))
-            {
-                return keyboard[key].ReadValueFromEvent(inputEvent, out value);
-            }
-            else
-            {
-                value = default;
-                return false;
-            }
         }
     }
 
@@ -319,19 +361,6 @@ namespace AggroBird.GameFramework
         {
             return TryGetMouse(index, out Mouse mouse) && InputSystemUtility.GetMouseButton(mouse, button).isPressed;
         }
-
-        public override bool ReadValueFromEvent(InputEventPtr inputEvent, out float value, int index = 0)
-        {
-            if (TryGetMouse(index, out Mouse mouse))
-            {
-                return InputSystemUtility.GetMouseButton(mouse, button).ReadValueFromEvent(inputEvent, out value);
-            }
-            else
-            {
-                value = default;
-                return false;
-            }
-        }
     }
 
     [Serializable]
@@ -349,18 +378,32 @@ namespace AggroBird.GameFramework
         {
             return TryGetGamepad(index, out Gamepad gamepad) && gamepad[button].isPressed;
         }
+    }
 
-        public override bool ReadValueFromEvent(InputEventPtr inputEvent, out float value, int index = 0)
+    [Serializable]
+    [PolymorphicClassType(Tooltip = "Gamepad stick direction button (true/false)")]
+    public sealed class GamepadStickDirectionButton : InputButton
+    {
+        public GamepadStickDirectionButton(GamepadStick stick, Direction direction, float sensitivity = 0.5f)
         {
-            if (TryGetGamepad(index, out Gamepad gamepad))
+            this.stick = stick;
+            this.direction = direction;
+            this.sensitivity = sensitivity;
+        }
+
+        public GamepadStick stick;
+        public Direction direction;
+        [Clamped(0, 1)]
+        public float sensitivity = 0.5f;
+
+        public override bool GetValue(int index = 0)
+        {
+            if (direction != Direction.None && TryGetGamepad(index, out Gamepad gamepad))
             {
-                return gamepad[button].ReadValueFromEvent(inputEvent, out value);
+                return InputSystemUtility.DirectionFromVector(gamepad.GetStickControl(stick).ReadValue(), sensitivity) == direction;
             }
-            else
-            {
-                value = default;
-                return false;
-            }
+
+            return false;
         }
     }
 
@@ -457,7 +500,15 @@ namespace AggroBird.GameFramework
     [PolymorphicClassType(Tooltip = "4-directional gamepad stick user interface input")]
     public sealed class GamepadStickInputDirection : InputDirection
     {
+        public GamepadStickInputDirection(GamepadStick stick, float sensitivity = 0.5f)
+        {
+            this.stick = stick;
+            this.sensitivity = sensitivity;
+        }
+
         public GamepadStick stick;
+        [Clamped(0, 1)]
+        public float sensitivity = 0.5f;
 
         public override Direction GetValue(int index = 0)
         {
