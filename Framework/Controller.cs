@@ -78,7 +78,7 @@ namespace AggroBird.GameFramework
     }
 
     // Input button(s)
-    [Serializable]
+    [Serializable, PolymorphicClassType(ShowFoldout = true)]
     public class InputButtonMapping : InputMapping<bool>
     {
         public InputButtonMapping(InputButton input, InputButton[] modifiers = null)
@@ -132,7 +132,7 @@ namespace AggroBird.GameFramework
     }
 
     // Input direction
-    [Serializable]
+    [Serializable, PolymorphicClassType(ShowFoldout = true)]
     public class InputDirectionMapping : InputMapping<Direction>
     {
         public InputDirectionMapping(InputDirection input, InputButton[] modifiers = null)
@@ -175,7 +175,7 @@ namespace AggroBird.GameFramework
     }
 
     // Linear axis
-    [Serializable]
+    [Serializable, PolymorphicClassType(ShowFoldout = true)]
     public class LinearAxisMapping : InputMapping<float>
     {
         public LinearAxisMapping(LinearAxis input, InputButton[] modifiers = null)
@@ -196,7 +196,7 @@ namespace AggroBird.GameFramework
     }
 
     // Vector axis
-    [Serializable]
+    [Serializable, PolymorphicClassType(ShowFoldout = true)]
     public class VectorAxisMapping : InputMapping<Vector2>
     {
         public VectorAxisMapping(VectorAxis input, InputButton[] modifiers = null)
@@ -219,10 +219,14 @@ namespace AggroBird.GameFramework
     // Controller base class
     public abstract class Controller : ScriptableObject
     {
-        [field: SerializeReference, PolymorphicField] public VectorAxisMapping CameraInput { get; protected set; }
-        [field: SerializeReference, PolymorphicField] public InputButtonMapping Confirm { get; protected set; }
-        [field: SerializeReference, PolymorphicField] public InputButtonMapping Cancel { get; protected set; }
-        [field: SerializeReference, PolymorphicField] public InputDirectionMapping DirectionInput { get; protected set; }
+        [field: SerializeReference, PolymorphicField, Header("Default Input")]
+        public VectorAxisMapping CameraInput { get; protected set; }
+        [field: SerializeReference, PolymorphicField, Space]
+        public InputButtonMapping Confirm { get; protected set; }
+        [field: SerializeReference, PolymorphicField, Space]
+        public InputButtonMapping Cancel { get; protected set; }
+        [field: SerializeReference, PolymorphicField, Space]
+        public InputDirectionMapping DirectionInput { get; protected set; }
 
 
         protected internal abstract void UpdateInput(Player player, int index, bool inputEnabled);
