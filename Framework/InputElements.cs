@@ -356,10 +356,19 @@ namespace AggroBird.GameFramework
         }
 
         public MouseButtonCode button;
+        public bool includePressesOutsideWindow;
 
         public override bool GetValue(int index = 0)
         {
-            return TryGetMouse(index, out Mouse mouse) && InputSystemUtility.GetMouseButton(mouse, button).isPressed;
+            if (TryGetMouse(index, out Mouse mouse) && InputSystemUtility.GetMouseButton(mouse, button).isPressed)
+            {
+                if (!includePressesOutsideWindow)
+                {
+                    Vector2 mousePos = mouse.position.ReadValue();
+                    return mousePos.x >= 0 && mousePos.y >= 0 && mousePos.x <= Screen.width && mousePos.y <= Screen.height;
+                }
+            }
+            return false;
         }
     }
 
