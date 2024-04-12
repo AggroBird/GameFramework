@@ -367,6 +367,10 @@ namespace AggroBird.GameFramework
                     Vector2 mousePos = mouse.position.ReadValue();
                     return mousePos.x >= 0 && mousePos.y >= 0 && mousePos.x <= Screen.width && mousePos.y <= Screen.height;
                 }
+                else
+                {
+                    return true;
+                }
             }
             return false;
         }
