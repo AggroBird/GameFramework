@@ -20,6 +20,9 @@ namespace AggroBird.GameFramework
         [Space]
         public LayerMask collisionMask = 1;
         [Space]
+        [Clamped(min: 0)] public float collisionRadius = 0.35f;
+
+        [Space]
         [Clamped(min: 0)] public float linearFollowSpeed = 10;
         public Rotator2 angularFollowSpeed = new(5, 5);
         [Space]
@@ -28,8 +31,6 @@ namespace AggroBird.GameFramework
         public Vector3 originOffset = new(0, 2, 0);
         public Vector3 followOffset = new(0, 3, -5);
         [Space]
-        [Clamped(min: 0)] public float collisionRadius = 0.35f;
-
         public FloatRange pitchRange = new(-30, 60);
 
         private Vector3 followPosition;
@@ -55,7 +56,7 @@ namespace AggroBird.GameFramework
         public bool updatePosition = true;
 
         protected Pawn CurrentTarget { get; private set; }
-        protected Vector3 CurrentTargetPosition => CurrentTarget.Center + originOffset;
+        protected Vector3 CurrentTargetPosition => CurrentTarget.Center + CurrentTarget.originOffset;
 
         public AutoFollowRotationMode autoFollowRotationMode = AutoFollowRotationMode.BothPitchAndYaw;
         public QueryTriggerInteraction queryTriggerInteraction = QueryTriggerInteraction.Ignore;
@@ -91,13 +92,13 @@ namespace AggroBird.GameFramework
             }
 #endif
 
-            offsetLength = followOffset.magnitude;
+            /*offsetLength = followOffset.magnitude;
 
             rotation = new Rotator2(pitch, transform.eulerAngles.y);
             targetCurrentPosition = transform.position - Quaternion.Euler(rotation.pitch, rotation.yaw, 0) * followOffset;
 
             followPosition = transform.position;
-            followRotation = transform.rotation;
+            followRotation = transform.rotation;*/
         }
 
         protected override void UpdateInput()
@@ -119,12 +120,13 @@ namespace AggroBird.GameFramework
 
                     if (CurrentTarget)
                     {
+                        var currentTarget = CurrentTarget;
                         Vector3 targetPosition = CurrentTargetPosition;
                         if (!hadTarget || Vector3.Distance(targetPosition, targetCurrentPosition) > 5)
                         {
                             rotation.yaw = CurrentTarget.transform.eulerAngles.y;
                             targetCurrentPosition = targetPreviousPosition = targetPosition;
-                            transform.rotation = Quaternion.Euler(pitch + rotation.pitch, rotation.yaw, 0);
+                            transform.rotation = Quaternion.Euler(currentTarget.pitch + rotation.pitch, rotation.yaw, 0);
                         }
                     }
                 }
@@ -136,7 +138,7 @@ namespace AggroBird.GameFramework
                         Vector2 cameraInput = controller.CameraInput.GetValue();
                         inputForce += cameraInput.magnitude;
                         if (inputForce > 1.5f) inputForce = 1.5f;
-                        rotation.pitch = pitchRange.Clamp(rotation.pitch - cameraInput.y);
+                        rotation.pitch = CurrentTarget.pitchRange.Clamp(rotation.pitch - cameraInput.y);
                         rotation.yaw += cameraInput.x;
                         rotation.yaw = Mathfx.ModAbs(rotation.yaw, 360);
                     }
@@ -152,6 +154,7 @@ namespace AggroBird.GameFramework
             if (Application.IsPlaying(gameObject) && CurrentTarget && updatePosition)
             {
                 float deltaTime = Time.deltaTime;
+                var currentTarget = CurrentTarget;
 
                 // Calculate current target velocity
                 Vector3 targetPosition = CurrentTargetPosition;
@@ -159,38 +162,38 @@ namespace AggroBird.GameFramework
                 targetPreviousPosition = targetPosition;
 
                 // Update rotation
-                AutoFollowRotationMode followMode = CurrentTarget.cameraAutoFollowRotationMode & autoFollowRotationMode;
+                AutoFollowRotationMode followMode = currentTarget.cameraAutoFollowRotationMode & autoFollowRotationMode;
                 if (followMode != AutoFollowRotationMode.None)
                 {
-                    Rotator3 targetRot = Rotator3.FromEuler(CurrentTarget.transform.eulerAngles);
+                    Rotator3 targetRot = Rotator3.FromEuler(currentTarget.transform.eulerAngles);
                     float rotateSpeed = (1 - Mathf.Clamp01(inputForce)) * Mathf.Clamp01((velocity.magnitude - 0.1f) / 3);
                     // Only rotate if the player is moving and we havent changed the camera recently
                     if (rotateSpeed > 0)
                     {
                         if ((followMode & AutoFollowRotationMode.Pitch) != AutoFollowRotationMode.None)
                         {
-                            float pitchRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.pitch, rotation.pitch)) * rotateSpeed * angularFollowSpeed.pitch * deltaTime;
+                            float pitchRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.pitch, rotation.pitch)) * rotateSpeed * currentTarget.angularFollowSpeed.pitch * deltaTime;
                             rotation.pitch = Mathf.MoveTowardsAngle(rotation.pitch, 0, pitchRotation);
                         }
                         if ((followMode & AutoFollowRotationMode.Yaw) != AutoFollowRotationMode.None)
                         {
-                            float yawRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.yaw, rotation.yaw)) * rotateSpeed * angularFollowSpeed.yaw * deltaTime;
+                            float yawRotation = Mathf.Abs(Mathf.DeltaAngle(targetRot.yaw, rotation.yaw)) * rotateSpeed * currentTarget.angularFollowSpeed.yaw * deltaTime;
                             rotation.yaw = Mathf.MoveTowardsAngle(rotation.yaw, targetRot.yaw, yawRotation);
                         }
                     }
                 }
-                Quaternion setRotation = Quaternion.Euler(pitch + rotation.pitch, rotation.yaw, 0);
+                Quaternion setRotation = Quaternion.Euler(currentTarget.pitch + rotation.pitch, rotation.yaw, 0);
 
                 // Update position
                 {
-                    float dist = Vector3.Distance(targetCurrentPosition, targetPosition) * linearFollowSpeed * deltaTime;
+                    float dist = Vector3.Distance(targetCurrentPosition, targetPosition) * currentTarget.linearFollowSpeed * deltaTime;
                     targetCurrentPosition = Vector3.MoveTowards(targetCurrentPosition, targetPosition, dist);
                 }
 
                 // Raycast for collisions
                 Vector3 setPosition;
                 {
-                    Vector3 cameraPosition = targetCurrentPosition + Quaternion.Euler(rotation.pitch, rotation.yaw, 0) * followOffset;
+                    Vector3 cameraPosition = targetCurrentPosition + Quaternion.Euler(rotation.pitch, rotation.yaw, 0) * currentTarget.followOffset;
                     Vector3 direction = cameraPosition - targetPosition;
                     float length = direction.magnitude;
                     if (length < Mathf.Epsilon)

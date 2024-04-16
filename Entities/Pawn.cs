@@ -37,8 +37,20 @@ namespace AggroBird.GameFramework
             return dummy;
         }
 
+        [Header("Camera Settings")]
         public AutoFollowRotationMode cameraAutoFollowRotationMode = AutoFollowRotationMode.None;
         public bool allowCameraRotation = true;
+        [Space]
+        [Clamped(min: 0)] public float linearFollowSpeed = 10;
+        public Rotator2 angularFollowSpeed = new(5, 5);
+        [Space]
+        [Clamped(0, 90)]
+        public float pitch = 10;
+        public Vector3 originOffset = new(0, 2, 0);
+        public Vector3 followOffset = new(0, 3, -5);
+        [Space]
+        public FloatRange pitchRange = new(-30, 60);
+
 
         public Player Owner { get; internal set; }
         public bool TryGetOwner<T>(out T result) where T : Player => result = Owner as T;
