@@ -129,9 +129,9 @@ namespace AggroBird.GameFramework
                     }
                 }
 
-                if (updateInput && overrideState != OverrideState.In && CurrentTarget && CurrentTarget.TryGetOwner(out Player owner))
+                if (updateInput && overrideState != OverrideState.In && CurrentTarget && CurrentTarget.allowCameraRotation && CurrentTarget.TryGetOwner(out Player owner))
                 {
-                    if (owner.TryGetController(out Controller controller))
+                    if (owner.InputEnabled && owner.TryGetController(out Controller controller))
                     {
                         Vector2 cameraInput = controller.CameraInput.GetValue();
                         inputForce += cameraInput.magnitude;

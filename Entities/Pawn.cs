@@ -38,6 +38,7 @@ namespace AggroBird.GameFramework
         }
 
         public AutoFollowRotationMode cameraAutoFollowRotationMode = AutoFollowRotationMode.None;
+        public bool allowCameraRotation = true;
 
         public Player Owner { get; internal set; }
         public bool TryGetOwner<T>(out T result) where T : Player => result = Owner as T;
