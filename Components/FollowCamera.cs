@@ -186,8 +186,17 @@ namespace AggroBird.GameFramework
 
                 // Update position
                 {
-                    float dist = Vector3.Distance(targetCurrentPosition, targetPosition) * currentTarget.linearFollowSpeed * deltaTime;
-                    targetCurrentPosition = Vector3.MoveTowards(targetCurrentPosition, targetPosition, dist);
+                    static Vector2 FollowLinearHorizontal(Vector2 current, Vector2 target, float speed)
+                    {
+                        return Vector2.MoveTowards(current, target, Vector2.Distance(current, target) * speed);
+                    }
+                    static float FollowLinearVertical(float current, float target, float speed)
+                    {
+                        return Mathf.MoveTowards(current, target, Mathf.Abs(current - target) * speed);
+                    }
+
+                    targetCurrentPosition.SetXZ(FollowLinearHorizontal(targetCurrentPosition.GetXZ(), targetPosition.GetXZ(), currentTarget.linearHorizontalFollowSpeed * deltaTime));
+                    targetCurrentPosition.y = FollowLinearVertical(targetCurrentPosition.y, targetPosition.y, currentTarget.linearVerticalFollowSpeed * deltaTime);
                 }
 
                 // Raycast for collisions

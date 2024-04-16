@@ -41,7 +41,8 @@ namespace AggroBird.GameFramework
         public AutoFollowRotationMode cameraAutoFollowRotationMode = AutoFollowRotationMode.None;
         public bool allowCameraRotation = true;
         [Space]
-        [Clamped(min: 0)] public float linearFollowSpeed = 10;
+        [Clamped(min: 0)] public float linearHorizontalFollowSpeed = 10;
+        [Clamped(min: 0)] public float linearVerticalFollowSpeed = 10;
         public Rotator2 angularFollowSpeed = new(5, 5);
         [Space]
         [Clamped(0, 90)]
