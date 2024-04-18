@@ -47,8 +47,8 @@ namespace AggroBird.GameFramework
         [Space]
         [Clamped(0, 90)]
         public float pitch = 10;
-        public Vector3 originOffset = new(0, 2, 0);
-        public Vector3 followOffset = new(0, 3, -5);
+        public Vector3 originOffset = new(0, 1, 0);
+        public Vector3 followOffset = new(0, 0.2f, -4.5f);
         [Space]
         public FloatRange pitchRange = new(-30, 60);
 
