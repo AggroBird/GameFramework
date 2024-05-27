@@ -16,7 +16,7 @@ namespace AggroBird.GameFramework
             return iteractable != null;
         }
 
-        private readonly List<IInteractable> interactables = new();
+        private readonly List<IInteractable> overlappingInteractables = new();
         private IInteractable nearestInteractable = null;
         private IInteractable currentInteractable = null;
 
@@ -36,7 +36,7 @@ namespace AggroBird.GameFramework
         }
 
 
-        protected virtual void Update()
+        protected virtual void FixedUpdate()
         {
             UpdateInteractables();
         }
@@ -65,25 +65,14 @@ namespace AggroBird.GameFramework
 
         private void UpdateInteractables()
         {
-            // Filter invalids
-            for (int i = 0; i < interactables.Count;)
-            {
-                if (!IsValid(interactables[i]))
-                {
-                    interactables.RemoveAt(i);
-                    continue;
-                }
-                i++;
-            }
-
             // Update nearest
             nearestInteractable = null;
-            if (interactables.Count > 0)
+            if (overlappingInteractables.Count > 0)
             {
                 float nearestDist = float.MaxValue;
-                for (int i = 0; i < interactables.Count; i++)
+                for (int i = 0; i < overlappingInteractables.Count; i++)
                 {
-                    var interactable = interactables[i];
+                    var interactable = overlappingInteractables[i];
                     if ((interactable is not Behaviour component || component.isActiveAndEnabled) && interactable.CanInteract(this))
                     {
                         float dist = (interactable.InteractPosition - transform.position).sqrMagnitude;
@@ -98,6 +87,7 @@ namespace AggroBird.GameFramework
                         EndInteract();
                     }
                 }
+                overlappingInteractables.Clear();
             }
         }
 
@@ -125,32 +115,30 @@ namespace AggroBird.GameFramework
 
         private readonly List<IInteractable> overlap = new List<IInteractable>();
 
-        protected virtual void OnTriggerEnter(Collider trigger)
+        protected void OnTriggerEnter(Collider trigger)
         {
             trigger.GetComponentsInParent(false, overlap);
             if (overlap.Count > 0)
             {
                 foreach (var interactable in overlap)
                 {
-                    if (!interactables.Contains(interactable))
+                    if (!overlappingInteractables.Contains(interactable))
                     {
-                        interactables.Add(interactable);
+                        overlappingInteractables.Add(interactable);
                     }
                 }
             }
         }
-        protected virtual void OnTriggerExit(Collider trigger)
+        protected void OnTriggerStay(Collider trigger)
         {
             trigger.GetComponentsInParent(false, overlap);
             if (overlap.Count > 0)
             {
                 foreach (var interactable in overlap)
                 {
-                    interactables.Remove(interactable);
-
-                    if (ReferenceEquals(currentInteractable, interactable))
+                    if (!overlappingInteractables.Contains(interactable))
                     {
-                        EndInteract();
+                        overlappingInteractables.Add(interactable);
                     }
                 }
             }
@@ -158,7 +146,7 @@ namespace AggroBird.GameFramework
 
         protected virtual void OnDisable()
         {
-            interactables.Clear();
+            overlappingInteractables.Clear();
         }
     }
 }
