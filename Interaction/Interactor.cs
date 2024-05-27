@@ -43,8 +43,6 @@ namespace AggroBird.GameFramework
 
         public virtual void UpdateInput(bool interact)
         {
-            UpdateInteractables();
-
             // Update input
             inputState.Update(interact);
             switch (inputState.State)
