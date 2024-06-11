@@ -49,6 +49,8 @@ namespace AggroBird.GameFramework
         [SerializeField, Min(0)] private float coyoteTime = 0.25f;
 
 
+        protected virtual float MaxSpeedModifier => 1;
+
         public Vector2 MovementInput { get; set; }
         public bool Jump
         {
@@ -244,7 +246,7 @@ namespace AggroBird.GameFramework
             Vector3 unitVel = goalVelocity.normalized;
             float velDot = Vector3.Dot(unitGoal, unitVel);
             float accel = acceleration * accelerationFactorFromDot.Evaluate(velDot);
-            Vector3 goalVel = unitGoal * maxSpeed * speedFactor;
+            Vector3 goalVel = unitGoal * (maxSpeed * speedFactor * MaxSpeedModifier);
             goalVelocity = Vector3.MoveTowards(goalVelocity, goalVel, accel * Time.fixedDeltaTime);
             Vector3 neededAccel = (goalVelocity - rigidbody.velocity) / Time.fixedDeltaTime;
             float maxAccel = maxAccelForce * maxAccelerationForceFactorFromDot.Evaluate(velDot) * maxAccelForceFactor;
