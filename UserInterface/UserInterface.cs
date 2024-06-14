@@ -340,7 +340,7 @@ namespace AggroBird.GameFramework
             if (AppInstance.Instance.PlatformProfile.ActiveInputMode == InputMode.Gamepad && EventSystem)
             {
                 GameObject selectedGameobject = EventSystem.currentSelectedGameObject;
-                if (selectedGameobject && selectedGameobject.GetComponentInParent<Menu>() == this)
+                if (selectedGameobject)
                 {
                     PointerEventData data = new(EventSystem.current);
                     ExecuteEvents.Execute(selectedGameobject, data, ExecuteEvents.pointerClickHandler);
@@ -353,7 +353,7 @@ namespace AggroBird.GameFramework
             {
                 // Send move event
                 GameObject selectedGameobject = EventSystem.currentSelectedGameObject;
-                if (selectedGameobject && selectedGameobject.GetComponentInParent<Menu>() == this)
+                if (selectedGameobject)
                 {
                     AxisEventData data = new(EventSystem)
                     {
