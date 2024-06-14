@@ -333,5 +333,42 @@ namespace AggroBird.GameFramework
                 PauseGame |= menu.PauseGame;
             }
         }
+
+
+        public void HandleConfirm()
+        {
+            if (AppInstance.Instance.PlatformProfile.ActiveInputMode == InputMode.Gamepad && EventSystem)
+            {
+                GameObject selectedGameobject = EventSystem.currentSelectedGameObject;
+                if (selectedGameobject && selectedGameobject.GetComponentInParent<Menu>() == this)
+                {
+                    PointerEventData data = new(EventSystem.current);
+                    ExecuteEvents.Execute(selectedGameobject, data, ExecuteEvents.pointerClickHandler);
+                }
+            }
+        }
+        public void HandleDirectionInput(Direction direction)
+        {
+            if (EventSystem)
+            {
+                // Send move event
+                GameObject selectedGameobject = EventSystem.currentSelectedGameObject;
+                if (selectedGameobject && selectedGameobject.GetComponentInParent<Menu>() == this)
+                {
+                    AxisEventData data = new(EventSystem)
+                    {
+                        moveDir = direction switch
+                        {
+                            Direction.Up => MoveDirection.Up,
+                            Direction.Right => MoveDirection.Right,
+                            Direction.Down => MoveDirection.Down,
+                            Direction.Left => MoveDirection.Left,
+                            _ => MoveDirection.None,
+                        }
+                    };
+                    ExecuteEvents.Execute(selectedGameobject, data, ExecuteEvents.moveHandler);
+                }
+            }
+        }
     }
 }

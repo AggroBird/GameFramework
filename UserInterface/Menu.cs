@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace AggroBird.GameFramework
@@ -74,19 +73,9 @@ namespace AggroBird.GameFramework
 
         public virtual bool OnConfirm()
         {
-            // Press current selection if controller
-            if (AppInstance.Instance.PlatformProfile.ActiveInputMode == InputMode.Gamepad && Parent)
+            if (Parent)
             {
-                EventSystem eventSystem = Parent.EventSystem;
-                if (eventSystem)
-                {
-                    GameObject selectedGameobject = eventSystem.currentSelectedGameObject;
-                    if (selectedGameobject && selectedGameobject.GetComponentInParent<Menu>() == this)
-                    {
-                        PointerEventData data = new(EventSystem.current);
-                        ExecuteEvents.Execute(selectedGameobject, data, ExecuteEvents.pointerClickHandler);
-                    }
-                }
+                Parent.HandleConfirm();
             }
 
             return true;
@@ -101,27 +90,7 @@ namespace AggroBird.GameFramework
         {
             if (Parent)
             {
-                EventSystem eventSystem = Parent.EventSystem;
-                if (eventSystem)
-                {
-                    // Send move event
-                    GameObject selectedGameobject = eventSystem.currentSelectedGameObject;
-                    if (selectedGameobject && selectedGameobject.GetComponentInParent<Menu>() == this)
-                    {
-                        AxisEventData data = new(Parent.EventSystem)
-                        {
-                            moveDir = direction switch
-                            {
-                                Direction.Up => MoveDirection.Up,
-                                Direction.Right => MoveDirection.Right,
-                                Direction.Down => MoveDirection.Down,
-                                Direction.Left => MoveDirection.Left,
-                                _ => MoveDirection.None,
-                            }
-                        };
-                        ExecuteEvents.Execute(selectedGameobject, data, ExecuteEvents.moveHandler);
-                    }
-                }
+                Parent.HandleDirectionInput(direction);
             }
 
             return true;
