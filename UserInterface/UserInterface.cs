@@ -33,6 +33,11 @@ namespace AggroBird.GameFramework
             scrollRectTargetValue = target;
             scrollRectProgress = 0;
         }
+        private bool delayScrollLayout = false;
+        public void RefreshScrollLayout()
+        {
+            delayScrollLayout = true;
+        }
 
         private readonly Vector3[] Corners = new Vector3[4];
         private Rect GetRectFromCorners()
@@ -189,36 +194,45 @@ namespace AggroBird.GameFramework
         public virtual void UpdateLayout()
         {
             EventSystem eventSystem = EventSystem;
-
-            // Check if current selection is visible in scroll rect
-            GameObject selection = eventSystem.currentSelectedGameObject;
-            if (selection != currentSelection)
+            if (eventSystem)
             {
-                currentSelection = selection;
-
-                if (currentSelection && currentSelection.TryGetComponent(out RectTransform element))
+                if (delayScrollLayout)
                 {
-                    ScrollRect scrollRect = currentSelection.GetComponentInParent<ScrollRect>();
-                    if (scrollRect && scrollRect.vertical)
+                    delayScrollLayout = false;
+                    currentSelection = null;
+                    return;
+                }
+
+                // Check if current selection is visible in scroll rect
+                GameObject selection = eventSystem.currentSelectedGameObject;
+                if (selection != currentSelection)
+                {
+                    currentSelection = selection;
+
+                    if (currentSelection && currentSelection.TryGetComponent(out RectTransform element))
                     {
-                        RectTransform viewport = scrollRect.viewport;
-                        RectTransform content = scrollRect.content;
-
-                        Rect viewportRect = GetRect(viewport);
-                        Rect contentRect = GetRect(content);
-                        Rect elementRect = GetRect(element);
-
-                        float scrollHeight = contentRect.height - viewportRect.height;
-                        float contentTop = viewportRect.y - contentRect.y;
-                        float elementTop = elementRect.y - contentRect.y;
-                        float elementBottom = elementTop + elementRect.height;
-                        if (elementTop < contentTop)
+                        ScrollRect scrollRect = currentSelection.GetComponentInParent<ScrollRect>();
+                        if (scrollRect && scrollRect.vertical)
                         {
-                            ScrollTo(scrollRect, Mathf.Clamp01(elementTop / scrollHeight));
-                        }
-                        else if (elementBottom > contentTop + viewportRect.height)
-                        {
-                            ScrollTo(scrollRect, Mathf.Clamp01((elementBottom - viewportRect.height) / scrollHeight));
+                            RectTransform viewport = scrollRect.viewport;
+                            RectTransform content = scrollRect.content;
+
+                            Rect viewportRect = GetRect(viewport);
+                            Rect contentRect = GetRect(content);
+                            Rect elementRect = GetRect(element);
+
+                            float scrollHeight = contentRect.height - viewportRect.height;
+                            float contentTop = viewportRect.y - contentRect.y;
+                            float elementTop = elementRect.y - contentRect.y;
+                            float elementBottom = elementTop + elementRect.height;
+                            if (elementTop < contentTop)
+                            {
+                                ScrollTo(scrollRect, Mathf.Clamp01(elementTop / scrollHeight));
+                            }
+                            else if (elementBottom > contentTop + viewportRect.height)
+                            {
+                                ScrollTo(scrollRect, Mathf.Clamp01((elementBottom - viewportRect.height) / scrollHeight));
+                            }
                         }
                     }
                 }
