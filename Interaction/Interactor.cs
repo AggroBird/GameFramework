@@ -71,7 +71,7 @@ namespace AggroBird.GameFramework
                 for (int i = 0; i < overlappingInteractables.Count; i++)
                 {
                     var interactable = overlappingInteractables[i];
-                    if ((interactable is not Behaviour component || component.isActiveAndEnabled) && interactable.CanInteract(this))
+                    if ((interactable is not Behaviour component || (component && component.isActiveAndEnabled)) && interactable.CanInteract(this))
                     {
                         float dist = (interactable.InteractPosition - transform.position).sqrMagnitude;
                         if (dist < nearestDist)
