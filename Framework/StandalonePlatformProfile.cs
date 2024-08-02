@@ -12,8 +12,6 @@ namespace AggroBird.GameFramework
         public override bool SupportsMouseKeyboard => true;
         public override InputMode ActiveInputMode => inputMode;
 
-        private double lastSwitchTime = 0;
-
 
         public override void Initialize()
         {
@@ -26,11 +24,6 @@ namespace AggroBird.GameFramework
 
         public override void UpdateInputMode()
         {
-            if (Time.realtimeSinceStartupAsDouble - lastSwitchTime < 1)
-            {
-                return;
-            }
-
             if (inputMode == InputMode.KeyboardMouse)
             {
                 Gamepad gamepad = Gamepad.current;
@@ -93,7 +86,6 @@ namespace AggroBird.GameFramework
             {
                 inputMode = newMode;
                 InputModeChanged(inputMode);
-                lastSwitchTime = Time.realtimeSinceStartupAsDouble;
             }
         }
     }
