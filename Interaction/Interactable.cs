@@ -23,7 +23,7 @@ namespace AggroBird.GameFramework
     public abstract class Interactable : MonoBehaviour, IInteractable
     {
         public abstract InteractTooltipContent TooltipContent { get; }
-        [SerializeField] private Vector3 interactOffset = Vector3.zero;
+        [SerializeField] protected Vector3 interactOffset = Vector3.zero;
         public virtual Vector3 InteractPosition { get => transform.TransformPoint(interactOffset); }
 
         public abstract bool CanInteract(Interactor interactor);
