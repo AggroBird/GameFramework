@@ -5,7 +5,9 @@ namespace AggroBird.GameFramework
 {
     public class Interactor : MonoBehaviour
     {
-        [field: SerializeField] public Entity Entity { get; private set; }
+        [field: SerializeField]
+        public Entity Entity { get; private set; }
+        public LayerMask layerMask = -1;
 
         private static bool IsValid(IInteractable iteractable)
         {
@@ -115,28 +117,34 @@ namespace AggroBird.GameFramework
 
         protected void OnTriggerEnter(Collider trigger)
         {
-            trigger.GetComponentsInParent(false, overlap);
-            if (overlap.Count > 0)
+            if (((1 << trigger.gameObject.layer) & layerMask.value) != 0)
             {
-                foreach (var interactable in overlap)
+                trigger.GetComponentsInParent(false, overlap);
+                if (overlap.Count > 0)
                 {
-                    if (!overlappingInteractables.Contains(interactable))
+                    foreach (var interactable in overlap)
                     {
-                        overlappingInteractables.Add(interactable);
+                        if (!overlappingInteractables.Contains(interactable))
+                        {
+                            overlappingInteractables.Add(interactable);
+                        }
                     }
                 }
             }
         }
         protected void OnTriggerStay(Collider trigger)
         {
-            trigger.GetComponentsInParent(false, overlap);
-            if (overlap.Count > 0)
+            if (((1 << trigger.gameObject.layer) & layerMask.value) != 0)
             {
-                foreach (var interactable in overlap)
+                trigger.GetComponentsInParent(false, overlap);
+                if (overlap.Count > 0)
                 {
-                    if (!overlappingInteractables.Contains(interactable))
+                    foreach (var interactable in overlap)
                     {
-                        overlappingInteractables.Add(interactable);
+                        if (!overlappingInteractables.Contains(interactable))
+                        {
+                            overlappingInteractables.Add(interactable);
+                        }
                     }
                 }
             }
