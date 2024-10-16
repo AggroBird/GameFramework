@@ -113,7 +113,7 @@ namespace AggroBird.GameFramework
         }
 
 
-        private readonly List<IInteractable> overlap = new List<IInteractable>();
+        private readonly List<IInteractable> overlap = new();
 
         protected void OnTriggerEnter(Collider trigger)
         {
