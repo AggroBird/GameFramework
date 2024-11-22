@@ -14,6 +14,7 @@ namespace AggroBird.GameFramework
         InteractTooltipContent TooltipContent { get; }
         Vector3 InteractPosition { get; }
         bool CanInteract(Interactor interactor);
+        public int Priority { get; }
 
         void BeginInteract(Interactor interactor);
         void UpdateInteract(Interactor interactor);
@@ -41,6 +42,8 @@ namespace AggroBird.GameFramework
                 }
             }
         }
+
+        public virtual int Priority { get => 0; }
 
         public abstract bool CanInteract(Interactor interactor);
 

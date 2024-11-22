@@ -70,16 +70,22 @@ namespace AggroBird.GameFramework
             if (overlappingInteractables.Count > 0)
             {
                 float nearestDist = float.MaxValue;
+                int lowestPriority = int.MaxValue;
                 for (int i = 0; i < overlappingInteractables.Count; i++)
                 {
                     var interactable = overlappingInteractables[i];
                     if ((interactable is not Behaviour component || (component && component.isActiveAndEnabled)) && interactable.CanInteract(this))
                     {
-                        float dist = (interactable.InteractPosition - transform.position).sqrMagnitude;
-                        if (dist < nearestDist)
+                        int priority = interactable.Priority;
+                        if (priority <= lowestPriority)
                         {
-                            nearestInteractable = interactable;
-                            nearestDist = dist;
+                            float dist = (interactable.InteractPosition - transform.position).sqrMagnitude;
+                            if (dist < nearestDist || priority < lowestPriority)
+                            {
+                                nearestInteractable = interactable;
+                                nearestDist = dist;
+                                lowestPriority = priority;
+                            }
                         }
                     }
                     else if (ReferenceEquals(currentInteractable, interactable))

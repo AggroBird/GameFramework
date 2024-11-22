@@ -8,7 +8,7 @@
 	"description": "Custom game framework for unity games",
 	"dependencies":
 	{
-		"com.aggrobird.unityextend": "1.0.98",
+		"com.aggrobird.unityextend": "1.0.99",
 		"com.unity.inputsystem": "1.7.0",
 		"com.cysharp.unitask": "2.5.3"
 	},
