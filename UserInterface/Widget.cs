@@ -14,7 +14,7 @@ namespace AggroBird.GameFramework
             Closing,
         }
 
-        public WidgetState State { get; private set; }
+        public WidgetState State { get; protected set; }
         public bool IsOpen => State == WidgetState.Open;
 
 
