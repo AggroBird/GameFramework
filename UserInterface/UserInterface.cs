@@ -207,8 +207,6 @@ namespace AggroBird.GameFramework
                 GameObject selection = eventSystem.currentSelectedGameObject;
                 if (selection != currentSelection)
                 {
-                    currentSelection = selection;
-
                     if (currentSelection && currentSelection.TryGetComponent(out RectTransform element))
                     {
                         ScrollRect scrollRect = currentSelection.GetComponentInParent<ScrollRect>();
@@ -219,19 +217,24 @@ namespace AggroBird.GameFramework
 
                             Rect viewportRect = GetRect(viewport);
                             Rect contentRect = GetRect(content);
-                            Rect elementRect = GetRect(element);
+                            if (contentRect.height > 0)
+                            {
+                                currentSelection = selection;
 
-                            float scrollHeight = contentRect.height - viewportRect.height;
-                            float contentTop = viewportRect.y - contentRect.y;
-                            float elementTop = elementRect.y - contentRect.y;
-                            float elementBottom = elementTop + elementRect.height;
-                            if (elementTop < contentTop)
-                            {
-                                ScrollTo(scrollRect, Mathf.Clamp01(elementTop / scrollHeight));
-                            }
-                            else if (elementBottom > contentTop + viewportRect.height)
-                            {
-                                ScrollTo(scrollRect, Mathf.Clamp01((elementBottom - viewportRect.height) / scrollHeight));
+                                Rect elementRect = GetRect(element);
+
+                                float scrollHeight = contentRect.height - viewportRect.height;
+                                float contentTop = viewportRect.y - contentRect.y;
+                                float elementTop = elementRect.y - contentRect.y;
+                                float elementBottom = elementTop + elementRect.height;
+                                if (elementTop < contentTop)
+                                {
+                                    ScrollTo(scrollRect, Mathf.Clamp01(elementTop / scrollHeight));
+                                }
+                                else if (elementBottom > contentTop + viewportRect.height)
+                                {
+                                    ScrollTo(scrollRect, Mathf.Clamp01((elementBottom - viewportRect.height) / scrollHeight));
+                                }
                             }
                         }
                     }
