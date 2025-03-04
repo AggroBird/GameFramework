@@ -88,7 +88,7 @@ namespace AggroBird.GameFramework
             debugConsoleClass = Type.GetType("AggroBird.ReflectionDebugConsole.DebugConsole, AggroBird.ReflectionDebugConsole, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null");
             if (debugConsoleClass != null)
             {
-                onConsoleFocusChange = debugConsoleClass.GetEvent("onConsoleFocusChange");
+                onConsoleFocusChange = debugConsoleClass.GetEvent("OnConsoleFocusChange");
                 if (onConsoleFocusChange != null)
                 {
                     MethodInfo callback = typeof(AppInstance).GetMethod(nameof(OnDebugConsoleFocus), BindingFlags.NonPublic | BindingFlags.Instance);
