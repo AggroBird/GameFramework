@@ -603,7 +603,7 @@ namespace AggroBird.GameFramework
 
         public override void ToString(PlatformProfile platformProfile, StringBuilder output)
         {
-            platformProfile.FormatGlyph(direction, output, glyphAsArrow);
+            platformProfile.FormatGlyph(stick, direction, output, glyphAsArrow);
         }
     }
 

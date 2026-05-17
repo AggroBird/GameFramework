@@ -5,7 +5,8 @@ namespace AggroBird.GameFramework
     [CreateAssetMenu(menuName = "Game/Framework/EntryPoint", fileName = "EntryPoint")]
     public class EntryPoint : ScriptableObject
     {
-        [SerializeField] private AppInstance gameInstancePrefab = default;
+        [SerializeField]
+        private LazyLoadReference<AppInstance> gameInstancePrefab = default;
 
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -16,7 +17,7 @@ namespace AggroBird.GameFramework
                 EntryPoint entryPointPrefab = Resources.Load<EntryPoint>("EntryPoint");
                 if (!entryPointPrefab) throw new FatalGameException("Failed to find entry point asset");
                 EntryPoint entryPoint = Instantiate(entryPointPrefab);
-                AppInstance gameInstance = Instantiate(entryPoint.gameInstancePrefab);
+                AppInstance gameInstance = Instantiate(entryPoint.gameInstancePrefab.asset);
                 gameInstance.Initialize();
             }
         }

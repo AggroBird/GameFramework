@@ -35,7 +35,7 @@ namespace AggroBird.GameFramework
             }
             return elements.ToArray();
         }
-        public static void LinkElementsHorizontal(IReadOnlyList<Selectable> elements)
+        public static void LinkElementsHorizontal(IReadOnlyList<Selectable> elements, bool loop)
         {
             if (elements.Count > 0)
             {
@@ -45,6 +45,18 @@ namespace AggroBird.GameFramework
                     {
                         mode = Navigation.Mode.Explicit,
                     };
+                }
+                else if (loop)
+                {
+                    for (int i = 0; i < elements.Count; i++)
+                    {
+                        elements[i].navigation = new Navigation
+                        {
+                            mode = Navigation.Mode.Explicit,
+                            selectOnLeft = elements[Mathfx.ModAbs(i - 1, elements.Count)],
+                            selectOnRight = elements[Mathfx.ModAbs(i + 1, elements.Count)],
+                        };
+                    }
                 }
                 else
                 {
@@ -67,11 +79,11 @@ namespace AggroBird.GameFramework
                 }
             }
         }
-        public static void LinkElementsHorizontal(RectTransform parent)
+        public static void LinkElementsHorizontal(RectTransform parent, bool loop)
         {
-            LinkElementsHorizontal(GetSelectablesInParent(parent));
+            LinkElementsHorizontal(GetSelectablesInParent(parent), loop);
         }
-        public static void LinkElementsVertical(IReadOnlyList<Selectable> elements)
+        public static void LinkElementsVertical(IReadOnlyList<Selectable> elements, bool loop)
         {
             if (elements.Count > 0)
             {
@@ -82,7 +94,7 @@ namespace AggroBird.GameFramework
                         mode = Navigation.Mode.Explicit,
                     };
                 }
-                else
+                else if (loop)
                 {
                     for (int i = 0; i < elements.Count; i++)
                     {
@@ -94,11 +106,30 @@ namespace AggroBird.GameFramework
                         };
                     }
                 }
+                else
+                {
+                    Selectable prev = null;
+                    for (int i = 0; i < elements.Count - 1; i++)
+                    {
+                        elements[i].navigation = new Navigation
+                        {
+                            mode = Navigation.Mode.Explicit,
+                            selectOnUp = prev,
+                            selectOnDown = elements[i + 1],
+                        };
+                        prev = elements[i];
+                    }
+                    elements[elements.Count - 1].navigation = new Navigation
+                    {
+                        mode = Navigation.Mode.Explicit,
+                        selectOnUp = prev,
+                    };
+                }
             }
         }
-        public static void LinkElementsVertical(RectTransform parent)
+        public static void LinkElementsVertical(RectTransform parent, bool loop)
         {
-            LinkElementsVertical(GetSelectablesInParent(parent));
+            LinkElementsVertical(GetSelectablesInParent(parent), loop);
         }
         public static void ReconnectSelectableNavigation(Selectable selectable)
         {

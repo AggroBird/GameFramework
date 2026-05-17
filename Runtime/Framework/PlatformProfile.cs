@@ -47,6 +47,7 @@ namespace AggroBird.GameFramework
         public abstract void UpdateInputMode();
 
         public abstract Controller CreateController(Player player);
+        public virtual Controller CreateController(Player player, InputMode inputMode) => CreateController(player);
         public virtual Controller DefaultControllerPrefab => null;
 
         protected void InputModeChanged(InputMode inputMode)
@@ -139,6 +140,16 @@ namespace AggroBird.GameFramework
             FormatGlyphTag(DefaultControllerGlyphAtlas, stick.ToString(), output);
         }
         public virtual void FormatGlyph(GamepadStick stick, Direction direction, StringBuilder output, bool glyphAsArrow)
+        {
+            if (glyphAsArrow)
+            {
+                FormatGlyphTag(DirectionGlyphAtlas, $"{direction}", output);
+                return;
+            }
+
+            FormatGlyphTag(DefaultControllerGlyphAtlas, $"{stick}{direction}", output);
+        }
+        public virtual void FormatGlyph(GamepadStick stick, Direction8 direction, StringBuilder output, bool glyphAsArrow)
         {
             if (glyphAsArrow)
             {

@@ -23,12 +23,14 @@ namespace AggroBird.GameFramework
         // Input
         [field: SerializeField]
         public bool LockCursor { get; protected set; } = true;
+        [field: SerializeField]
+        public bool InputRequiresFocus { get; protected set; } = true;
         private bool uiRequiresInput = false;
 
         public bool HasFocus { get; private set; } = true;
         public virtual bool AllowRegainFocus => debugConsoleHasFocusGetMethod == null || !debugConsoleHasFocusGetMethod.Invoke();
 
-        public virtual bool InputEnabled => HasFocus && inputEnabled && !uiRequiresInput;
+        public virtual bool InputEnabled => (!InputRequiresFocus || HasFocus) && inputEnabled && !uiRequiresInput;
         public void SetInputEnabled(bool enabled)
         {
             inputEnabled = enabled;
