@@ -109,7 +109,7 @@ namespace AggroBird.GameFramework
     [Serializable, PolymorphicClassType(ShowFoldout = true)]
     public class InputButtonMapping : InputMapping<bool>
     {
-        public InputButtonMapping(InputButton input, InputButton[] modifiers = null, bool axis = false)
+        public InputButtonMapping(InputButton input, InputButton[] modifiers = null)
         {
             inputs = new InputButton[1] { input };
 
@@ -121,8 +121,6 @@ namespace AggroBird.GameFramework
             {
                 this.modifiers = new InputButton[0];
             }
-
-            this.axis = axis;
         }
         public InputButtonMapping(InputButton[] inputs, InputButton[] modifiers = null)
         {
@@ -139,8 +137,6 @@ namespace AggroBird.GameFramework
         public ReadOnlySpan<InputButton> Modifiers => modifiers;
 
         [SerializeField]
-        private bool axis = false;
-        [SerializeField, ConditionalField(nameof(axis), ConditionalFieldOperator.Equal, false)]
         private ButtonSwitch @switch;
 
         private int modifiersDown = 0;
@@ -158,15 +154,73 @@ namespace AggroBird.GameFramework
                 }
                 mainButtonDown = mainButtonValue ? ++mainButtonDown : 0;
                 bool currentValue = modifiersDown >= mainButtonDown && mainButtonDown > 0;
-                if (axis)
+                @switch.Update(currentValue);
+                value = @switch.State == ButtonState.Pressed;
+            }
+        }
+
+        public override void ToString(PlatformProfile platformProfile, StringBuilder output)
+        {
+            int c = 0;
+            foreach (var modifier in modifiers)
+            {
+                if (c++ > 0) output.Append('+');
+                modifier.ToString(platformProfile, output);
+            }
+            foreach (var input in inputs)
+            {
+                if (c++ > 0) output.Append('+');
+                input.ToString(platformProfile, output);
+            }
+        }
+    }
+
+    // Input button axis
+    [Serializable, PolymorphicClassType(ShowFoldout = true)]
+    public class InputButtonAxisMapping : InputMapping<bool>
+    {
+        public InputButtonAxisMapping(InputButton input, InputButton[] modifiers = null)
+        {
+            inputs = new InputButton[1] { input };
+
+            if (modifiers != null)
+            {
+                this.modifiers = modifiers;
+            }
+            else
+            {
+                this.modifiers = new InputButton[0];
+            }
+        }
+        public InputButtonAxisMapping(InputButton[] inputs, InputButton[] modifiers = null)
+        {
+            this.inputs = inputs;
+            this.modifiers = modifiers;
+        }
+
+        [SerializeReference, PolymorphicField]
+        private InputButton[] inputs;
+        public ReadOnlySpan<InputButton> Inputs => inputs;
+
+        [SerializeReference, PolymorphicField]
+        private InputButton[] modifiers;
+        public ReadOnlySpan<InputButton> Modifiers => modifiers;
+
+        private int modifiersDown = 0;
+        private int mainButtonDown = 0;
+
+        public override void Update(int index)
+        {
+            if (!Utility.IsNullOrEmpty(inputs))
+            {
+                CheckModifiers(modifiers, index, ref modifiersDown);
+                bool mainButtonValue = true;
+                foreach (var input in inputs)
                 {
-                    value = currentValue;
+                    mainButtonValue &= input.GetValue(index);
                 }
-                else
-                {
-                    @switch.Update(currentValue);
-                    value = @switch.State == ButtonState.Pressed;
-                }
+                mainButtonDown = mainButtonValue ? ++mainButtonDown : 0;
+                value = modifiersDown >= mainButtonDown && mainButtonDown > 0;
             }
         }
 
@@ -204,8 +258,6 @@ namespace AggroBird.GameFramework
         public ReadOnlySpan<InputButton> Modifiers => modifiers;
 
         [SerializeField]
-        private bool axis = false;
-        [SerializeField, ConditionalField(nameof(axis), ConditionalFieldOperator.Equal, false)]
         private DirectionSwitch @switch = new(false);
 
         private int modifiersDown = 0;
@@ -219,15 +271,8 @@ namespace AggroBird.GameFramework
                 Direction mainButtonValue = Input.GetValue(index);
                 mainButtonDown = (mainButtonValue != Direction.None) ? ++mainButtonDown : 0;
                 var currentValue = modifiersDown >= mainButtonDown && mainButtonDown > 0 ? mainButtonValue : Direction.None;
-                if (axis)
-                {
-                    value = currentValue;
-                }
-                else
-                {
-                    @switch.Update(currentValue);
-                    value = @switch.State;
-                }
+                @switch.Update(currentValue);
+                value = @switch.State;
             }
         }
 
@@ -244,7 +289,51 @@ namespace AggroBird.GameFramework
         }
     }
 
-    // Input direction (1D)
+    // Input direction axis
+    [Serializable, PolymorphicClassType(ShowFoldout = true)]
+    public class InputDirectionAxisMapping : InputMapping<Direction>
+    {
+        public InputDirectionAxisMapping(InputDirection input, InputButton[] modifiers = null)
+        {
+            Input = input;
+            this.modifiers = modifiers;
+        }
+
+        [field: SerializeReference, PolymorphicField]
+        public InputDirection Input { get; private set; }
+
+        [field: SerializeReference, PolymorphicField]
+        private InputButton[] modifiers;
+        public ReadOnlySpan<InputButton> Modifiers => modifiers;
+
+        private int modifiersDown = 0;
+        private int mainButtonDown = 0;
+
+        public override void Update(int index)
+        {
+            if (Input != null)
+            {
+                CheckModifiers(modifiers, index, ref modifiersDown);
+                Direction mainButtonValue = Input.GetValue(index);
+                mainButtonDown = (mainButtonValue != Direction.None) ? ++mainButtonDown : 0;
+                value = modifiersDown >= mainButtonDown && mainButtonDown > 0 ? mainButtonValue : Direction.None;
+            }
+        }
+
+        public override void ToString(PlatformProfile platformProfile, StringBuilder output)
+        {
+            int c = 0;
+            foreach (var modifier in modifiers)
+            {
+                if (c++ > 0) output.Append('+');
+                modifier.ToString(platformProfile, output);
+            }
+            if (c++ > 0) output.Append('+');
+            Input.ToString(platformProfile, output);
+        }
+    }
+
+    // Integral direction (1D)
     [Serializable, PolymorphicClassType(ShowFoldout = true)]
     public class IntegralDirectionMapping : InputMapping<int>
     {
@@ -262,8 +351,6 @@ namespace AggroBird.GameFramework
         public ReadOnlySpan<InputButton> Modifiers => modifiers;
 
         [SerializeField]
-        private bool axis = false;
-        [SerializeField, ConditionalField(nameof(axis), ConditionalFieldOperator.Equal, false)]
         private IntegralSwitch @switch = new(false);
 
         private int modifiersDown = 0;
@@ -277,15 +364,52 @@ namespace AggroBird.GameFramework
                 int mainButtonValue = Input.GetValue(index);
                 mainButtonDown = (mainButtonValue != 0) ? ++mainButtonDown : 0;
                 var currentValue = modifiersDown >= mainButtonDown && mainButtonDown > 0 ? mainButtonValue : 0;
-                if (axis)
-                {
-                    value = currentValue;
-                }
-                else
-                {
-                    @switch.Update(currentValue);
-                    value = @switch.State;
-                }
+                @switch.Update(currentValue);
+                value = @switch.State;
+            }
+        }
+
+        public override void ToString(PlatformProfile platformProfile, StringBuilder output)
+        {
+            int c = 0;
+            foreach (var modifier in modifiers)
+            {
+                if (c++ > 0) output.Append('+');
+                modifier.ToString(platformProfile, output);
+            }
+            if (c++ > 0) output.Append('+');
+            Input.ToString(platformProfile, output);
+        }
+    }
+
+    // Integral direction axis (1D)
+    [Serializable, PolymorphicClassType(ShowFoldout = true)]
+    public class IntegralDirectionAxisMapping : InputMapping<int>
+    {
+        public IntegralDirectionAxisMapping(IntegralDirection input, InputButton[] modifiers = null)
+        {
+            Input = input;
+            this.modifiers = modifiers;
+        }
+
+        [field: SerializeReference, PolymorphicField]
+        public IntegralDirection Input { get; private set; }
+
+        [field: SerializeReference, PolymorphicField]
+        private InputButton[] modifiers;
+        public ReadOnlySpan<InputButton> Modifiers => modifiers;
+
+        private int modifiersDown = 0;
+        private int mainButtonDown = 0;
+
+        public override void Update(int index)
+        {
+            if (Input != null)
+            {
+                CheckModifiers(modifiers, index, ref modifiersDown);
+                int mainButtonValue = Input.GetValue(index);
+                mainButtonDown = (mainButtonValue != 0) ? ++mainButtonDown : 0;
+                value = modifiersDown >= mainButtonDown && mainButtonDown > 0 ? mainButtonValue : 0;
             }
         }
 

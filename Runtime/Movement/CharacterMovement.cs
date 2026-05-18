@@ -34,6 +34,7 @@ namespace AggroBird.GameFramework
         [Header("Movement")]
         [SerializeField, Min(0)] private float maxSpeed = 6;
         [SerializeField, Min(0)] private float sprintSpeed = 10;
+        [SerializeField, Min(0)] private float sneakSpeed = 3;
         [SerializeField, Min(0)] private float acceleration = 400;
         [SerializeField, Min(0)] private float maxAccelForce = 300;
         [SerializeField] private AnimationCurve accelerationFactorFromDot;
@@ -56,6 +57,7 @@ namespace AggroBird.GameFramework
 
         public Vector2 MovementInput { get; set; }
         public bool Sprint { get; set; }
+        public bool Sneak { get; set; }
 
         public float MaxSpeed => maxSpeed;
 
@@ -64,6 +66,7 @@ namespace AggroBird.GameFramework
         public float SprintSpeed => sprintSpeed;
         public bool UseStamina => useStamina;
         public bool IsSprinting => Sprint && (!useStamina || Stamina > 0);
+        public bool IsSneaking => Sneak && !IsSprinting;
 
         private static PhysicsMaterial physicMaterial = default;
 
@@ -279,7 +282,7 @@ namespace AggroBird.GameFramework
                     Vector3 unitVel = goalVelocity.normalized;
                     float velDot = Vector3.Dot(unitGoal, unitVel);
                     float accel = acceleration * accelerationFactorFromDot.Evaluate(velDot);
-                    Vector3 goalVel = unitGoal * ((IsSprinting ? sprintSpeed : maxSpeed) * MaxSpeedModifier);
+                    Vector3 goalVel = unitGoal * ((IsSprinting ? sprintSpeed : IsSneaking ? sneakSpeed : maxSpeed) * MaxSpeedModifier);
                     goalVelocity = Vector3.MoveTowards(goalVelocity, goalVel, accel * deltaTime);
                     Vector3 neededAccel = (goalVelocity - rigidbody.linearVelocity) / deltaTime;
                     float maxAccel = maxAccelForce * maxAccelerationForceFactorFromDot.Evaluate(velDot);
